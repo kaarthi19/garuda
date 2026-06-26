@@ -164,6 +164,68 @@ Work landed on branch `phase-0-data-core`.
 
 ---
 
+## Fixes — model correctness (branch `fix-commit-state-leak`, 2026-06-26)
+
+Two latent bugs surfaced during the Benders-feasibility analysis (both inherited
+from `village-100gw@1096aa4`; flagged for village-100gw and captive-2025).
+
+### F1. Commitment state leaked across representative periods
+
+`cCommitState` (grid) and `cVILCommitState` (village) ran the commitment
+recursion `vCOMMIT[t+1] == vCOMMIT[t] + vSTART[t+1] − vSHUT[t+1]` over the full
+horizon (`inputs.T_red`), threading commitment from each representative week into
+the next — unlike SOC/ramps, which are period-cyclic via a `…Wrap` on `START`.
+Representative weeks are independent samples, so this spuriously coupled them.
+Fixed to mirror SOC/ramps: recursion on `INTERIOR` (`t-1`) + new
+`cCommitStateWrap` / `cVILCommitStateWrap` on `START` (wrap to
+`t+hours_per_period-1`), so each representative period is cyclic and independent.
+
+**Re-baselines results where commitment binds** (the new values are the
+physically correct ones; the direction varies):
+
+| case | before (buggy) | after (fixed) | Δ |
+|---|---|---|---|
+| timor_demo village | 23.6609M | 23.5769M | −0.36% |
+| timor_demo gridvillage | 23.55655M | 23.55655M | 0 (non-binding) |
+| maluku base | 87.786M | 88.012M | +0.26% |
+
+On maluku, the buggy version let thermal commitment carry across representative
+weeks, under-counting start-ups and making the island look ~0.26% **cheaper** than
+reality. `87.786M` matches the prior published maluku figure — the corrected value
+is `88.012M`. (`commit d05cfa0`.)
+
+### F2. Grid-only scenarios crashed on missing site `Max_Cap_MW`
+
+The empty `village_generators` fallback (built when a dataset has no site
+generators — `base`/`grid`/`nocoal` on grid-only islands) lacked a `Max_Cap_MW`
+column, which `optimizer.jl` indexes; this threw *"column :Max_Cap_MW not found"*
+before the solve. Added `Max_Cap_MW = Float64[]` to the fallback; maluku base now
+solves. (`commit 594befb`.)
+
+**Verified (absolute paths):** timor_demo (village + gridvillage) and maluku base
+solve to optimality; `tests/verify_data_core.jl` (12 checks) still passes. Branch
+`fix-commit-state-leak`, not yet merged to main.
+
+> Process note: an earlier verification of these fixes accidentally ran in the
+> `village-100gw` working tree (shell cwd), not garuda. village-100gw was restored
+> to untouched; all model runs now use absolute paths.
+
+---
+
+## Decision — Benders decomposition (deferred)
+
+Verified by a multi-agent feasibility analysis (see the roadmap). Conclusions:
+exact Benders can preserve precision, but "exact + open-source + fast" is
+pick-two. **Decisions:** precision bar = **relaxed-UC Benders on HiGHS with the
+UC integrality gap measured empirically** (not bit-exact integer monolith);
+**deferred** until after the `build_model!` extraction (Phase 2) + a scaling
+assessment (the binding dimension at scale is *sites*, not time, so period-
+decomposition may be the wrong axis). Prerequisites: the F1 commit-state fix
+(done) and `build_model!`. The inherited `benders_decomposition.jl` is a broken
+reference (scalar-floor cut, dropped policy constraints) — not a starting point.
+
+---
+
 ## Phase 1 — Open & safe (HiGHS default + schema validator)
 
 <!-- next: solver abstraction → HiGHS default + conditional Gurobi import;
