@@ -1,5 +1,6 @@
 # function_compiler.jl
 include("input_data.jl")
+include("zonal_system.jl")   # Layer A data-core wrapper (ZonalSystem, build_system)
 include("optimizer.jl")
 include("result_extraction_function.jl")
 # benders_decomposition.jl provides an optional capacity_expansion_benders
@@ -21,8 +22,8 @@ function function_compiler(
         BAUCO2emissions;
         village_storage_max_mwh::Float64 = 208.0
     )
-    # 1) Load inputs
-    inputs = input_data(filepath)
+    # 1) Load inputs into the Layer A data core (engine-agnostic ZonalSystem)
+    inputs = build_system(filepath)
 
     # 2) Run the optimization
     solution = capacity_expansion(

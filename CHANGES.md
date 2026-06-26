@@ -59,5 +59,36 @@ provenance/status banner to `README.md` pointing here.
 **Verify:** the next step reproduces a known result from the source repo
 *before* any code change, proving the fork behaves identically (Phase 0.5).
 
-<!-- Append new Phase 0 entries below (0.2 ZonalSystem, 0.3 site aliases,
-     0.4 zones.csv, 0.5 verification). -->
+### 0.2 `ZonalSystem` data-core type + `build_system()` — 2026-06-26
+
+Introduced the **Layer A data-core type** so every engine dispatches on one
+named, documented contract instead of an anonymous NamedTuple.
+
+**New file `functions/zonal_system.jl`:**
+- `struct ZonalSystem` wraps the loader's data; `Base.getproperty` forwards field
+  access to the wrapped NamedTuple, so existing engine code (`inputs.G`,
+  `inputs.demand`, …) is unchanged. The raw NamedTuple stays available as
+  `sys.data`.
+- `build_system(filepath)::ZonalSystem` — a drop-in for `input_data` on the solve
+  path.
+
+**`functions/function_compiler.jl`:** includes `zonal_system.jl` and loads via
+`build_system(filepath)` instead of `input_data(filepath)` (the variable is still
+`inputs`, so `optimizer.jl` / `result_extraction_function.jl` are untouched).
+
+**Why a forwarding wrapper, not a flat 48-field struct:** zero risk of field
+drift, nothing to keep in sync, identical property access guaranteed. Verified
+safe first: a grep showed no NamedTuple-specific use of `inputs` in `functions/`,
+and `input_data` / `capacity_expansion` each have exactly one caller
+(`function_compiler.jl`).
+
+**Verified (no solver needed):** `julia --project=. /tmp/verify_zonal.jl` →
+*"ZonalSystem forwards all 48 fields by identity; build_system matches
+input_data"* on the `timor_demo` dataset. End-to-end solve reproduction is done
+in Phase 0.5.
+
+`input_data` itself is left intact (the Layer A loader); `ZonalSystem` is purely
+additive.
+
+<!-- Append new Phase 0 entries below (0.3 site aliases, 0.4 zones.csv,
+     0.5 verification). -->
