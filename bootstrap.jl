@@ -9,11 +9,11 @@ Pkg.resolve()
 Pkg.instantiate()
 
 using JuMP
-using Gurobi
+using HiGHS
 
 include(joinpath(REPO_ROOT, "functions", "preflight.jl"))
 
-println("Checking Gurobi availability")
-validate_gurobi()
+println("Checking the default open-source solver (HiGHS)")
+validate_solver("highs")
 
-println("Julia environment is ready.")
+println("Julia environment is ready. (Gurobi is optional — set \"solver\": \"gurobi\" in a config to use it.)")

@@ -7,7 +7,7 @@ Pkg.activate(REPO_ROOT)
 using JSON
 using JuMP
 using DataFrames, CSV
-using Gurobi
+using HiGHS
 using Base.Filesystem: mkpath
 
 include(joinpath(REPO_ROOT, "functions", "preflight.jl"))
@@ -17,6 +17,12 @@ include(joinpath(REPO_ROOT, "functions/function_compiler.jl"))
 
 # 2) Read config.json
 config_path, preflight_only = parse_cli_args(ARGS)
+
+# Select the solver from config (open-source HiGHS by default) and load its
+# package. HiGHS is always available; Gurobi is imported only when requested.
+solver = lowercase(get(JSON.parsefile(config_path), "solver", "highs"))
+solver == "gurobi" && @eval using Gurobi
+
 preflight = run_preflight(config_path, REPO_ROOT)
 cfg = preflight.cfg
 island           = cfg["island"]
@@ -67,5 +73,6 @@ function_compiler(
     NoCoal,
     CO235reduction,
     BAUCO2emissions;
-    village_storage_max_mwh = village_storage_max_mwh
+    village_storage_max_mwh = village_storage_max_mwh,
+    solver = solver
 )
