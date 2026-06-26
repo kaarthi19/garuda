@@ -20,7 +20,7 @@ match the `years` entry (both are joined into the input path by
 | `village_demand.csv` | – | required | required for `gridvillage` |
 | `village_demandheat.csv` | – | required | required for `gridvillage` |
 | `village_generators_variability.csv` | – | required | required for `gridvillage` |
-| `zones.csv` | informational only — never read by the code | | |
+| `zones.csv` | optional — supplies human-readable zone names (`zone_names`); not required to solve | | |
 
 Run `julia --project=. run_model.jl --config <config.json> --preflight-only` to
 check a folder before attempting a full solve.

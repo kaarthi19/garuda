@@ -120,4 +120,27 @@ original (VIL / VIL_G / VIL_STOR, village_zone, demand & variability matrices, a
 the derived Var_Cost / CO2_Rate / Start_Cost columns all equal); the ZonalSystem
 forwarding regression still passes.
 
-<!-- Append new Phase 0 entries below (0.4 zones.csv, 0.5 verification). -->
+### 0.4 Read `zones.csv` into `zone_names` — 2026-06-26
+
+`zones.csv` (present for multi-zone islands: jawa_bali, kalimantan, sulawesi,
+sumatera) was authored but **never read** — the model knew zones only as
+integers. Added `functions/zones.jl::read_zone_names(path)` and wired it into
+`input_data`, so the loaded `ZonalSystem` now carries
+`zone_names :: Dict{Int,String}` (zone integer → human-readable name). Empty when
+`zones.csv` is absent (e.g. single-zone / `timor_demo`). This feeds readable
+reports and named buses on open-format export.
+
+The reader is tolerant of the real schema: a `province,zone` layout with a
+`z`-prefixed label (`z1` → `1`), a header BOM, and `province` / `zone_name` /
+`name` / `system` spellings of the name column.
+
+**`data_indonesia/README.md`:** updated the `zones.csv` row (no longer "never
+read by the code").
+
+**Verified (no solver):** `/tmp/verify_zones.jl` — sulawesi yields 6 names with
+every modelled zone covered (`1 => north_sulawesi`, `2 => gorontalo`,
+`3 => central_sulawesi`, …); `timor_demo` loads with an empty map; a missing file
+→ empty map. The site-alias and ZonalSystem-forwarding (now 49 fields)
+regressions still pass.
+
+<!-- Append new Phase 0 entries below (0.5 verification). -->

@@ -1,5 +1,7 @@
 # `site` vocabulary alias resolution (site_/village_/ip_) at the I/O boundary
 include("site_aliases.jl")
+# optional human-readable zone names from zones.csv
+include("zones.jl")
 
 function input_data(filepath)
 
@@ -13,6 +15,10 @@ function input_data(filepath)
 
     #set of zones
     Z = convert(Array{Int64}, unique(collect(skipmissing(generators.Zone))));
+
+    #human-readable zone names from the optional zones.csv (previously unread);
+    #maps zone integer -> name for readable reports and named buses on export.
+    zone_names = read_zone_names(joinpath(filepath, "zones.csv"))
 
     #Demand
     #reading reference demand input data
@@ -360,6 +366,7 @@ function input_data(filepath)
         T = T,
         T_red = T_red,
         Z = Z,
+        zone_names = zone_names,
         L = L,
         UC = UC,
         ED = ED,

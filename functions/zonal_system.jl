@@ -19,7 +19,8 @@ Engine-agnostic, in-memory representation of a zonal power system: the platform'
 sets/subsets (`G`, `Z`, `L`, `UC`, `ED`, `STOR`, `VRE`, `VIL`, …), the
 representative-period time structure (`T`, `P`, `W`, `sample_weight`,
 `hours_per_period`), and derived economics (`Var_Cost`, `CO2_Rate`, … columns on
-the generator frames). It holds no solver state.
+the generator frames), plus `zone_names` (zone integer → label, read from
+`zones.csv` when present). It holds no solver state.
 
 Build one with [`build_system`](@ref). Property access forwards to the underlying
 loaded data, so `sys.generators`, `sys.G`, `sys.sample_weight`, `sys.VIL`, … work
