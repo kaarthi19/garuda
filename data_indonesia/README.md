@@ -30,9 +30,14 @@ check a folder before attempting a full solve.
 - **Zones** are integers `1..NZ`. The `Zone` column in `generators.csv`, the
   `demand_z<i>` columns in `demand.csv`, and the `z<i>` columns in `network.csv`
   must all use the same numbering. Single-zone islands use `1` everywhere.
-- **Villages** are integers `1..NV` in the `Village` column of
-  `village_generators.csv`, matching the `demand_village<i>` columns in
-  `village_demand.csv` and `village_demandheat.csv`.
+- **Sites** (the platform's canonical term for a decentralised node within a
+  zone) are integers `1..NV` in the `Site` column of `site_generators.csv`,
+  matching the `demand_site<i>` columns in `site_demand.csv` and
+  `site_demandheat.csv`. For backward compatibility the loader also accepts the
+  inherited spellings **`village_*` / `Village` / `demand_village<i>`** (the
+  100 GW village-solar study) and **`ip_*` / `Industrial_Park` / `demand_ip<i>`**
+  (the captive-industrial study) — use one spelling consistently per dataset.
+  Resolution lives in `functions/site_aliases.jl`.
 - **R_ID** must be consecutive integers starting at 1, in file row order. R_IDs
   are used directly as array indices throughout the model.
 - **Time** is modelled as representative periods (currently 8 representative weeks
