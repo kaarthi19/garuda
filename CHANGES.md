@@ -90,5 +90,34 @@ in Phase 0.5.
 `input_data` itself is left intact (the Layer A loader); `ZonalSystem` is purely
 additive.
 
-<!-- Append new Phase 0 entries below (0.3 site aliases, 0.4 zones.csv,
-     0.5 verification). -->
+### 0.3 `site` vocabulary with `village_*` / `ip_*` aliases — 2026-06-26
+
+Made **`site`** the canonical platform term for a decentralised node within a
+zone, while accepting the two inherited spellings so both dataset families load
+unchanged: `village_*` / `Village` (100 GW village-solar study) and `ip_*` /
+`Industrial_Park` (captive-industrial study). New datasets can use the canonical
+`site_*` / `Site` / `demand_site<i>` spelling.
+
+**New file `functions/site_aliases.jl`:** `resolve_site_csv(dir, base)`
+(site_→village_→ip_ filename resolution), `site_id_col(df)`
+(Site|Village|Industrial_Park), `site_demand_col(df, i)`
+(demand_site|village|ip`<i>`).
+
+**`functions/input_data.jl`:** six I/O-boundary edits route the site tables
+(generators, demand, demandheat, generators_variability, connection) through the
+resolver, and normalise the site-ID column back to the internal name `Village`.
+Because `optimizer.jl` indexes site demand **positionally** (`village_demand[t,
+vil]`) and only references the ID column as `.Village`, nothing downstream
+changes — the returned `ZonalSystem` is identical regardless of spelling.
+
+**Scope:** this is the *accommodation* for captive (deferred): the alias
+mechanism is in place and unit-tested on the `ip_*` / `Industrial_Park` spelling,
+but full captive-dataset ingestion (extra IP metadata columns) remains Phase 6.
+
+**Verified (no solver):** `/tmp/verify_site_aliases.jl` builds a `site_*`-spelled
+copy of `timor_demo` and asserts it loads byte-identically to the `village_*`
+original (VIL / VIL_G / VIL_STOR, village_zone, demand & variability matrices, and
+the derived Var_Cost / CO2_Rate / Start_Cost columns all equal); the ZonalSystem
+forwarding regression still passes.
+
+<!-- Append new Phase 0 entries below (0.4 zones.csv, 0.5 verification). -->

@@ -1,3 +1,6 @@
+# `site` vocabulary alias resolution (site_/village_/ip_) at the I/O boundary
+include("site_aliases.jl")
+
 function input_data(filepath)
 
     #GRID
@@ -112,9 +115,14 @@ function input_data(filepath)
     #VILLAGES
     #Village Generators
     #reading village generator data
-    if isfile(joinpath(filepath, "village_generators.csv"))
-        village_generators = DataFrame(CSV.File(joinpath(filepath, "village_generators.csv")));
-
+    site_gen_csv = resolve_site_csv(filepath, "generators")
+    if site_gen_csv !== nothing
+        village_generators = DataFrame(CSV.File(site_gen_csv));
+        # normalise the site-identifier column (Site|Village|Industrial_Park) to
+        # the internal name `Village` so the rest of the loader/engine is unchanged
+        let idc = site_id_col(village_generators)
+            idc == :Village || rename!(village_generators, idc => :Village)
+        end
     else
         village_generators = DataFrame(
             R_ID                        = Int[],
@@ -154,8 +162,12 @@ function input_data(filepath)
     #generous cap (i.e. reproduces the prior always-connected behaviour).
     village_connect_cost = Dict{Int,Float64}()
     village_connect_max  = Dict{Int,Float64}()
-    if isfile(joinpath(filepath, "village_connection.csv"))
-        vc = DataFrame(CSV.File(joinpath(filepath, "village_connection.csv")))
+    site_conn_csv = resolve_site_csv(filepath, "connection")
+    if site_conn_csv !== nothing
+        vc = DataFrame(CSV.File(site_conn_csv))
+        let idc = site_id_col(vc)
+            idc == :Village || rename!(vc, idc => :Village)
+        end
         for r in eachrow(vc)
             village_connect_cost[r.Village] = r.Cost_per_yr
             village_connect_max[r.Village]  = r.Max_Connect_MW
@@ -167,10 +179,11 @@ function input_data(filepath)
     end
 
     #Village Demand
-    if isfile(joinpath(filepath, "village_demand.csv"))
-        village_demand_input = DataFrame(CSV.File(joinpath(filepath, "village_demand.csv")));
-        #generate column symbols based on VIL indices
-        village_demand_cols = [Symbol("demand_village$i") for i in VIL]
+    site_demand_csv = resolve_site_csv(filepath, "demand")
+    if site_demand_csv !== nothing
+        village_demand_input = DataFrame(CSV.File(site_demand_csv));
+        #generate column symbols based on VIL indices (site/village/ip aliases)
+        village_demand_cols = [site_demand_col(village_demand_input, i) for i in VIL]
         village_demand = select(village_demand_input, village_demand_cols...);
 
         #set of price responsive demand (non-served energy) segments
@@ -197,10 +210,11 @@ function input_data(filepath)
         VIL_VOLL = 0.0
     end
 
-    if isfile(joinpath(filepath, "village_demandheat.csv"))
-        village_heat_demand_input = DataFrame(CSV.File(joinpath(filepath, "village_demandheat.csv")));
-        # Generate column symbols based on VIL indices
-        village_heat_demand_cols = [Symbol("demand_village$i") for i in VIL]
+    site_demandheat_csv = resolve_site_csv(filepath, "demandheat")
+    if site_demandheat_csv !== nothing
+        village_heat_demand_input = DataFrame(CSV.File(site_demandheat_csv));
+        # Generate column symbols based on VIL indices (site/village/ip aliases)
+        village_heat_demand_cols = [site_demand_col(village_heat_demand_input, i) for i in VIL]
         village_demandheat = select(village_heat_demand_input, village_heat_demand_cols...);
     else
         village_demandheat = DataFrame(
@@ -209,10 +223,11 @@ function input_data(filepath)
     end
 
     #VIL Variability
-    if isfile(joinpath(filepath, "village_generators_variability.csv"))
-        #read village generator capacity factors by hour, dropping the leading hour
-        #index column so profile column g lines up with village generator R_ID g
-        village_variability = DataFrame(CSV.File(joinpath(filepath, "village_generators_variability.csv")))[:, 2:end]
+    site_var_csv = resolve_site_csv(filepath, "generators_variability")
+    if site_var_csv !== nothing
+        #read site generator capacity factors by hour, dropping the leading hour
+        #index column so profile column g lines up with site generator R_ID g
+        village_variability = DataFrame(CSV.File(site_var_csv))[:, 2:end]
         for g in (ncol(village_variability)+1):(isempty(VIL_G) ? 0 : maximum(VIL_G))
             village_variability[!, Symbol("flat_cf_", g)] .= 1.0
         end
