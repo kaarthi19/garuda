@@ -143,4 +143,29 @@ every modelled zone covered (`1 => north_sulawesi`, `2 => gorontalo`,
 → empty map. The site-alias and ZonalSystem-forwarding (now 49 fields)
 regressions still pass.
 
-<!-- Append new Phase 0 entries below (0.5 verification). -->
+### 0.5 End-to-end verification — Phase 0 reproduces the import byte-for-byte — 2026-06-26
+
+Definitive proof the data-core refactor changes no results.
+
+- **Byte-identical solves.** Solved `timor_demo` `village` + `gridvillage`
+  (Gurobi, academic licence) on the refactored branch and on the pristine `main`
+  import. Objectives match exactly — village `2.366093688239e7` ($23.6609369M),
+  gridvillage `2.355655499305e7` ($23.5565550M) — and `diff -rq` over every
+  result CSV reports no differences.
+- **Layer A regression test** consolidated into `tests/verify_data_core.jl` (no
+  solver): 12 checks across ZonalSystem forwarding (49 fields), the
+  site_/village_/ip_ alias path (a synthesised `site_*` copy loads identically),
+  and zones.csv → zone_names. All pass.
+- **Inherited suite:** `tests/test_fishing_calculator.py` → 4 passed.
+
+**Phase 0 complete.** The platform repo stands as a clean fork with a named,
+documented, alias-tolerant Layer A data core, provably behaviour-preserving.
+Work landed on branch `phase-0-data-core`.
+
+---
+
+## Phase 1 — Open & safe (HiGHS default + schema validator)
+
+<!-- next: solver abstraction → HiGHS default + conditional Gurobi import;
+     Python schema validator. -->
+
