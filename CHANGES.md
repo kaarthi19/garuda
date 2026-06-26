@@ -228,6 +228,49 @@ reference (scalar-floor cut, dropped policy constraints) — not a starting poin
 
 ## Phase 1 — Open & safe (HiGHS default + schema validator)
 
-<!-- next: solver abstraction → HiGHS default + conditional Gurobi import;
-     Python schema validator. -->
+### 1.1 Pluggable solver — HiGHS default, Gurobi optional — 2026-06-26
+
+The model hardcoded `Model(Gurobi.Optimizer)`. Added `functions/solver.jl`
+`make_solver(solver; mipgap, time_limit)` mapping each solver's attributes (HiGHS
+`mip_rel_gap`/`time_limit`; Gurobi `MIPGap`/`TimeLimit`/`Crossover`). Threaded a
+`solver` parameter through `capacity_expansion` → `function_compiler` →
+`run_model.jl`, selected by a config key `"solver": "highs"|"gurobi"` (default
+**highs**). `using Gurobi` is now conditional (imported only when requested);
+`preflight.jl`'s `validate_gurobi` → `validate_solver`; `bootstrap.jl` validates
+HiGHS — so **a fresh setup needs no commercial licence**. HiGHS added to
+Project/Manifest.
+
+**Verified:**
+- **Gurobi opt-in** (`"solver":"gurobi"`): timor_demo village solves in ~5 s to
+  23.5769M — exact match to the post-fix baseline; the conditional import works.
+- **HiGHS default**: solves to optimality, but the unit-commitment MILP is *hard*
+  for it — timor_demo village took **~27 min** (vs Gurobi ~5 s) and returned
+  **23.734M** at the 1% gap (within tolerance, but 0.67% above Gurobi's 23.5769M,
+  because both stop at 1% gap yet find different incumbents).
+
+**Implication (important):** HiGHS delivers the strategic goal — *license-free
+runnability* — but is impractical for the full UC-MILP at scale. It is the right
+default for small/demo cases, the no-solve screening engine, and the coming
+dispatch/LP engines (LPs are fast on HiGHS); **Gurobi remains the fast path for
+full UC capacity-expansion runs.** This empirically confirms the Benders analysis:
+open-source scalability for this model needs UC *relaxation*, not just a solver
+swap. The default MIP gap is unchanged (1%) for both solvers.
+
+### 1.2 Python schema validator — 2026-06-26
+
+New `tools/validate_schema.py`: validates an input folder before a solve —
+required files; **R_ID consecutive from 1** (used as an array index);
+**variability rows = T**; **Sub_Weights sum = 8760**; **zone IDs align** across
+generators/demand/network; network incidence ∈ {−1,0,1}; **fuel referential
+integrity**; site-demand columns (site_/village_/ip_ aliases). Standalone
+(`python tools/validate_schema.py <dir>`) or imported.
+
+`preflight.jl` shells out to it (best-effort): **blocks** on confirmed data errors
+(exit 1), **skips with a warning** if python/pandas is unavailable (exit 3) so a
+pure-Julia setup is never blocked; `GARUDA_PYTHON` / `GARUDA_SKIP_VALIDATION`
+override. **Verified:** passes on timor_demo / sulawesi / maluku / timor_belu;
+catches a broken copy (R_ID gap, unknown fuel, Sub_Weights 8860≠8760, 1343≠1344
+rows); preflight blocks bad data and skips gracefully without pandas.
+
+Phase 1 lands on branch `phase-1-open-safe`.
 

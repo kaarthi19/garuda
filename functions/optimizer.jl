@@ -1,14 +1,7 @@
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs")
 
-    CE = Model(Gurobi.Optimizer)
-    set_attribute(CE, "MIPGap", mipgap)
-    #set_attribute(CE, "LogFile", "gurobi_output.log")
-    set_attribute(CE, "Crossover", 0)
-    #set_attribute(CE, "UnboundedRay", 1)
-    #set_attribute(CE, "Nodes", 10)
-    set_attribute(CE, "TimeLimit", 3*24*60*60)
-    #set_attribute(CE, "Heuristics", 0)
-    #set_attribute(CE, "Cuts", 3)
+    # pluggable solver: HiGHS (open-source default) or Gurobi (optional fast path)
+    CE = make_solver(solver; mipgap = mipgap)
 
     #DECISION VARIABLES
 
