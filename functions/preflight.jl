@@ -112,16 +112,17 @@ function validate_input_files(inputs_path::AbstractString, flags)
     )
 end
 
-function validate_gurobi()
+function validate_solver(solver::AbstractString)
+    s = lowercase(strip(solver))
     try
-        model = Model(Gurobi.Optimizer)
+        model = s == "gurobi" ? Model(Gurobi.Optimizer) : Model(HiGHS.Optimizer)
         set_silent(model)
         @variable(model, 0 <= x <= 1)
         @objective(model, Max, x)
         optimize!(model)
     catch err
         error(
-            "Gurobi is installed but could not start a licensed optimizer session: " *
+            "Solver \"$(solver)\" could not start a working optimizer session: " *
             sprint(showerror, err)
         )
     end
@@ -129,15 +130,44 @@ function validate_gurobi()
     return nothing
 end
 
+function validate_schema(inputs_path::AbstractString, repo_root::AbstractString)
+    # Best-effort: shell out to the Python schema validator (tools/validate_schema.py).
+    # Block only on confirmed data errors (exit 1); skip with a warning if the
+    # validator cannot run (no python/pandas) so a pure-Julia setup is never blocked.
+    script = joinpath(repo_root, "tools", "validate_schema.py")
+    isfile(script) || return nothing
+    get(ENV, "GARUDA_SKIP_VALIDATION", "") == "1" && return nothing
+    python = get(ENV, "GARUDA_PYTHON", "python3")
+    buf = IOBuffer()
+    code = try
+        run(pipeline(ignorestatus(`$(python) $(script) $(inputs_path)`); stdout = buf, stderr = buf)).exitcode
+    catch err
+        @warn "schema validation skipped: $(sprint(showerror, err))"
+        return nothing
+    end
+    out = String(take!(buf))
+    if code == 0
+        return nothing
+    elseif code == 1
+        error("Input schema validation failed:\n" * out *
+              "\nFix the inputs above, or set GARUDA_SKIP_VALIDATION=1 to bypass.")
+    else
+        @warn "schema validation skipped (validator exit $(code)):\n$(out)"
+        return nothing
+    end
+end
+
 function run_preflight(config_path::AbstractString, repo_root::AbstractString)
     cfg = load_config(config_path)
     flags = scenario_settings(cfg["scenario"])
     clean_flags = clean_settings(cfg["clean"])
+    solver = lowercase(get(cfg, "solver", "highs"))
     inputs_path = joinpath(repo_root, "data_indonesia", cfg["year"], cfg["island"])
     results_dir = joinpath(repo_root, "results", "$(cfg["scenario"])_$(cfg["island"])_$(cfg["year"])_$(cfg["clean"])")
 
-    validate_gurobi()
+    validate_solver(solver)
     validate_input_files(inputs_path, flags)
+    validate_schema(inputs_path, repo_root)
 
     return (
         cfg = cfg,
@@ -145,5 +175,6 @@ function run_preflight(config_path::AbstractString, repo_root::AbstractString)
         clean_flags = clean_flags,
         inputs_path = inputs_path,
         results_dir = results_dir,
+        solver = solver,
     )
 end
