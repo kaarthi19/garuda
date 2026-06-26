@@ -59,5 +59,113 @@ provenance/status banner to `README.md` pointing here.
 **Verify:** the next step reproduces a known result from the source repo
 *before* any code change, proving the fork behaves identically (Phase 0.5).
 
-<!-- Append new Phase 0 entries below (0.2 ZonalSystem, 0.3 site aliases,
-     0.4 zones.csv, 0.5 verification). -->
+### 0.2 `ZonalSystem` data-core type + `build_system()` — 2026-06-26
+
+Introduced the **Layer A data-core type** so every engine dispatches on one
+named, documented contract instead of an anonymous NamedTuple.
+
+**New file `functions/zonal_system.jl`:**
+- `struct ZonalSystem` wraps the loader's data; `Base.getproperty` forwards field
+  access to the wrapped NamedTuple, so existing engine code (`inputs.G`,
+  `inputs.demand`, …) is unchanged. The raw NamedTuple stays available as
+  `sys.data`.
+- `build_system(filepath)::ZonalSystem` — a drop-in for `input_data` on the solve
+  path.
+
+**`functions/function_compiler.jl`:** includes `zonal_system.jl` and loads via
+`build_system(filepath)` instead of `input_data(filepath)` (the variable is still
+`inputs`, so `optimizer.jl` / `result_extraction_function.jl` are untouched).
+
+**Why a forwarding wrapper, not a flat 48-field struct:** zero risk of field
+drift, nothing to keep in sync, identical property access guaranteed. Verified
+safe first: a grep showed no NamedTuple-specific use of `inputs` in `functions/`,
+and `input_data` / `capacity_expansion` each have exactly one caller
+(`function_compiler.jl`).
+
+**Verified (no solver needed):** `julia --project=. /tmp/verify_zonal.jl` →
+*"ZonalSystem forwards all 48 fields by identity; build_system matches
+input_data"* on the `timor_demo` dataset. End-to-end solve reproduction is done
+in Phase 0.5.
+
+`input_data` itself is left intact (the Layer A loader); `ZonalSystem` is purely
+additive.
+
+### 0.3 `site` vocabulary with `village_*` / `ip_*` aliases — 2026-06-26
+
+Made **`site`** the canonical platform term for a decentralised node within a
+zone, while accepting the two inherited spellings so both dataset families load
+unchanged: `village_*` / `Village` (100 GW village-solar study) and `ip_*` /
+`Industrial_Park` (captive-industrial study). New datasets can use the canonical
+`site_*` / `Site` / `demand_site<i>` spelling.
+
+**New file `functions/site_aliases.jl`:** `resolve_site_csv(dir, base)`
+(site_→village_→ip_ filename resolution), `site_id_col(df)`
+(Site|Village|Industrial_Park), `site_demand_col(df, i)`
+(demand_site|village|ip`<i>`).
+
+**`functions/input_data.jl`:** six I/O-boundary edits route the site tables
+(generators, demand, demandheat, generators_variability, connection) through the
+resolver, and normalise the site-ID column back to the internal name `Village`.
+Because `optimizer.jl` indexes site demand **positionally** (`village_demand[t,
+vil]`) and only references the ID column as `.Village`, nothing downstream
+changes — the returned `ZonalSystem` is identical regardless of spelling.
+
+**Scope:** this is the *accommodation* for captive (deferred): the alias
+mechanism is in place and unit-tested on the `ip_*` / `Industrial_Park` spelling,
+but full captive-dataset ingestion (extra IP metadata columns) remains Phase 6.
+
+**Verified (no solver):** `/tmp/verify_site_aliases.jl` builds a `site_*`-spelled
+copy of `timor_demo` and asserts it loads byte-identically to the `village_*`
+original (VIL / VIL_G / VIL_STOR, village_zone, demand & variability matrices, and
+the derived Var_Cost / CO2_Rate / Start_Cost columns all equal); the ZonalSystem
+forwarding regression still passes.
+
+### 0.4 Read `zones.csv` into `zone_names` — 2026-06-26
+
+`zones.csv` (present for multi-zone islands: jawa_bali, kalimantan, sulawesi,
+sumatera) was authored but **never read** — the model knew zones only as
+integers. Added `functions/zones.jl::read_zone_names(path)` and wired it into
+`input_data`, so the loaded `ZonalSystem` now carries
+`zone_names :: Dict{Int,String}` (zone integer → human-readable name). Empty when
+`zones.csv` is absent (e.g. single-zone / `timor_demo`). This feeds readable
+reports and named buses on open-format export.
+
+The reader is tolerant of the real schema: a `province,zone` layout with a
+`z`-prefixed label (`z1` → `1`), a header BOM, and `province` / `zone_name` /
+`name` / `system` spellings of the name column.
+
+**`data_indonesia/README.md`:** updated the `zones.csv` row (no longer "never
+read by the code").
+
+**Verified (no solver):** `/tmp/verify_zones.jl` — sulawesi yields 6 names with
+every modelled zone covered (`1 => north_sulawesi`, `2 => gorontalo`,
+`3 => central_sulawesi`, …); `timor_demo` loads with an empty map; a missing file
+→ empty map. The site-alias and ZonalSystem-forwarding (now 49 fields)
+regressions still pass.
+
+### 0.5 End-to-end verification — Phase 0 reproduces the import byte-for-byte — 2026-06-26
+
+Definitive proof the data-core refactor changes no results.
+
+- **Byte-identical solves.** Solved `timor_demo` `village` + `gridvillage`
+  (Gurobi, academic licence) on the refactored branch and on the pristine `main`
+  import. Objectives match exactly — village `2.366093688239e7` ($23.6609369M),
+  gridvillage `2.355655499305e7` ($23.5565550M) — and `diff -rq` over every
+  result CSV reports no differences.
+- **Layer A regression test** consolidated into `tests/verify_data_core.jl` (no
+  solver): 12 checks across ZonalSystem forwarding (49 fields), the
+  site_/village_/ip_ alias path (a synthesised `site_*` copy loads identically),
+  and zones.csv → zone_names. All pass.
+- **Inherited suite:** `tests/test_fishing_calculator.py` → 4 passed.
+
+**Phase 0 complete.** The platform repo stands as a clean fork with a named,
+documented, alias-tolerant Layer A data core, provably behaviour-preserving.
+Work landed on branch `phase-0-data-core`.
+
+---
+
+## Phase 1 — Open & safe (HiGHS default + schema validator)
+
+<!-- next: solver abstraction → HiGHS default + conditional Gurobi import;
+     Python schema validator. -->
+
