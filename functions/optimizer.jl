@@ -311,9 +311,16 @@ function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constr
             cShutBound[t in inputs.T, g in inputs.UC],
                 vSHUT[t,g] <= vCAP[g] / inputs.generators.Existing_Cap_MW[g]
 
-            #define the commit variable
-            cCommitState[t in inputs.T_red, g in inputs.UC],
-                vCOMMIT[t+1,g] == vCOMMIT[t,g] + vSTART[t+1,g] - vSHUT[t+1,g]
+            #commitment state recursion within a representative period (interior hours)
+            cCommitState[t in inputs.INTERIOR, g in inputs.UC],
+                vCOMMIT[t,g] == vCOMMIT[t-1,g] + vSTART[t,g] - vSHUT[t,g]
+
+            #commitment state recursion, sub-period wrapping — each representative
+            #period is cyclic and independent, matching the SOC/ramp treatment. The
+            #prior formulation ran over the full horizon (inputs.T_red) and leaked
+            #commitment state across periods, which over-constrained the model.
+            cCommitStateWrap[t in inputs.START, g in inputs.UC],
+                vCOMMIT[t,g] == vCOMMIT[t+inputs.hours_per_period-1,g] + vSTART[t,g] - vSHUT[t,g]
 
         end);
 
@@ -544,9 +551,14 @@ function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constr
             cVILShutBound[t in inputs.T, g in inputs.VIL_UC],
                 vVIL_SHUT[t,g] <= vVIL_CAP[g] / inputs.village_generators.Existing_Cap_MW[g]
 
-            #define the commit variable
-            cVILCommitState[t in inputs.T_red, g in inputs.VIL_UC],
-                vVIL_COMMIT[t+1,g] == vVIL_COMMIT[t,g] + vVIL_START[t+1,g] - vVIL_SHUT[t+1,g]
+            #commitment state recursion within a representative period (interior hours)
+            cVILCommitState[t in inputs.INTERIOR, g in inputs.VIL_UC],
+                vVIL_COMMIT[t,g] == vVIL_COMMIT[t-1,g] + vVIL_START[t,g] - vVIL_SHUT[t,g]
+
+            #commitment state recursion, sub-period wrapping — cyclic and independent
+            #per representative period (matches the grid fix and the SOC/ramp treatment).
+            cVILCommitStateWrap[t in inputs.START, g in inputs.VIL_UC],
+                vVIL_COMMIT[t,g] == vVIL_COMMIT[t+inputs.hours_per_period-1,g] + vVIL_START[t,g] - vVIL_SHUT[t,g]
 
         end);
 
