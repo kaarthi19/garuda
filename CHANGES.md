@@ -274,3 +274,32 @@ rows); preflight blocks bad data and skips gracefully without pandas.
 
 Phase 1 lands on branch `phase-1-open-safe`.
 
+---
+
+## Phase 2 — Keystone: extract `build_model!` from the optimizer
+
+### 2.1 Split build vs solve — 2026-06-26
+
+`capacity_expansion` was a single 783-line function that created the solver,
+declared every variable / constraint / expression / objective, solved, and
+returned. Split into:
+- **`build_model!(CE, inputs, flags…)`** — declares everything on a passed-in
+  model and returns the variable/expression references the extractor reads. **No
+  solve.** This is the shared model definition every engine can reuse.
+- **`capacity_expansion(…; solver)`** — thin wrapper: `make_solver` →
+  `build_model!` → `optimize!` → status → `merge(refs, (cost = objective_value(CE),))`.
+
+Verified safe first by grep: `mipgap`/`solver` appear only in the wrapper, never
+in the body; one `optimize!`, one `return`. The result extractor reads via
+`value.(solution.X)` on the returned refs, so the split is transparent to it.
+
+**Why this is the keystone:** prerequisite for the dispatch/reliability engine
+(build, then *fix* capacity instead of solving for it) and for a precision-safe
+Benders (master + subproblem from one source of truth — exactly what the dead
+`benders_decomposition.jl` got wrong by hand-duplicating the model).
+
+**Verified byte-identical (Gurobi):** timor_demo village 23.5769M, gridvillage
+23.5566M, maluku base 88.0122M — all three exact to the Phase-1 baseline.
+
+Phase 2 lands on branch `phase-2-build-model`.
+
