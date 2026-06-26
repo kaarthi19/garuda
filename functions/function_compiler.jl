@@ -1,6 +1,7 @@
 # function_compiler.jl
 include("input_data.jl")
 include("zonal_system.jl")   # Layer A data-core wrapper (ZonalSystem, build_system)
+include("solver.jl")         # pluggable optimizer (HiGHS default, Gurobi optional)
 include("optimizer.jl")
 include("result_extraction_function.jl")
 # benders_decomposition.jl provides an optional capacity_expansion_benders
@@ -20,7 +21,8 @@ function function_compiler(
         NoCoal::Bool,
         CO235reduction::Bool,
         BAUCO2emissions;
-        village_storage_max_mwh::Float64 = 208.0
+        village_storage_max_mwh::Float64 = 208.0,
+        solver::AbstractString = "highs"
     )
     # 1) Load inputs into the Layer A data core (engine-agnostic ZonalSystem)
     inputs = build_system(filepath)
@@ -39,7 +41,8 @@ function function_compiler(
         NoCoal,
         CO235reduction,
         BAUCO2emissions;
-        village_storage_max_mwh = village_storage_max_mwh
+        village_storage_max_mwh = village_storage_max_mwh,
+        solver = solver
     )
 
     # 3) Extract & write results into the folder
