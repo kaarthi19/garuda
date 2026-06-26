@@ -303,3 +303,26 @@ Benders (master + subproblem from one source of truth — exactly what the dead
 
 Phase 2 lands on branch `phase-2-build-model`.
 
+---
+
+## Phase 3 — Engines
+
+### 3.1 No-solve screening engine — 2026-06-26
+
+New `tools/screening.py`: a **solver-free** per-zone screen — a merit-order
+dispatch of the *existing* fleet (VRE must-take at availability, thermal stacked
+cheapest-first; storage & transmission ignored) over the representative hours.
+Reports per-zone annual demand, RE share, emissions, operating cost and unserved
+energy. Runs on a laptop with only Python + pandas/numpy — **no Julia, no solver,
+no licence**. Excludes new-build candidates (`New_Build==1`, matching the loader's
+`OLD` set), which in some datasets carry a "potential" `Existing_Cap_MW`.
+
+**Validated:** on maluku the screen's existing-fleet emissions (890 ktCO₂) land
+within ~5% of the solved capacity-expansion result (850 ktCO₂) — the intended
+order-of-magnitude check. timor_demo (village diesel) → 414 ktCO₂, ~2% RE,
+sensible. Multi-zone sulawesi reports per-zone; transmission is ignored, so
+import-reliant zones show high unserved (a documented screening limitation).
+
+The first Phase-3 engine and the cleanest "anyone-can-run-it" surface — no solver
+at all. Lands on branch `phase-3-engines`.
+
