@@ -375,3 +375,178 @@ real industrial-park data.
 dispatch/reliability (fast LP), RE-resource (resource view) — plus the inherited
 capacity-expansion MILP.
 
+---
+
+## Phase 4 — Interoperability (PyPSA export)
+
+### 4.1 Zonal model → PyPSA network — 2026-06-27
+
+New `tools/export_pypsa.py` (`build_network(folder, mode)`): translates a zonal
+input folder into a `pypsa.Network`, so the data core can feed the established
+open-source framework instead of competing with it. Mapping: zone → **Bus**,
+zonal demand → **Load**, transmission line → **bidirectional lossless Link**
+(`p_nom = Line_Max_Flow_MW`, `p_min_pu = -1`), generator/VRE → **Generator**
+(`marginal_cost = Var_OM + fuel·heat_rate`, availability profile as `p_max_pu`),
+storage → **StorageUnit**, each NSE segment → a per-zone **load-shedding
+Generator** (`marginal_cost = VOLL·cost`, `p_nom·p_max_pu = NSE_Max·demand`), and
+the representative periods → **snapshots** with `snapshot_weightings.objective =
+W[p]/H` (Σ = 8760 h) and `stores = 1 h`. Two modes: `dispatch` (existing fleet
+fixed, the validated path) and `expansion` (new-build extendable, best-effort).
+Python + pypsa; pypsa imported lazily. See `docs/pypsa_export.md`.
+
+**Why links, not lines.** garuda's network is a *transport* model — the demand
+balance nets `Σ_l incidence[l,z]·FLOW` with `FLOW ∈ [−T_CAP, T_CAP]` and the
+DC-power-flow (susceptance/angle) block in `optimizer.jl` is commented out. A
+PyPSA `Line` would impose Kirchhoff's voltage law; a bidirectional `Link`
+reproduces garuda's free transport up to the thermal limit. The incidence sign
+sets the direction (power leaves the `+1` zone = `bus0`).
+
+**Fidelity gaps (documented, deliberate):** transport not KVL (lines lossless, no
+`Line_Loss_Percentage`); no unit commitment (continuous generators — matches the
+default LP-relaxed dispatch, not an exact UC/MILP or start costs); whole-horizon
+cyclic storage rather than per-representative-period; storage discharge capped at
+`p_nom` (garuda caps only charge). Scope: the **grid (zonal) layer**; the
+village/site layer is out of scope (it decouples from the grid in grid-off
+scenarios).
+
+**One translation bug found and fixed during validation:** garuda applies the
+hourly availability profile (`cMaxPowerED`) to *every* economic-dispatch unit
+(`Commit==0`) — VRE **and** derated thermal (≈30 % of sulawesi thermal columns
+sit at 0.5, not 1.0). The first cut keyed `p_max_pu` on the VRE flag and so
+over-stated derated thermal availability; keying it on `Commit` instead made the
+multi-zone total match exactly (below).
+
+### 4.2 Dispatch-parity validation — 2026-06-27
+
+New `tools/validate_pypsa_parity.py`: solves the exported `dispatch` network on
+HiGHS and compares **system-total unserved energy** against the garuda dispatch
+engine's `reliability_results.csv`. The system total is the well-defined metric —
+with a uniform NSE price and a connected lossless network the LP is *degenerate*
+in *which* connected zone bears a shortfall, so per-zone unserved is reported but
+not asserted.
+
+**Validated (existing-fleet LP dispatch, HiGHS both sides):**
+
+| case | zones · links | garuda total unserved | PyPSA total unserved | rel. Δ |
+|---|---|---|---|---|
+| maluku (base) | 1 · 0 | 205 997.3 MWh (12.418 %) | 205 997.3 MWh (12.418 %) | 0.0000 % |
+| sulawesi grid-only (base) | 6 · 18 | 2 394 733.6 MWh (9.225 %) | 2 394 733.6 MWh (9.225 %) | 0.0000 % |
+
+Both match to the decimal. maluku (single-zone, fleet pinned at capacity)
+validates the generator/storage/NSE/snapshot-weighting translation; the
+multi-zone grid-only sulawesi case additionally validates the inter-zone links —
+their per-line capacities and `bus0/bus1` directions equal garuda's fixed `T_CAP`
+exactly. The multi-zone reference uses a **grid-only** fixture (the six grid CSVs
+of sulawesi, villages omitted — villages decouple from the grid in `base` but
+bloat the garuda LP); recreate it per `docs/pypsa_export.md`. The maluku case is
+reproducible from shipped data with no fixture.
+
+> Process note: the village-laden sulawesi `base` dispatch is a large LP (slow on
+> HiGHS); the grid-only fixture solves in ~40 s and is the right parity reference
+> for the grid-only export.
+
+---
+
+## Phase 5 — Experience layer
+
+### 5.1 Guided launcher — `tools/launcher.py` — 2026-06-27
+
+A non-expert on-ramp for a single run: **validate** (reuses
+`validate_schema.validate_dataset`, the same checks that gate `preflight.jl`) →
+**preview** (zones, generators with UC/VRE/storage counts, transmission lines, the
+`P×H=T` representative structure, an order-of-magnitude variable count, and a
+runtime estimate anchored on measured timings) → **scaffold** a `config.json` with
+the right keys for `run_model.jl` (incl. `engine`, `relax_uc`, `solver`) →
+optionally `--run` (shells out to `julia … run_model.jl`, exactly as a human
+would; it never wires into the optimizer). Python + pandas.
+
+**Verify:** `python tools/launcher.py --island maluku --year 2030 --scenario base
+--clean reference --engine dispatch` previews 1 zone / 73 generators / 1344 steps
+and writes a valid config; the same on sulawesi `gridvillage` reports 6 zones / 278
+generators / 18 lines and flags the HiGHS UC-MILP as slow at that scale.
+
+### 5.2 Auto-report — `tools/report.py` — 2026-06-27
+
+Turns a scenario's result CSVs into one shareable **HTML** (self-contained,
+base64-embedded matplotlib charts) **and a PDF**. Headline metrics (system cost,
+CO₂, RE share, annual demand, energy served, unserved energy + share), charts
+(generation mix, installed capacity, cost breakdown, per-zone reliability) and
+tables, all degrading gracefully when a CSV is absent. PDF via **weasyprint** when
+importable, otherwise matplotlib **`PdfPages`** — so a PDF is always produced with
+no native (Cairo/Pango) dependency.
+
+**A units subtlety it gets right.** The source result CSVs mix *annualised*
+quantities (cost, CO₂, RE, `reliability_results`) with *representative-period
+sums* (`generator_results.GWh`, `nse_results`); since `Sub_Weights` are **not
+uniform**, a summed generation column can't be annualised after the fact. The
+report therefore anchors annual demand/served/unserved-share on the **input**
+`demand.csv` (auto-located at `data_indonesia/<year>/<island>`), takes annual
+unserved from the sample-weighted `reliability_results`, and labels the
+generation-mix chart as a representative-period sum — rather than mixing units
+(an early cut reported a 47.9 % "unserved share" where the true annual figure is
+12.4 %; now correct).
+
+**Verify:** `python tools/report.py results/base_maluku_2030_reference` →
+`report.html` + `report.pdf` with demand 1 658.9 GWh, served 1 452.9, unserved
+206.0 (12.4 %); `tools/report.py results/gridvillage_timor_demo_2030_reference`
+renders an expansion run with the village layer present. See
+`docs/experience_layer.md`.
+
+---
+
+## Phase 6 — Generalize & document
+
+### 6.A Site generality — captive-industrial datasets as first-class — 2026-06-28
+
+Made the decentralised **site** layer fully general so a captive-industrial
+(`ip_*`) dataset loads, runs and reports exactly like the village (`village_*`)
+data, validated against the real **`Power-Lab/data-indonesia-2025`** release.
+
+**Finding — the loader already generalises.** `input_data` ingested the real
+captive datasets (e.g. sumatera: 9 zones, 488 grid generators, **19 industrial
+parks**, 222 site generators) through the existing `site_aliases.jl` resolver
+**unchanged** — the ~25 extra IP metadata columns (`plant_owner`, `latitude`,
+`commodity`, …) are simply not selected, and the modelling columns load
+identically. So the Phase 0.3 "full captive ingestion remains Phase 6" caveat was
+already satisfied at the loader; the real gaps were plumbing.
+
+**Changes:**
+- **`functions/preflight.jl`** — `validate_input_files` was hardcoded to require
+  `village_*.csv`; it now resolves the required *site* tables through any
+  `site_/village_/ip_` spelling (`_input_present`), so a captive (`ip_`) dataset
+  passes preflight. `expected_input_files` lists the canonical `site_` names.
+- **Canonical `site_` output naming** — `result_extraction_function.jl` and
+  `dispatch_engine.jl` now write `site_generator_results.csv`,
+  `site_storage_results.csv`, `site_import_results.csv`,
+  `site_connection_results.csv`, `site_nse_results.csv`,
+  `site_nse_heat_results.csv`, `site_heat_generator_results.csv` and
+  `site_reliability_results.csv` (was `village_*`), regardless of input spelling.
+  Docs updated (`outputs_guide.md`, `ntt_data_integration.md`).
+- **`tools/launcher.py`** — the scenario preview now reports the site layer
+  (`N site(s) · M site generator(s)`) and folds site generators into the
+  problem-size estimate.
+
+**Verified:**
+- `input_data` loads di2025 sumatera (19 parks) and north_maluku (4 parks) with
+  no code changes.
+- A captive run (`scenario=captive`, north_maluku) **passes preflight** with only
+  `ip_*` site files present (the old hardcoded `village_*` check would have
+  blocked it) and reaches the solver.
+- `validate_schema.py` and `launcher.py` both accept the captive dataset; the
+  launcher preview shows `4 site(s) · 71 site generator(s)`.
+- A `gridvillage` dispatch on `timor_demo` writes the full `site_*` result set
+  (incl. `site_reliability_results.csv`) and **no** `village_*` files; the
+  auto-report renders correctly off the renamed outputs.
+- `tests/verify_data_core.jl` — all 12 data-core checks still pass.
+
+> Note: the captive **solve** is heavy for HiGHS (the IP-laden LP is large and
+> degenerate, like the village-laden cases) — full end-to-end runs on
+> sumatera/jawa_bali want Gurobi or a long background HiGHS job. Ingestion,
+> preflight and output naming are validated independently of solve time.
+
+> Scope: the canonical `site_` rename covers result **filenames** (and the
+> extractor's return keys); the internal per-row ID column stays `Village`.
+> Bringing a captive dataset into the repo as a committed first-class case
+> (sumatera/jawa_bali) and the audience guides / `ZonalPowerModel.jl` package
+> remain the rest of Phase 6.
+
