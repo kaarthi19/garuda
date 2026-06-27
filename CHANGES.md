@@ -303,3 +303,75 @@ Benders (master + subproblem from one source of truth — exactly what the dead
 
 Phase 2 lands on branch `phase-2-build-model`.
 
+---
+
+## Phase 3 — Engines
+
+### 3.1 No-solve screening engine — 2026-06-26
+
+New `tools/screening.py`: a **solver-free** per-zone screen — a merit-order
+dispatch of the *existing* fleet (VRE must-take at availability, thermal stacked
+cheapest-first; storage & transmission ignored) over the representative hours.
+Reports per-zone annual demand, RE share, emissions, operating cost and unserved
+energy. Runs on a laptop with only Python + pandas/numpy — **no Julia, no solver,
+no licence**. Excludes new-build candidates (`New_Build==1`, matching the loader's
+`OLD` set), which in some datasets carry a "potential" `Existing_Cap_MW`.
+
+**Validated:** on maluku the screen's existing-fleet emissions (890 ktCO₂) land
+within ~5% of the solved capacity-expansion result (850 ktCO₂) — the intended
+order-of-magnitude check. timor_demo (village diesel) → 414 ktCO₂, ~2% RE,
+sensible. Multi-zone sulawesi reports per-zone; transmission is ignored, so
+import-reliant zones show high unserved (a documented screening limitation).
+
+The first Phase-3 engine and the cleanest "anyone-can-run-it" surface — no solver
+at all. Lands on branch `phase-3-engines`.
+
+### 3.2 Dispatch / reliability engine — 2026-06-26
+
+New `functions/dispatch_engine.jl`. `dispatch_only()` reuses the **same model
+definition** as capacity expansion (`build_model!` — the Phase 2 keystone payoff)
+but **fixes capacity to the existing fleet** (`JuMP.fix`; `New_Build==1`
+candidates → 0), so it solves only the operational problem: how a given fleet runs
+and where it falls short. Non-served energy is the slack, so the problem is
+**always feasible** — an undersized fleet reports a shortage instead of going
+infeasible.
+
+`relax_uc = true` (default) relaxes the unit-commitment binaries to [0,1] → a pure
+**LP that HiGHS solves fast** (the open-source payoff: the UC-MILP took ~27 min,
+this LP solves in seconds–minutes). `relax_uc = false` keeps exact UC (MILP).
+
+`reliability_results()` writes per-zone (and per-village) **Total NSE, NSE % of
+demand, LOLE** (sample-weighted shortage hours/yr) and **peak shortage** to
+`reliability_results.csv`. Wired via an `engine` config key
+(`"expansion"` | `"dispatch"`) + `relax_uc` through `function_compiler` /
+`run_model.jl`.
+
+**Validated:** dispatch solved as an LP on HiGHS for timor_demo + maluku, and the
+**dispatch and screening engines independently agree** — maluku existing-fleet
+unserved 12.417% (dispatch) vs 12.42% (screening 3.1), 206 GWh both ways, which
+cross-validates both. maluku's existing fleet is short ~78% of the year (LOLE
+6,790 h, peak 69.7 MW) — so the engine correctly reports shortage rather than
+expanding; timor_demo's adequate fleet → 0 shortage. Capacity-fixing confirmed (no
+spurious build). Lands on branch `phase-3-engines`.
+
+### 3.3 RE resource & siting engine — 2026-06-26
+
+New `tools/re_resource.py` + `docs/re_resource.md`. Promotes the existing GIS
+siting pipeline (`dem_slope` → `candidate_land` → `resource_siting` →
+`ntt/solar_potential`, which bake developable-MW ceilings into the generator
+tables) into a **consumable per-zone / per-site product**: developable solar/wind
+capacity (MW) = `max(Existing_Cap_MW, Max_Cap_MW)` over VRE units, capacity-
+weighted mean CF from the variability profiles, and annual energy potential (GWh).
+Python + pandas/numpy only — no Julia, no solver, no GIS stack.
+
+**Verified:** maluku zone 1 → solar 2,614 MW (CF 0.14, 3,156 GWh), wind 3,188 MW
+(CF 0.03) — sum + CFs check out against the raw data; sulawesi per-zone and
+per-(captive-industrial)-site, where the land-based ceilings are correctly huge (a
+single nickel-smelter site shows ~278 GW of *sitable* solar — a non-binding
+guardrail, clearly labelled). The site path also exercises the `village_*` alias on
+real industrial-park data.
+
+**Phase 3 complete:** three engines on one data core — screening (no solver),
+dispatch/reliability (fast LP), RE-resource (resource view) — plus the inherited
+capacity-expansion MILP.
+
