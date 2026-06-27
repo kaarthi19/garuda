@@ -326,3 +326,31 @@ import-reliant zones show high unserved (a documented screening limitation).
 The first Phase-3 engine and the cleanest "anyone-can-run-it" surface — no solver
 at all. Lands on branch `phase-3-engines`.
 
+### 3.2 Dispatch / reliability engine — 2026-06-26
+
+New `functions/dispatch_engine.jl`. `dispatch_only()` reuses the **same model
+definition** as capacity expansion (`build_model!` — the Phase 2 keystone payoff)
+but **fixes capacity to the existing fleet** (`JuMP.fix`; `New_Build==1`
+candidates → 0), so it solves only the operational problem: how a given fleet runs
+and where it falls short. Non-served energy is the slack, so the problem is
+**always feasible** — an undersized fleet reports a shortage instead of going
+infeasible.
+
+`relax_uc = true` (default) relaxes the unit-commitment binaries to [0,1] → a pure
+**LP that HiGHS solves fast** (the open-source payoff: the UC-MILP took ~27 min,
+this LP solves in seconds–minutes). `relax_uc = false` keeps exact UC (MILP).
+
+`reliability_results()` writes per-zone (and per-village) **Total NSE, NSE % of
+demand, LOLE** (sample-weighted shortage hours/yr) and **peak shortage** to
+`reliability_results.csv`. Wired via an `engine` config key
+(`"expansion"` | `"dispatch"`) + `relax_uc` through `function_compiler` /
+`run_model.jl`.
+
+**Validated:** dispatch solved as an LP on HiGHS for timor_demo + maluku, and the
+**dispatch and screening engines independently agree** — maluku existing-fleet
+unserved 12.417% (dispatch) vs 12.42% (screening 3.1), 206 GWh both ways, which
+cross-validates both. maluku's existing fleet is short ~78% of the year (LOLE
+6,790 h, peak 69.7 MW) — so the engine correctly reports shortage rather than
+expanding; timor_demo's adequate fleet → 0 shortage. Capacity-fixing confirmed (no
+spurious build). Lands on branch `phase-3-engines`.
+

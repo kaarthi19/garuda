@@ -39,6 +39,8 @@ CO2_constraint = preflight.clean_flags.CO2_constraint
 RE_constraint  = preflight.clean_flags.RE_constraint
 RE_limit       = Float64(get(cfg, "RE_limit", 0.34))          # min RE share (clean runs)
 village_storage_max_mwh = Float64(get(cfg, "village_storage_max_mwh", 208.0)) # per-unit cap on new village storage
+engine   = lowercase(get(cfg, "engine", "expansion"))        # "expansion" | "dispatch"
+relax_uc = Bool(get(cfg, "relax_uc", true))                  # LP-relax UC in dispatch (fast on HiGHS)
 
 # 4) Scenario toggles
 Grid = preflight.flags.Grid
@@ -74,5 +76,7 @@ function_compiler(
     CO235reduction,
     BAUCO2emissions;
     village_storage_max_mwh = village_storage_max_mwh,
-    solver = solver
+    solver = solver,
+    engine = engine,
+    relax_uc = relax_uc
 )
