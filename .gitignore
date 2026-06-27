@@ -18,5 +18,6 @@ __pycache__/
 jobs/
 results/
 
-# Partner-facing capability note (kept local, not tracked)
+# Local reference docs (kept local, not tracked)
 capability_note.md
+ROADMAP.md
