@@ -354,3 +354,24 @@ cross-validates both. maluku's existing fleet is short ~78% of the year (LOLE
 expanding; timor_demo's adequate fleet → 0 shortage. Capacity-fixing confirmed (no
 spurious build). Lands on branch `phase-3-engines`.
 
+### 3.3 RE resource & siting engine — 2026-06-26
+
+New `tools/re_resource.py` + `docs/re_resource.md`. Promotes the existing GIS
+siting pipeline (`dem_slope` → `candidate_land` → `resource_siting` →
+`ntt/solar_potential`, which bake developable-MW ceilings into the generator
+tables) into a **consumable per-zone / per-site product**: developable solar/wind
+capacity (MW) = `max(Existing_Cap_MW, Max_Cap_MW)` over VRE units, capacity-
+weighted mean CF from the variability profiles, and annual energy potential (GWh).
+Python + pandas/numpy only — no Julia, no solver, no GIS stack.
+
+**Verified:** maluku zone 1 → solar 2,614 MW (CF 0.14, 3,156 GWh), wind 3,188 MW
+(CF 0.03) — sum + CFs check out against the raw data; sulawesi per-zone and
+per-(captive-industrial)-site, where the land-based ceilings are correctly huge (a
+single nickel-smelter site shows ~278 GW of *sitable* solar — a non-binding
+guardrail, clearly labelled). The site path also exercises the `village_*` alias on
+real industrial-park data.
+
+**Phase 3 complete:** three engines on one data core — screening (no solver),
+dispatch/reliability (fast LP), RE-resource (resource view) — plus the inherited
+capacity-expansion MILP.
+
