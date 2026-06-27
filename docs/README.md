@@ -26,6 +26,8 @@ energy-transition platform for Indonesia. New here? Start with the
 | [../MODEL.md](../MODEL.md) | The optimisation formulation (capacity expansion + dispatch), cross-referenced to the code |
 | [village_adaptation.md](village_adaptation.md) | Site (village / industrial) modelling and scenario semantics |
 | [outputs_guide.md](outputs_guide.md) | Result files, columns, and headline metrics |
+| [pypsa_export.md](pypsa_export.md) | Export the zonal network to PyPSA + dispatch-parity validation (Phase 4) |
+| [experience_layer.md](experience_layer.md) | The guided run launcher and the HTML/PDF auto-report (Phase 5) |
 
 ## Renewable resource & siting
 
