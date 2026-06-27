@@ -275,34 +275,36 @@ function result_extraction(
     )
 
     # 11) Write CSVs into the scenario folder
+    # Canonical `site_` naming for the decentralised-node result tables (the data
+    # core's site vocabulary — village_/ip_ are input aliases; outputs are site_).
     CSV.write(joinpath(results_dir, "generator_results.csv"),      generator)
-    CSV.write(joinpath(results_dir, "village_generator_results.csv"),   village_generators)
-    CSV.write(joinpath(results_dir, "village_heat_generator_results.csv"), village_heat_generators)
-    CSV.write(joinpath(results_dir, "village_import_results.csv"),      village_import)
-    CSV.write(joinpath(results_dir, "village_connection_results.csv"),  village_connection)
+    CSV.write(joinpath(results_dir, "site_generator_results.csv"),      village_generators)
+    CSV.write(joinpath(results_dir, "site_heat_generator_results.csv"), village_heat_generators)
+    CSV.write(joinpath(results_dir, "site_import_results.csv"),         village_import)
+    CSV.write(joinpath(results_dir, "site_connection_results.csv"),     village_connection)
     CSV.write(joinpath(results_dir, "transmission_flow_results.csv"),   transmission_flow)
     CSV.write(joinpath(results_dir, "storage_results.csv"),        storage)
-    CSV.write(joinpath(results_dir, "village_storage_results.csv"),     village_storage)
+    CSV.write(joinpath(results_dir, "site_storage_results.csv"),        village_storage)
     CSV.write(joinpath(results_dir, "transmission_results.csv"),   transmission)
     CSV.write(joinpath(results_dir, "nse_results.csv"),            nse_r)
-    CSV.write(joinpath(results_dir, "village_nse_results.csv"),         nse_r_village)
-    CSV.write(joinpath(results_dir, "village_nse_heat_results.csv"),    nse_heat_village)
+    CSV.write(joinpath(results_dir, "site_nse_results.csv"),            nse_r_village)
+    CSV.write(joinpath(results_dir, "site_nse_heat_results.csv"),       nse_heat_village)
     CSV.write(joinpath(results_dir, "cost_results.csv"),           cost)
     CSV.write(joinpath(results_dir, "clean_energy_results.csv"),   clean_energy)
 
     return (
         generator_results        = generator,
-        village_generator_results     = village_generators,
-        village_heat_generator_results = village_heat_generators,
-        village_import_results        = village_import,
-        village_connection_results    = village_connection,
+        site_generator_results        = village_generators,
+        site_heat_generator_results   = village_heat_generators,
+        site_import_results           = village_import,
+        site_connection_results       = village_connection,
         transmission_flow_results     = transmission_flow,
         storage_results          = storage,
-        village_storage_results       = village_storage,
+        site_storage_results          = village_storage,
         transmission_results     = transmission,
         nse_results              = nse_r,
-        village_nse_results           = nse_r_village,
-        village_nse_heat_results      = nse_heat_village,
+        site_nse_results              = nse_r_village,
+        site_nse_heat_results         = nse_heat_village,
         cost_results             = cost,
         clean_energy             = clean_energy
     )

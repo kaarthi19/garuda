@@ -6,21 +6,27 @@ in `cost_results.csv` and $ elsewhere; emissions are tCO₂/yr.
 
 ## File-by-file
 
-**`generator_results.csv`** (grid) / **`village_generator_results.csv`** —
+> The decentralised-node result tables use the canonical **`site_`** prefix
+> regardless of the input spelling (`village_`/`ip_`/`site_` are accepted input
+> aliases — see `functions/site_aliases.jl`). Each row still carries the
+> internal `Village` ID column. A dispatch run additionally writes
+> `site_reliability_results.csv` (per-site NSE / LOLE / peak shortage).
+
+**`generator_results.csv`** (grid) / **`site_generator_results.csv`** —
 one row per unit: `Total_MW` (optimised capacity), `Start_MW` (existing),
 `Change_in_MW` (build > 0, retire < 0), `GWh`/`Electricity_GWh` (annual
-generation). Village rows carry the `Village` ID.
+generation). Site rows carry the `Village` ID.
 
-**`storage_results.csv`** / **`village_storage_results.csv`** — energy
+**`storage_results.csv`** / **`site_storage_results.csv`** — energy
 capacity per storage unit: `Total_Storage_MWh`, `Change_in_Storage_MWh`.
 Pair with the power capacity row in the generator results to get duration
 (MWh ÷ MW).
 
-**`village_import_results.csv`** — per village: `Total_Import_MWh`,
+**`site_import_results.csv`** — per site: `Total_Import_MWh`,
 `Peak_Import_MW`. Nonzero only in `grid*` scenarios.
 
-**`nse_results.csv`** / **`village_nse_results.csv`** — non-served energy by
-segment × zone (or village): `Total_NSE_MWh`, `NSE_Percent_of_Demand`,
+**`nse_results.csv`** / **`site_nse_results.csv`** — non-served energy by
+segment × zone (or site): `Total_NSE_MWh`, `NSE_Percent_of_Demand`,
 `Max_NSE_MW`. The reliability outcome.
 
 **`cost_results.csv`** — single-row $M breakdown:
@@ -46,8 +52,8 @@ Comparing a standalone run (`village_…`) against a coordinated run
 | Avoided grid reinforcement | Δ `Fixed_Costs_Transmission`, and per-line Δ in `transmission_results.csv` |
 | Diesel displacement | Δ annual `GWh` summed over diesel rows in both generator results files; fuel burn = GWh × heat rate |
 | Emissions reduction | Δ `CO2_Emissions` |
-| Optimal battery sizing | `village_storage_results.csv` MWh with paired MW from `village_generator_results.csv` |
-| Reliability improvement | Δ `Total_NSE_MWh` in `village_nse_results.csv` |
+| Optimal battery sizing | `site_storage_results.csv` MWh with paired MW from `site_generator_results.csv` |
+| Reliability improvement | Δ `Total_NSE_MWh` in `site_nse_results.csv` |
 
 ```python
 import pandas as pd
