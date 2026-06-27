@@ -87,25 +87,42 @@ function expected_input_files(flags)
     end
 
     if flags.VillageBuild
+        # canonical `site_` names; any of the site_/village_/ip_ spellings satisfies
+        # the requirement (resolved in validate_input_files), so captive (ip_) and
+        # village (village_) datasets both pass.
         append!(required, [
-            "village_generators.csv",
-            "village_demand.csv",
-            "village_demandheat.csv",
-            "village_generators_variability.csv",
+            "site_generators.csv",
+            "site_demand.csv",
+            "site_demandheat.csv",
+            "site_generators_variability.csv",
         ])
     end
 
     return required
 end
 
+# accepted site-table spellings, canonical first (mirrors functions/site_aliases.jl)
+const _SITE_PREFIXES = ("site_", "village_", "ip_")
+
+# A required input is present if the file exists, or — for a site table (a
+# `site_*` name) — if any of the site_/village_/ip_ spellings of it exists.
+function _input_present(inputs_path::AbstractString, filename::AbstractString)
+    isfile(joinpath(inputs_path, filename)) && return true
+    for p in _SITE_PREFIXES
+        if startswith(filename, p)
+            base = filename[length(p)+1:end]
+            for q in _SITE_PREFIXES
+                isfile(joinpath(inputs_path, q * base)) && return true
+            end
+        end
+    end
+    return false
+end
+
 function validate_input_files(inputs_path::AbstractString, flags)
     isdir(inputs_path) || error("Input data directory not found: $(inputs_path)")
 
-    missing_files = String[]
-    for filename in expected_input_files(flags)
-        full_path = joinpath(inputs_path, filename)
-        isfile(full_path) || push!(missing_files, filename)
-    end
+    missing_files = [f for f in expected_input_files(flags) if !_input_present(inputs_path, f)]
 
     isempty(missing_files) || error(
         "Missing required input files in $(inputs_path): $(join(missing_files, ", "))"

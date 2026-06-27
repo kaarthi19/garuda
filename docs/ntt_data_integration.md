@@ -173,7 +173,7 @@ and a source in the zone balance), and a per-village binary **grid-connection**
 decision (`vVIL_CONNECT`) that gates import/export against the interconnection
 cost from `village_connection.csv` (added to the objective). Village diesel is
 kept `Commit=0` so the only binaries are the connection decisions. Results add
-`village_connection_results.csv` (per-village `Connected` + import/export MWh)
+`site_connection_results.csv` (per-site `Connected` + import/export MWh)
 and `transmission_flow_results.csv`.
 
 **Verified (Belu, 81 villages, `gridvillage`):** the model builds and solves to
