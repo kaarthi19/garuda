@@ -33,6 +33,19 @@ dispatch engine simply fixes capacity and (by default) relaxes unit commitment t
 a fast LP. See [`docs/re_resource.md`](docs/re_resource.md) for the resource
 engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 
+## Interoperability & experience
+
+| Tool | What it does | How to run |
+|------|--------------|-----------|
+| **PyPSA export** | Hand the zonal network to [PyPSA](https://pypsa.org) (buses, links, generators, storage, loads, snapshots) instead of competing with it | `python tools/export_pypsa.py data_indonesia/2030/sulawesi --netcdf out.nc` |
+| **Parity check** | Prove the export reproduces the garuda dispatch engine (system-total unserved matches to 0.0000 % on maluku and 6-zone sulawesi) | `python tools/validate_pypsa_parity.py <folder> --reference <results_dir>` |
+| **Run launcher** | Validate inputs, preview scenario size + ETA, scaffold a config, optionally launch | `python tools/launcher.py --island maluku --year 2030 --scenario base --clean reference` |
+| **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability) | `python tools/report.py results/base_maluku_2030_reference` |
+
+See [`docs/pypsa_export.md`](docs/pypsa_export.md) and
+[`docs/experience_layer.md`](docs/experience_layer.md). The PyPSA export and the
+report's PDF need `pip install pypsa matplotlib jinja2`.
+
 ---
 
 ## Quick start
@@ -93,7 +106,7 @@ The solver is selected per run with the `"solver"` config key:
 |------|-------------|
 | `data_indonesia/<year>/<island>/` | Zonal input CSVs — `generators.csv`, `demand.csv`, `generators_variability.csv`, `fuels_data.csv`, optional `network.csv`, and site files (`site_*` / `village_*` / `ip_*`). Full schema in [`data_indonesia/README.md`](data_indonesia/README.md). |
 | `functions/` | Julia core: `input_data.jl` (load → `ZonalSystem`), `zonal_system.jl`, `site_aliases.jl`, `zones.jl` (data core); `solver.jl` (HiGHS/Gurobi); `optimizer.jl` (`build_model!` + capacity expansion); `dispatch_engine.jl` (dispatch/reliability); `result_extraction_function.jl`; `function_compiler.jl`; `preflight.jl`. |
-| `tools/` | Python: `screening.py`, `re_resource.py` (no-solver engines), `validate_schema.py`, and the GIS resource-siting pipeline (`dem_slope.py`, `candidate_land.py`, `resource_siting.py`, `ntt/`). |
+| `tools/` | Python: `screening.py`, `re_resource.py` (no-solver engines), `validate_schema.py`; `export_pypsa.py` + `validate_pypsa_parity.py` (PyPSA interop); `launcher.py` + `report.py` (experience layer); and the GIS resource-siting pipeline (`dem_slope.py`, `candidate_land.py`, `resource_siting.py`, `ntt/`). |
 | `run_model.jl` | Entry point — reads a `config.json`, runs the chosen engine, writes results. |
 | `scenario_*.yml` | Scenario definitions (islands, years, scenarios, clean cases, CO₂ limits). |
 | `tests/` | `verify_data_core.jl` (no-solver Layer-A regression) and `test_fishing_calculator.py`. |
@@ -135,16 +148,22 @@ headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 
 ## Documentation map
 
+**New here? Start with the audience guide that fits you:**
+[data consumer](docs/guide_data_consumer.md) (developers) ·
+[analyst](docs/guide_analyst.md) (modellers) ·
+[policy](docs/guide_policy.md) (government / partners).
+
 | Document | Covers |
 |----------|--------|
 | [`data_indonesia/README.md`](data_indonesia/README.md) | Input data dictionary, column by column |
 | [`docs/re_resource.md`](docs/re_resource.md) | RE-resource engine + the GIS siting pipeline |
 | [`docs/new_region_guide.md`](docs/new_region_guide.md) | Add a new island/region |
 | [`docs/outputs_guide.md`](docs/outputs_guide.md) | Result files and headline metrics |
+| [`docs/pypsa_export.md`](docs/pypsa_export.md) | PyPSA export + dispatch-parity validation |
+| [`docs/experience_layer.md`](docs/experience_layer.md) | Guided run launcher + HTML/PDF auto-report |
 | [`docs/village_adaptation.md`](docs/village_adaptation.md) | Site (village/industrial) modelling and scenario semantics |
 | [`docs/environment_setup.md`](docs/environment_setup.md) | Julia / Python / optional Gurobi setup |
 | [`MODEL.md`](MODEL.md) | Mathematical formulation, cross-referenced to the code |
-| [`CHANGES.md`](CHANGES.md) | Development log — every change, with verification |
 
 ---
 
