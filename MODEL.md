@@ -111,6 +111,6 @@ Gurobi; `MIPGap = mipgap` (config key, default 0.01), `TimeLimit` 72 h,
 
 ## Known formulation limitations
 
-Collected in `CHANGES.md` "Flagged for follow-up": grid-only RE share,
-unenforced village `Max_Cap_MW`, flat import price, no village exports, no
-reserve constraints, and annual-only result extraction.
+Flagged for follow-up: grid-only RE share, unenforced village `Max_Cap_MW`, flat
+import price, no village exports, no reserve constraints, and annual-only result
+extraction.
