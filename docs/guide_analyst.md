@@ -64,10 +64,12 @@ the headline comparison — its delta is the **coordination value**
   This makes the open-source path practical but is an **optimistic** dispatch where
   commitment binds (see caveats).
 
-The launcher scaffolds the required keys (`island`, `year`, `scenario`, `clean`,
-`CO235reduction`, `BAUCO2emissions`, `CO2_limit`). Optional keys, with defaults:
-`engine` (expansion), `solver` (highs), `relax_uc` (true), `mipgap` (0.01),
-`RE_limit`, `import_price`, `village_storage_max_mwh`.
+The launcher writes the config — the required keys (`island`, `year`, `scenario`,
+`clean`, `CO235reduction`, `BAUCO2emissions`, `CO2_limit`) plus `engine`, `solver`,
+`relax_uc` and `mipgap` (0.01). `run_model.jl` accepts three further keys, read
+with a default when absent (the launcher does **not** scaffold these — add them by
+hand if needed): `RE_limit` (0.34), `import_price` (59.0),
+`village_storage_max_mwh` (208.0).
 
 ## Reading results
 

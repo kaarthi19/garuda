@@ -17,8 +17,9 @@ the code.
 | `S` | Demand-curtailment (NSE) segments |
 | `VIL` | Villages; `VIL_G`, `VIL_UC`, `VIL_ED`, `VIL_STOR`, `VIL_NEW`, `VIL_OLD` mirror the grid subsets |
 
-Each hour `t` carries `sample_weight[t] = Sub_Weights[p]/168`, scaling
-representative-period operations to annual quantities.
+Each hour `t` carries `sample_weight[t] = Sub_Weights[p]/Timesteps_per_Rep_Period`
+(= 168 in the shipped datasets), scaling representative-period operations to
+annual quantities.
 
 ## Decision variables (optimizer.jl 16–111)
 
