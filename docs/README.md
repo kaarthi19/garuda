@@ -11,6 +11,16 @@ energy-transition platform for Indonesia. New here? Start with the
 | [../README.md](../README.md) | What Garuda is, the four analysis engines, and a quick start |
 | [environment_setup.md](environment_setup.md) | Julia / Python setup, and the optional Gurobi licence |
 
+## Guides by audience
+
+Audience-oriented entry points — each routes you to the detailed docs below.
+
+| Guide | For |
+|-------|-----|
+| [guide_data_consumer.md](guide_data_consumer.md) | **Developers / data engineers** — load, validate, transform, and export the zonal data |
+| [guide_analyst.md](guide_analyst.md) | **Modellers / researchers** — choose an engine, scenario and solver; read results |
+| [guide_policy.md](guide_policy.md) | **Government / partners** — what Garuda answers, how to read a report, what to watch for |
+
 ## Inputs & data
 
 | Doc | What it covers |
@@ -39,8 +49,3 @@ energy-transition platform for Indonesia. New here? Start with the
 | [solar_resource_geodata.md](solar_resource_geodata.md) | Solar capacity factors from QGIS rasters |
 | [calculators/](calculators/) | Sectoral demand calculators (per-archetype load profiles) |
 
-## Development
-
-| Doc | What it covers |
-|-----|----------------|
-| [../CHANGES.md](../CHANGES.md) | Development log — every change, with its verification |

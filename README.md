@@ -148,6 +148,11 @@ headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 
 ## Documentation map
 
+**New here? Start with the audience guide that fits you:**
+[data consumer](docs/guide_data_consumer.md) (developers) ·
+[analyst](docs/guide_analyst.md) (modellers) ·
+[policy](docs/guide_policy.md) (government / partners).
+
 | Document | Covers |
 |----------|--------|
 | [`data_indonesia/README.md`](data_indonesia/README.md) | Input data dictionary, column by column |
@@ -159,7 +164,6 @@ headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 | [`docs/village_adaptation.md`](docs/village_adaptation.md) | Site (village/industrial) modelling and scenario semantics |
 | [`docs/environment_setup.md`](docs/environment_setup.md) | Julia / Python / optional Gurobi setup |
 | [`MODEL.md`](MODEL.md) | Mathematical formulation, cross-referenced to the code |
-| [`CHANGES.md`](CHANGES.md) | Development log — every change, with verification |
 
 ---
 
