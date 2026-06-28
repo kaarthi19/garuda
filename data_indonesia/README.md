@@ -82,7 +82,7 @@ Columns the model reads:
 | `Eff_Up` / `Eff_Down` | fraction | Storage charge / discharge efficiency (1 for non-storage). |
 | `STOR` | 0/1 | `1` = storage resource (gets energy-capacity and state-of-charge variables). |
 | `VRE` | 0/1 | Variable-renewable flag (reporting only; dispatch limits come from `Commit = 0` + the variability file). |
-| `RE` | 0/1 | Counts toward the renewable-share constraint in `clean` runs. **Only grid generators count toward RE share — village generation does not.** |
+| `RE` | 0/1 | Counts toward the renewable-share constraint in `clean` runs (`optimizer.jl` multiplies `RE` into `eREShare`). **Set `RE=1` only for genuine renewables** (solar, wind, hydro, geothermal, biomass/biogas) — a fossil unit tagged `RE=1` both inflates the reported RE share and loosens the `clean`-run constraint. **Only grid generators count toward RE share — village generation does not.** |
 | `THERM` | 0/1 | Thermal flag (reporting only). |
 
 Columns present in legacy files but **ignored by the code**: `System`, `Province`,
