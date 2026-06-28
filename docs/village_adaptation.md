@@ -46,7 +46,7 @@ identical data (see `docs/outputs_guide.md`).
 ## Things to know before trusting village results
 
 - **RE share counts grid generation only.** Village solar does not contribute
-  to the `RE_limit` constraint in `clean` runs. Flagged in `CHANGES.md`.
+  to the `RE_limit` constraint in `clean` runs.
 - **Village `Max_Cap_MW` is not enforced** — village solar/battery power
   capacity is unbounded; storage energy is capped per unit by
   `village_storage_max_mwh` (config key, default 208 MWh). Set realistic caps

@@ -107,7 +107,7 @@ function reliability_results(solution, inputs, results_dir)
             dem = sum(sw[t] * inputs.village_demand[t, vil] for t in inputs.T; init = 0.0)
             push!(vrows, (vil, total, dem > 0 ? 100 * total / dem : 0.0, lole, peak))
         end
-        CSV.write(joinpath(results_dir, "village_reliability_results.csv"), vrows)
+        CSV.write(joinpath(results_dir, "site_reliability_results.csv"), vrows)
     end
     return nothing
 end

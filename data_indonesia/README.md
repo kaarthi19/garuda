@@ -129,8 +129,7 @@ time series fills all rows.
 
 > Note: before June 2026 the loader did not drop the leading `r_id` column, so
 > every economic-dispatch generator silently used the profile of the *previous*
-> generator. See `CHANGES.md` at the repo root if you are comparing against older
-> results.
+> generator. This was fixed in June 2026 — older results predate the fix.
 
 ---
 
