@@ -38,7 +38,7 @@ engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 | Tool | What it does | How to run |
 |------|--------------|-----------|
 | **PyPSA export** | Hand the zonal network to [PyPSA](https://pypsa.org) (buses, links, generators, storage, loads, snapshots) instead of competing with it | `python tools/export_pypsa.py data_indonesia/2030/sulawesi --netcdf out.nc` |
-| **Parity check** | Prove the export reproduces the garuda dispatch engine (system-total unserved matches to 0.0000 % on maluku and 6-zone sulawesi) | `python tools/validate_pypsa_parity.py <folder> --reference <results_dir>` |
+| **Parity check** | Prove the export reproduces the garuda dispatch engine (system-total unserved matches to 0.0000 % on maluku and a 6-zone grid-only sulawesi case) | `python tools/validate_pypsa_parity.py <folder> --reference <results_dir>` |
 | **Run launcher** | Validate inputs, preview scenario size + ETA, scaffold a config, optionally launch | `python tools/launcher.py --island maluku --year 2030 --scenario base --clean reference` |
 | **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability) | `python tools/report.py results/base_maluku_2030_reference` |
 
@@ -65,11 +65,19 @@ julia --project=. bootstrap.jl
 # 3) An instant, solver-free look at an island
 python tools/screening.py data_indonesia/2030/maluku
 
-# 4) A full optimisation on the synthetic village demo (~30 s)
-julia --project=. run_model.jl --config jobs/<job>/config.json
+# 4) Validate, preview and run a scenario in one step — the launcher scaffolds the
+#    config and shells out to the solver. Dispatch is a fast LP on HiGHS (seconds
+#    to a few minutes); a full capacity-expansion run is much slower on HiGHS
+#    (~25 min for this demo) — pass --solver gurobi for the fast MILP path.
+python tools/launcher.py --island timor_demo --year 2030 --scenario gridvillage \
+  --clean reference --engine dispatch --run
+
+# 5) Turn the run's results into a shareable report (HTML + PDF)
+python tools/report.py results/gridvillage_timor_demo_2030_reference
 ```
 
-To generate `config.json` jobs from a scenario file:
+**Batch runs.** To build and run many island/year/scenario/clean jobs from a
+scenario file:
 
 ```bash
 python generate_jobs_local.py \
@@ -77,9 +85,9 @@ python generate_jobs_local.py \
   --run-script run_model.jl --output-root jobs
 ```
 
-This builds one job per island/year/scenario/clean combination under `jobs/`,
-runs each, and writes results to `results/<job_name>/`. `generate_jobs.py` does
-the same for **HPC/SLURM** clusters (add `--submit` to `sbatch` them).
+This writes one `jobs/<job_name>/config.json` per combination, runs each, and
+writes results to `results/<job_name>/`. `generate_jobs.py` does the same for
+**HPC/SLURM** clusters (add `--submit` to `sbatch` them).
 
 **Validate inputs before a long solve:**
 ```bash
@@ -139,8 +147,10 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 Each run writes per-unit/zone CSVs to `results/<job_name>/` — `generator_results.csv`,
 `storage_results.csv`, `transmission_results.csv`, `cost_results.csv`,
 `clean_energy_results.csv` (CO₂ + RE share), `nse_results.csv`, and the
-`village_*_results.csv` set. **Dispatch** runs additionally write
-`reliability_results.csv` (per-zone non-served energy, LOLE, peak shortage).
+`site_*_results.csv` set (canonical `site_` names regardless of the input
+spelling). **Dispatch** runs additionally write `reliability_results.csv` and
+`site_reliability_results.csv` (per-zone / per-site non-served energy, LOLE, peak
+shortage).
 See [`docs/outputs_guide.md`](docs/outputs_guide.md) for column-level detail and
 headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 

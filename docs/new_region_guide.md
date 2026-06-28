@@ -79,10 +79,17 @@ table.
 
 | Scale | Example | Where to run |
 |-------|---------|--------------|
-| ~25 units, 1 zone, 4 villages | `timor_demo` | Laptop, ~30 s |
-| ~70 units, 1 zone | `maluku` | Laptop, ~3 min |
-| ~115 grid + 16 village units | `papua` `village` | Laptop ceiling, ~35 min |
+| ~25 units, 2 zones, 4 villages | `timor_demo` | Laptop |
+| ~70 units, 1 zone | `maluku` | Laptop |
+| ~115 grid + 16 village units | `papua` `village` | Laptop ceiling |
 | Multi-zone with full village data | `sulawesi`, `kalimantan` | HPC (`generate_jobs.py` + SLURM) |
+
+Solve time depends heavily on the **engine and solver**. The LP-relaxed
+**dispatch** engine is fast on HiGHS (seconds to minutes). The full
+capacity-expansion **MILP** is fast on **Gurobi** (timor_demo ~5 s) but much
+slower on the open-source **HiGHS** default (timor_demo ~25 min, and
+several-fold harder at `papua`/`sulawesi` scale) — use Gurobi or an HPC node for
+production expansion runs.
 
 Binary unit-commitment variables (one set per `Commit = 1` unit per hour) drive
 solve time; see the commitment note in `docs/village_adaptation.md`.
