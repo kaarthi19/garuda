@@ -15,6 +15,14 @@ The platform exposes one **zonal data core** to several **analysis engines**, ea
 matched to a different question and compute budget — from an instant, solver-free
 screen to a full capacity-expansion optimisation.
 
+![Garuda's sub-national zonal division of Indonesia](docs/img/zones_map.png)
+
+*Indonesia resolved into **33 grid zones** across **8 island systems** — in the four
+multi-zone systems (Sumatera, Jawa–Bali, Kalimantan, Sulawesi) the zones are
+provinces; each zone further resolves to individual village / industrial sites (not
+shown). Province boundaries from public Indonesian administrative data; regenerate
+with `python tools/plot_zones_map.py`.*
+
 ---
 
 ## The analysis engines
