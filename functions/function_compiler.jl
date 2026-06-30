@@ -41,7 +41,7 @@ function function_compiler(
         solution = capacity_expansion(
             inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
-            village_storage_max_mwh = village_storage_max_mwh, solver = solver
+            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc
         )
     end
 
