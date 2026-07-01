@@ -60,9 +60,14 @@ the headline comparison — its delta is the **coordination value**
   scale (a `timor_demo` expansion took ~27 min vs ~5 s on Gurobi).
 - **Gurobi** (`"solver":"gurobi"`) — the fast path for full capacity expansion;
   needs a (free academic) licence.
-- `"relax_uc": true` (dispatch default) drops the commitment binaries to an LP.
-  This makes the open-source path practical but is an **optimistic** dispatch where
-  commitment binds (see caveats).
+- **`"relax_uc"`** LP-relaxes the commitment binaries. It is the **dispatch**
+  default (a fast operational LP) and can also be set on **expansion**
+  (`"engine":"expansion","relax_uc":true`): the build problem becomes an LP that
+  solves in **seconds on HiGHS** — within **~0.8 %** of the exact MILP cost on
+  `timor_demo` (a measured lower bound; the relaxed fleet is optimistic where
+  commitment binds). This is the highest-leverage open-source-fast path; a faster
+  *MILP* solver only matters when you need exact UC. Default **off** for expansion
+  (decision-grade); set `relax_uc:false` to force the exact MILP in dispatch too.
 
 The launcher writes the config — the required keys (`island`, `year`, `scenario`,
 `clean`, `CO235reduction`, `BAUCO2emissions`, `CO2_limit`) plus `engine`, `solver`,

@@ -32,3 +32,31 @@ function make_solver(solver::AbstractString = "highs"; mipgap::Real = 0.01,
     silent && set_silent(model)
     return model
 end
+
+"""
+    _relax_binaries!(CE, names)
+
+LP-relax the named binary variable containers on model `CE`: each binary variable
+is freed to the continuous range `[0, 1]`. Used to turn the unit-commitment MILP
+into an LP (a fast, license-free relaxation) in both the dispatch and the
+capacity-expansion engines. Names absent from the model (e.g. the village
+grid-connection binary in a grid-off scenario) are skipped.
+"""
+function _relax_binaries!(CE, names)
+    od = object_dictionary(CE)
+    for nm in names
+        haskey(od, nm) || continue
+        for v in CE[nm]
+            if is_binary(v)
+                unset_binary(v)
+                set_lower_bound(v, 0.0)
+                set_upper_bound(v, 1.0)
+            end
+        end
+    end
+    return nothing
+end
+
+# the unit-commitment binaries shared by both engines (grid + village commitment,
+# plus the village grid-connection decision); fed to _relax_binaries!.
+const UC_BINARIES = (:vCOMMIT, :vSTART, :vSHUT, :vVIL_COMMIT, :vVIL_START, :vVIL_SHUT, :vVIL_CONNECT)

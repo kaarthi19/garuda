@@ -19,20 +19,7 @@ import Base.Filesystem: mkpath
 # datasets but are not built). Mirrors the loader's NEW = New_Build.==1.
 _existing_cap(df, col, g) = df.New_Build[g] == 1 ? 0.0 : Float64(df[g, col])
 
-function _relax_binaries!(CE, names)
-    od = object_dictionary(CE)
-    for nm in names
-        haskey(od, nm) || continue
-        for v in CE[nm]
-            if is_binary(v)
-                unset_binary(v)
-                set_lower_bound(v, 0.0)
-                set_upper_bound(v, 1.0)
-            end
-        end
-    end
-    return nothing
-end
+# _relax_binaries! and UC_BINARIES are defined in solver.jl (shared by both engines).
 
 function dispatch_only(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = true)
     CE = make_solver(solver; mipgap = mipgap)
@@ -58,7 +45,7 @@ function dispatch_only(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint,
     end
 
     # LP-relaxed dispatch (fast on HiGHS) unless an exact UC dispatch is requested
-    relax_uc && _relax_binaries!(CE, (:vCOMMIT, :vSTART, :vSHUT, :vVIL_COMMIT, :vVIL_START, :vVIL_SHUT, :vVIL_CONNECT))
+    relax_uc && _relax_binaries!(CE, UC_BINARIES)
 
     optimize!(CE)
     if termination_status(CE) == MOI.OPTIMAL

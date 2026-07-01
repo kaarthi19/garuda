@@ -114,6 +114,14 @@ The solver is selected per run with the `"solver"` config key:
 - **`"gurobi"`** — optional commercial fast path for large unit-commitment MILPs.
   Requires a licence (see `docs/environment_setup.md`); imported only when requested.
 
+**Fast expansion without a licence.** The full capacity-expansion UC-MILP is slow on
+HiGHS. Setting `"relax_uc": true` (with `"engine":"expansion"`) LP-relaxes the
+commitment binaries, so it solves in **seconds** on HiGHS instead of tens of
+minutes — within **~0.8 %** of the exact MILP cost on the `timor_demo` case (a
+measured lower bound; the relaxed fleet is slightly optimistic). Use it for fast
+license-free exploration; keep `relax_uc:false` (the default) for decision-grade
+expansion runs.
+
 ---
 
 ## Repository structure
@@ -142,7 +150,7 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 |-----|---------|---------|
 | `solver` | `"highs"` | `"highs"` (open-source) or `"gurobi"` |
 | `engine` | `"expansion"` | `"expansion"` or `"dispatch"` |
-| `relax_uc` | `true` | relax unit-commitment to an LP in dispatch mode (fast on HiGHS) |
+| `relax_uc` | engine-dependent | LP-relax unit commitment to a fast, license-free LP. Default **on** for dispatch, **off** (exact MILP) for expansion; set `true` on expansion for a fast solve (~0.8 % above the exact cost on the demo). |
 | `mipgap` | `0.01` | relative MIP gap |
 | `RE_limit` | `0.34` | minimum grid renewable share (`clean` runs) |
 | `import_price` | `59.0` $/MWh | flat price sites pay for grid imports |
