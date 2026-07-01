@@ -40,7 +40,10 @@ RE_constraint  = preflight.clean_flags.RE_constraint
 RE_limit       = Float64(get(cfg, "RE_limit", 0.34))          # min RE share (clean runs)
 village_storage_max_mwh = Float64(get(cfg, "village_storage_max_mwh", 208.0)) # per-unit cap on new village storage
 engine   = lowercase(get(cfg, "engine", "expansion"))        # "expansion" | "dispatch"
-relax_uc = Bool(get(cfg, "relax_uc", true))                  # LP-relax UC in dispatch (fast on HiGHS)
+# LP-relax the unit-commitment binaries. Default ON for dispatch (fast operational
+# LP) and OFF for expansion (exact MILP — the decision-grade default); set
+# "relax_uc" in the config to override either, e.g. fast license-free expansion.
+relax_uc = Bool(get(cfg, "relax_uc", engine == "dispatch"))
 
 # 4) Scenario toggles
 Grid = preflight.flags.Grid

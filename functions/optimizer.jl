@@ -768,21 +768,33 @@ end
 
 # Thin capacity-expansion entry point: create the solver, build the model on it,
 # solve, and return the model references plus the realised objective value.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs")
+#
+# `relax_uc = false` (default) keeps the exact unit-commitment MILP. `relax_uc =
+# true` LP-relaxes the commitment (and village grid-connection) binaries via
+# `_relax_binaries!`, turning the build/invest problem into an LP that solves
+# quickly on any open-source solver. The relaxation is an APPROXIMATION of the
+# exact MILP: it gives a lower bound on system cost and an optimistic fleet
+# (fractional commitment and grid-connection), under-counting start-up / minimum
+# up-down effects. Use it for fast license-free expansion where the empirically
+# measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false)
     CE = make_solver(solver; mipgap = mipgap)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
                         village_storage_max_mwh = village_storage_max_mwh)
 
+    relax_uc && _relax_binaries!(CE, UC_BINARIES)
+
     optimize!(CE)
+    mode = relax_uc ? "LP, UC relaxed" : "MILP, exact UC"
     if termination_status(CE) == MOI.OPTIMAL
-        println("The model solved successfully.")
+        println("Capacity expansion solved successfully ($(mode)).")
     elseif termination_status(CE) == MOI.TIME_LIMIT
-        println("The model reached the time limit.")
+        println("Capacity expansion reached the time limit ($(mode)).")
     elseif termination_status(CE) == MOI.INFEASIBLE
-        println("The model is infeasible.")
+        println("Capacity expansion is infeasible.")
     else
-        println("The model did not solve successfully. Termination status: ", termination_status(CE))
+        println("Capacity expansion did not solve. Termination status: ", termination_status(CE))
     end
 
     return merge(refs, (cost = objective_value(CE),))
