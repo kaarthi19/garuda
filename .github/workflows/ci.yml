@@ -1,0 +1,57 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    name: Python — schema validation + unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install pandas numpy click pyyaml pytest
+      - name: Schema-validate every committed dataset
+        run: |
+          rc=0
+          # every folder that holds a generators.csv (2030/2035 islands + any
+          # committed captive/<year>/<island>), regardless of nesting depth.
+          while IFS= read -r gen; do
+            d=$(dirname "$gen")
+            echo "::group::validate $d"
+            python tools/validate_schema.py "$d" || rc=1
+            echo "::endgroup::"
+          done < <(find data_indonesia -name generators.csv | sort)
+          exit $rc
+      - name: Unit tests (no solver)
+        run: python -m pytest tests/test_fishing_calculator.py tests/test_coordination_value.py -q
+
+  julia:
+    name: Julia — data core + real dispatch solve (HiGHS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GARUDA_SKIP_VALIDATION: "1"   # the python job already gates on the schema
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1.12"           # matches Manifest.toml (julia_version 1.12.5)
+      - uses: julia-actions/cache@v2
+      - name: Instantiate (installs HiGHS; Gurobi_jll is licence-free to install)
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
+      - name: Layer-A data-core regression (no solver)
+        run: julia --project=. tests/verify_data_core.jl
+      - name: Real solve — maluku 2030 base dispatch LP on HiGHS
+        run: julia --project=. run_model.jl --config .github/ci/maluku_dispatch.config.json
+      - name: Headline-number check (±1 %)
+        run: julia --project=. tests/check_dispatch_headlines.jl results/base_maluku_2030_reference
