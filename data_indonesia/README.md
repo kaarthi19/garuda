@@ -7,6 +7,10 @@ must exactly match the island key used in the scenario YAML, and `<year>` must
 match the `years` entry (both are joined into the input path by
 `functions/preflight.jl`).
 
+**Where the numbers come from** — source, build method, and modification history
+for every dataset, plus the official-source replacement map — is in
+[`DATA_PROVENANCE.md`](DATA_PROVENANCE.md).
+
 ## Which files are required when
 
 | File | `base` / `grid` | `village` / `gridvillage` | `grid`-family (`grid`, `gridvillage`, `nocoal`, `highimportprice`) |

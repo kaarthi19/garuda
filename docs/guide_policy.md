@@ -75,18 +75,23 @@ A model is a decision aid, not an oracle. Before quoting a number:
 1. **Data provenance is research-grade.** The inputs are credible but not yet
    replaced with official PLN/ESDM/RUKN figures per zone and site. Treat results as
    *directional and comparative* until provenance is upgraded — this is the top
-   item on the path to decision-grade use.
+   item on the path to decision-grade use. Where each number comes from, and which
+   official source replaces it, is documented file by file in
+   [`data_indonesia/DATA_PROVENANCE.md`](../data_indonesia/DATA_PROVENANCE.md).
 2. **A representative-week sample, not a full year.** The model runs on sampled
    representative periods weighted to a year — robust for annual totals, not for
    any specific date.
 3. **Reliability numbers are optimistic by default.** The fast open-source dispatch
    relaxes some thermal-plant operating limits, so unserved energy is a lower-ish
    estimate where those bind.
-4. **The "RE share" can be mislabelled.** It follows a per-unit renewable flag in
-   the data. One such case — fossil units mistakenly flagged renewable in the
-   maluku dataset — was found and corrected precisely because the model is open
-   and auditable; other islands' flags remain research-grade, so cross-check the
-   figure against the generation mix in the same report.
+4. **Check what the "RE share" counts.** It follows a per-unit renewable flag in
+   the data. Mis-flags have occurred and been corrected — fossil units flagged
+   renewable on maluku, and a follow-up audit across all islands that restored
+   146 hydro/geothermal units (including 768 MW of geothermal potential) to the
+   renewable side; the schema validator now warns on both patterns. The flags
+   deliberately count dispatchable renewables (hydro, geothermal, bio, waste),
+   not just solar and wind — so read the share against the generation mix in the
+   same report.
 5. **Costs are comparative.** Use cost differences between scenarios; the absolute
    M$/yr depends on modelling scope.
 

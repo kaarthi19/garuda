@@ -26,6 +26,7 @@ Audience-oriented entry points — each routes you to the detailed docs below.
 | Doc | What it covers |
 |-----|----------------|
 | [../data_indonesia/README.md](../data_indonesia/README.md) | Input data dictionary — every CSV, column by column |
+| [../data_indonesia/DATA_PROVENANCE.md](../data_indonesia/DATA_PROVENANCE.md) | Data provenance — sources, modification log, official replacement map |
 | [new_region_guide.md](new_region_guide.md) | Add a new island / region to the model |
 | [ntt_data_integration.md](ntt_data_integration.md) | The NTT / Timor data pipeline (source workbooks → model inputs) |
 
