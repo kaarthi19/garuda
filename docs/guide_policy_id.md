@@ -79,7 +79,11 @@ selisih itu dengan satu perintah.
   koordinasinya.
 - **reference vs clean** — `clean` memberlakukan batas emisi CO₂ ala JETP dan
   pangsa minimum energi terbarukan; `reference` tidak. Membandingkan keduanya
-  memperlihatkan implikasi biaya dan pembangunan dari kebijakan tersebut.
+  memperlihatkan implikasi biaya dan pembangunan dari kebijakan tersebut. Secara
+  bawaan batas dan pangsa minimum itu berlaku pada **lapisan jaringan saja**;
+  analis dapat memperluas keduanya agar mencakup pembangkitan dan permintaan
+  desa (`policy_scope: "system"`), dan laporan menampilkan kedua pangsa dalam
+  kedua mode.
 
 ## Hal yang perlu diwaspadai
 

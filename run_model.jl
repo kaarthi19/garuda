@@ -52,6 +52,13 @@ ImportPrice = Float64(get(cfg, "import_price", preflight.flags.ImportPrice)) # $
 # Feed-in price ($/MWh) paid for village exports to the grid. Default 0 keeps
 # exports an unremunerated spill path (the shipped-reference behaviour).
 export_price = Float64(get(cfg, "export_price", 0.0))
+# Scope of the clean-run policy constraints (CO2 cap + RE floor): "grid" (the
+# default — village generation sits outside both) or "system" (cap covers
+# grid + village emissions; the RE floor counts village RE generation over
+# grid + village electricity demand).
+policy_scope = lowercase(String(get(cfg, "policy_scope", "grid")))
+policy_scope in ("grid", "system") ||
+    error("config key policy_scope must be \"grid\" or \"system\", got \"$(policy_scope)\"")
 if export_price > ImportPrice
     println("WARNING: export_price ($(export_price)) > import_price ($(ImportPrice)) — " *
             "a connected village profits from importing and re-exporting; results " *
@@ -90,5 +97,6 @@ function_compiler(
     solver = solver,
     engine = engine,
     relax_uc = relax_uc,
-    export_price = export_price
+    export_price = export_price,
+    policy_scope = policy_scope
 )

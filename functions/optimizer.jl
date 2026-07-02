@@ -2,7 +2,7 @@
 # on the model `CE` and returns the variable/expression references the result
 # extractor reads. It performs NO solve, so engines (capacity expansion, dispatch,
 # Benders) can share one model definition; the caller creates `CE` and solves it.
-function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0)
+function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0, policy_scope = "grid")
 
     #DECISION VARIABLES
 
@@ -89,10 +89,9 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     if Grid
         @variables(CE, begin
             vVIL_IMPORT[inputs.T, inputs.VIL]  >= 0  #grid import for the villages
-            #grid export (surplus solar) from the villages. Modelled in the balance
-            #but UNREMUNERATED (no revenue term in the objective), so it is only a
-            #free spill path and is 0 in practice — see MODEL.md. A feed-in term
-            #is a known follow-up.
+            #grid export (surplus solar) from the villages. Earns feed-in revenue
+            #only when export_price > 0 (config key; default 0 = an unremunerated
+            #free spill path, 0 in practice) — see MODEL.md and eVILExportRevenue.
             vVIL_EXPORT[inputs.T, inputs.VIL]  >= 0
             vVIL_CONNECT[inputs.VIL], Bin            #1 = village is connected to the grid
         end)
@@ -576,9 +575,19 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     );
     
     
+    # The policy constraints below apply to the GRID layer by default
+    # (policy_scope = "grid" — the shipped-reference behaviour, where village
+    # generation sits outside both the CO2 cap and the RE floor). With
+    # policy_scope = "system" the cap covers grid + village emissions and the
+    # RE floor counts RE-flagged village generation over grid + village
+    # electricity demand (village heat is out of scope either way).
     if CO2_constraint
-        #setting CO2 emissions constraint to 290 as per JETP agreement
-        @constraint(CE, cCO2EmissionsGrid, eCO2EmissionsGrid <= CO2_limit);
+        if policy_scope == "system"
+            @constraint(CE, cCO2EmissionsSystem, eCO2EmissionsGrid + eCO2EmissionsVIL <= CO2_limit);
+        else
+            #setting CO2 emissions constraint to 290 as per JETP agreement
+            @constraint(CE, cCO2EmissionsGrid, eCO2EmissionsGrid <= CO2_limit);
+        end
     end
 
     if CO235reduction
@@ -586,15 +595,30 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         @constraint(CE, cCO2EmissionsVIL,  eCO2EmissionsVIL <= 0.65*BAUCO2emissions);
     end
 
-    #renewable energy share
-    @expression(CE, eREShare, 
+    #renewable energy share (grid layer)
+    @expression(CE, eREShare,
     (sum(inputs.sample_weight[t]*inputs.generators.RE[g]*vGEN[t,g] for t in inputs.T, g in inputs.G) /
     sum(inputs.sample_weight[t]*inputs.demand[t,z] for t in inputs.T, z in inputs.Z))
     );
-    
+
+    # system-wide RE share: adds RE-flagged village generation to the numerator
+    # and village electricity demand to the denominator. Built as an expression
+    # unconditionally (reported in clean_energy_results); constrains the solve
+    # only when policy_scope = "system".
+    @expression(CE, eREShareSystem,
+    ((sum(inputs.sample_weight[t]*inputs.generators.RE[g]*vGEN[t,g] for t in inputs.T, g in inputs.G) +
+      sum(inputs.sample_weight[t]*inputs.village_generators.RE[g]*vVIL_GEN[t,g] for t in inputs.T, g in inputs.VIL_G)) /
+     (sum(inputs.sample_weight[t]*inputs.demand[t,z] for t in inputs.T, z in inputs.Z) +
+      sum(inputs.sample_weight[t]*inputs.village_demand[t,vil] for t in inputs.T, vil in inputs.VIL)))
+    );
+
     if RE_constraint
-        #setting renewable energy share constraint to 34% as per JETP agreement
-        @constraint(CE, cREShare, eREShare >= RE_limit);
+        if policy_scope == "system"
+            @constraint(CE, cREShareSystem, eREShareSystem >= RE_limit);
+        else
+            #setting renewable energy share constraint to 34% as per JETP agreement
+            @constraint(CE, cREShare, eREShare >= RE_limit);
+        end
     end
 
     #OBJECTIVE FUNCTION
@@ -779,6 +803,7 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         CO2EmissionsGrid = eCO2EmissionsGrid,
         CO2EmissionsVIL = eCO2EmissionsVIL,
         REShare = eREShare,
+        REShareSystem = eREShareSystem,
         NSECosts = eNSECosts,
         VILNSECosts = eVILNSECosts,
         VILNSEHeatCosts = eVILNSEHeatCosts,
@@ -797,12 +822,12 @@ end
 # (fractional commitment and grid-connection), under-counting start-up / minimum
 # up-down effects. Use it for fast license-free expansion where the empirically
 # measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid")
     CE = make_solver(solver; mipgap = mipgap)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
                         village_storage_max_mwh = village_storage_max_mwh,
-                        export_price = export_price)
+                        export_price = export_price, policy_scope = policy_scope)
 
     relax_uc && _relax_binaries!(CE, UC_BINARIES)
 
