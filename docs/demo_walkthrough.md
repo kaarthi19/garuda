@@ -79,17 +79,20 @@ caveats.
 
 > **Read the result honestly.** Each demo village carries a stylised distance to
 > the nearest substation (wini 3 km → raijua 90 km), priced into its annual
-> connection cost (`village_connection.csv`, ~$9k/yr → ~$240k/yr). At these
-> distances and demo costs the model keeps **all four villages islanded** —
-> solar+storage beats grid imports plus an MV feeder — so the coordination value
-> is ~0, and the per-village *decision* (and the price at which it would flip) is
-> the real output. For contrast: with the connection file removed (connection
-> free — the old default), all four villages connect and the value looks bigger;
-> the distance pricing is what makes the number defensible rather than
-> optimistic. The interesting version of this question — hundreds of real
-> villages, some MW-scale and half a kilometre from a substation (real Timor:
-> 780 villages, median 17 km, min 0.6 km) — is exactly the Phase-1
-> demonstration proposed in the concept note.
+> connection cost (`village_connection.csv`, ~$9k/yr → ~$240k/yr). The
+> distance now drives the decision: in the exact-UC MILP (`--exact-uc`, ~15 min
+> on HiGHS) **wini — the near village — connects and the three remote villages
+> stay islanded**, with all village diesel retired. The fast LP shown above
+> relaxes the 0/1 connect decision, so wini connects only fractionally (~1 %)
+> and rounds to "0 connected" — one reason the LP is a lower bound, not the
+> decision. Either way the coordination value on four tiny stylised villages is
+> ~0; the per-village *decision* is the real output. For contrast: with the
+> connection file removed (connection free — the old default), all four villages
+> connect and the value looks bigger; the distance pricing is what makes the
+> number defensible rather than optimistic. The interesting version of this
+> question — hundreds of real villages, some MW-scale and half a kilometre from
+> a substation (real Timor: 780 villages, median 17 km, min 0.6 km) — is exactly
+> the Phase-1 demonstration proposed in the concept note.
 
 ## What needs more than a laptop
 
