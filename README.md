@@ -186,6 +186,7 @@ headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 | Document | Covers |
 |----------|--------|
 | [`data_indonesia/README.md`](data_indonesia/README.md) | Input data dictionary, column by column |
+| [`data_indonesia/DATA_PROVENANCE.md`](data_indonesia/DATA_PROVENANCE.md) | Where every dataset comes from + the official-source replacement map |
 | [`docs/re_resource.md`](docs/re_resource.md) | RE-resource engine + the GIS siting pipeline |
 | [`docs/new_region_guide.md`](docs/new_region_guide.md) | Add a new island/region |
 | [`docs/outputs_guide.md`](docs/outputs_guide.md) | Result files and headline metrics |
