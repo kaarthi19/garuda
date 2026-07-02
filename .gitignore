@@ -30,3 +30,6 @@ tools/idn_prov.json
 
 # Local partner/funder draft (kept local, like capability_note.md)
 concept_note.md
+
+# Sensitivity-sweep dataset variants (derived from the base by tools/sensitivity.py)
+data_indonesia/*/*__*/

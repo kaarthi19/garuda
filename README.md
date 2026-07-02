@@ -54,11 +54,13 @@ engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 | **Run launcher** | Validate inputs, preview scenario size + ETA, scaffold a config, optionally launch | `python tools/launcher.py --island maluku --year 2030 --scenario base --clean reference` |
 | **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability); `--lang id` renders it in Bahasa Indonesia | `python tools/report.py results/base_maluku_2030_reference` |
 | **Coordination value** | The standalone-vs-coordinated delta (cost, diesel, emissions, unserved energy avoided) as one command — compare two runs, or solve both on HiGHS then compare | `python tools/coordination_value.py run --island timor_demo --year 2030` |
+| **Sensitivity sweeps** | How robust is the plan? Perturb fuel price / demand / solar CF / import & export prices around a base case (auditable dataset variants), solve each, summarise the ranges | `python tools/sensitivity.py run --island timor_demo --year 2030 --scenario gridvillage --param fuel=0.8,1.2` |
 
 See [`docs/pypsa_export.md`](docs/pypsa_export.md),
-[`docs/experience_layer.md`](docs/experience_layer.md) and
-[`docs/coordination_value.md`](docs/coordination_value.md). The PyPSA export and
-the report's PDF need `pip install pypsa matplotlib jinja2`.
+[`docs/experience_layer.md`](docs/experience_layer.md),
+[`docs/coordination_value.md`](docs/coordination_value.md) and
+[`docs/sensitivity.md`](docs/sensitivity.md). The PyPSA export and the
+report's PDF need `pip install pypsa matplotlib jinja2`.
 
 ---
 
