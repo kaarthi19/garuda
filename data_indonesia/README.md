@@ -7,6 +7,10 @@ must exactly match the island key used in the scenario YAML, and `<year>` must
 match the `years` entry (both are joined into the input path by
 `functions/preflight.jl`).
 
+**Where the numbers come from** — source, build method, and modification history
+for every dataset, plus the official-source replacement map — is in
+[`DATA_PROVENANCE.md`](DATA_PROVENANCE.md).
+
 ## Which files are required when
 
 | File | `base` / `grid` | `village` / `gridvillage` | `grid`-family (`grid`, `gridvillage`, `nocoal`, `highimportprice`) |
@@ -20,6 +24,7 @@ match the `years` entry (both are joined into the input path by
 | `village_demand.csv` | – | required | required for `gridvillage` |
 | `village_demandheat.csv` | – | required | required for `gridvillage` |
 | `village_generators_variability.csv` | – | required | required for `gridvillage` |
+| `village_connection.csv` | – | – | strongly recommended for `gridvillage` — without it, connection is **free** and every village connects |
 | `zones.csv` | optional — supplies human-readable zone names (`zone_names`); not required to solve | | |
 
 Run `julia --project=. run_model.jl --config <config.json> --preflight-only` to
@@ -211,6 +216,26 @@ fill these columns with zeros** — the file must still exist for `village` /
 
 Same rules as `generators_variability.csv`: hour-index first column (dropped on
 load), then one profile column per village generator in `R_ID` order.
+
+---
+
+## `village_connection.csv` — per-village grid-interconnection cost (optional)
+
+Drives the co-optimised connect-vs-island decision in `Grid` scenarios
+(`gridvillage` / `gridcaptive`): connecting village *v* adds `Cost_per_yr` to the
+objective (via the binary `vVIL_CONNECT[v]`) and caps its import/export at
+`Max_Connect_MW`.
+
+| Column | Type | Meaning |
+|--------|------|---------|
+| `Village` | int | Village id (matches `village_generators.csv::Village`). |
+| `Cost_per_yr` | number | Annualised interconnection cost, $/yr — a fixed grid-tap cost plus an MV feeder priced by **distance to the nearest grid substation** (`hubdist_km` from the siting pipeline), annualised. Derivation: `tools/ntt/costs.py::connection_cost_per_yr`; regenerate with `python tools/connection_cost.py <folder>`. |
+| `Max_Connect_MW` | number | Interconnection capacity cap (peak demand × 1.5, floored at 0.02 MW). |
+
+**If the file (or a village's row) is missing, connection is free with a huge
+cap** — every village connects, and the coordination value degenerates. Missing
+rows are a data gap, not a modelling choice; datasets without siting data can
+generate provisional costs via `--default-km`.
 
 ---
 

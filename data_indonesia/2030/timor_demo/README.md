@@ -16,6 +16,12 @@ What it represents (stylised, NTT-plausible):
   with an existing village diesel genset (0.15–0.5 MW), candidate solar PV and
   battery storage, an evening-peaked load (peaks 0.05–0.15 MW), and zero heat
   demand.
+- **Grid distance**: each village carries a stylised distance to the nearest
+  substation — wini 3 km (border town near the TTU grid), boking 30 km,
+  amfoang 45 km (remote interior), raijua 90 km (an island beyond Sawu,
+  effectively unconnectable) — priced into `village_connection.csv`, so the
+  connect-vs-island decision differs by village (same cost model as
+  `tools/ntt/costs.py::connection_cost_per_yr`).
 - **Time**: 8 uniform representative weeks (1,344 hours, weights summing to
   8760), a smooth solar profile with mild dry/wet-season variation, and diesel
   priced at $18/MMBtu so solar-plus-storage competes the way it does in real

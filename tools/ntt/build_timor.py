@@ -47,10 +47,11 @@ DIESEL_VOM = 8.0
 DIESEL_COST_MMBTU = 18.0
 DIESEL_CO2 = 0.0732
 
-# Interconnection-cost model (documented defaults; tune in verification)
-CONNECT_FIXED_IDR = 150_000_000      # Rp: fixed cost to tap the MV grid per village
-CONNECT_IDR_PER_KM = 400_000_000     # Rp/km: MV feeder to the grid backbone
-CONNECT_DEFAULT_KM = 10.0            # used when a village has no coordinates
+# Interconnection-cost model: constants + formula live in tools/ntt/costs.py
+# (C.CONNECT_*, C.connection_cost_per_yr). The distances used at build time are
+# PROVISIONAL (village-centroid proxy); once the siting pipeline has written
+# hubdist_km (distance to the nearest grid substation) into
+# village_solar_potential.csv, refine with:  python tools/connection_cost.py <folder>
 
 # 30-col village generator layout (grid GEN_COLS + a Village column after Zone)
 VIL_GEN_COLS = ["R_ID", "Zone", "Village", "Resource", "technology", "owner",
@@ -229,7 +230,11 @@ def build(villages, out_dir, year, solar_cap=False, gis_dir="~/Desktop/QGIS_NEW"
               ["r_id"] + [r[3] for r in gen_rows], rows)
 
     # --- village_connection.csv (per-village interconnection cost) ----------
-    # centroid for distance fallback / coordinate-free villages
+    # PROVISIONAL distances: haversine to the village centroid, a rough proxy
+    # used only until the siting pipeline provides hubdist_km (distance to the
+    # nearest grid substation). Refine after siting with
+    #   python tools/connection_cost.py <folder>
+    # which rewrites this file from village_solar_potential.csv::hubdist_km.
     coords = [(v.lat, v.lon) for v in villages if v.lat is not None]
     clat = sum(c[0] for c in coords) / len(coords) if coords else -9.7
     clon = sum(c[1] for c in coords) / len(coords) if coords else 124.3
@@ -238,11 +243,9 @@ def build(villages, out_dir, year, solar_cap=False, gis_dir="~/Desktop/QGIS_NEW"
         if v.lat is not None:
             dist = max(1.0, haversine_km(v.lat, v.lon, clat, clon))
         else:
-            dist = CONNECT_DEFAULT_KM
-        capex_idr = CONNECT_FIXED_IDR + dist * CONNECT_IDR_PER_KM
-        cost_per_yr = round(C.idr_to_usd(capex_idr) * C.crf(C.DISCOUNT_RATE, C.LIFETIME_YEARS["grid"]))
-        max_connect = round(max(d.peak_mw * 1.5, 0.02), 4)
-        conn_rows.append([vid, cost_per_yr, max_connect])
+            dist = C.CONNECT_DEFAULT_KM
+        conn_rows.append([vid, C.connection_cost_per_yr(dist),
+                          C.connect_max_mw(d.peak_mw)])
     write_csv(out_dir / "village_connection.csv",
               ["Village", "Cost_per_yr", "Max_Connect_MW"], conn_rows)
 

@@ -1,7 +1,8 @@
 # Policy guide
 
-*For government and development-partner stakeholders: what Garuda answers, how to
-read a result, and what to be careful about — no modelling background assumed.*
+*For government, civil-society (CSO) and development-partner stakeholders: what
+Garuda answers, how to read a result, and what to be careful about — no modelling
+background assumed.*
 
 You do not need to run the model to use this guide; it explains how to interpret a
 Garuda report and where the tool fits. To commission a run, an analyst can follow
@@ -74,23 +75,31 @@ A model is a decision aid, not an oracle. Before quoting a number:
 1. **Data provenance is research-grade.** The inputs are credible but not yet
    replaced with official PLN/ESDM/RUKN figures per zone and site. Treat results as
    *directional and comparative* until provenance is upgraded — this is the top
-   item on the path to decision-grade use.
+   item on the path to decision-grade use. Where each number comes from, and which
+   official source replaces it, is documented file by file in
+   [`data_indonesia/DATA_PROVENANCE.md`](../data_indonesia/DATA_PROVENANCE.md).
 2. **A representative-week sample, not a full year.** The model runs on sampled
    representative periods weighted to a year — robust for annual totals, not for
    any specific date.
 3. **Reliability numbers are optimistic by default.** The fast open-source dispatch
    relaxes some thermal-plant operating limits, so unserved energy is a lower-ish
    estimate where those bind.
-4. **The "RE share" can be mislabelled.** It follows a per-unit renewable flag in
-   the data, and in places some existing fossil units carry that flag — which can
-   inflate the figure. Cross-check against the generation mix in the same report.
+4. **Check what the "RE share" counts.** It follows a per-unit renewable flag in
+   the data. Mis-flags have occurred and been corrected — fossil units flagged
+   renewable on maluku, and a follow-up audit across all islands that restored
+   146 hydro/geothermal units (including 768 MW of geothermal potential) to the
+   renewable side; the schema validator now warns on both patterns. The flags
+   deliberately count dispatchable renewables (hydro, geothermal, bio, waste),
+   not just solar and wind — so read the share against the generation mix in the
+   same report.
 5. **Costs are comparative.** Use cost differences between scenarios; the absolute
    M$/yr depends on modelling scope.
 
 ## Open, auditable, reproducible
 
 Garuda runs on the open-source **HiGHS** solver — no commercial licence — so any
-ministry, developer or researcher can run and audit it, and results are
-byte-reproducible. An auditable model also surfaces errors proprietary tools hide
-(this work has already found and corrected modelling bugs in the inherited code).
-For a plan several institutions must trust, that transparency is itself a feature.
+ministry, CSO, developer or researcher can run and audit it on a laptop, and
+results are byte-reproducible. An auditable model also surfaces errors proprietary
+tools hide (this work has already found and corrected modelling bugs in the
+inherited code). For a plan several institutions must trust, that transparency is
+itself a feature.

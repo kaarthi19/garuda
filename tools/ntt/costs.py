@@ -36,6 +36,16 @@ FIXED_OM_FRACTION = {       # annual fixed O&M as a fraction of overnight capex
     "grid": 0.01,
 }
 
+# Grid-interconnection (MV feeder) cost assumptions. NTT working numbers —
+# replace with PLN unit costs when available. Used by build_timor.py (provisional,
+# centroid-distance), tools/connection_cost.py (hubdist_km-based refinement) and
+# tools/make_timor_demo.py (stylised demo distances).
+CONNECT_FIXED_IDR = 150_000_000      # Rp: fixed cost to tap the MV grid per village
+CONNECT_IDR_PER_KM = 400_000_000     # Rp/km: MV feeder to the grid backbone
+CONNECT_DEFAULT_KM = 10.0            # fallback when a village has no distance data
+CONNECT_MAX_FACTOR = 1.5             # interconnection sized to peak demand x this
+CONNECT_MAX_FLOOR_MW = 0.02          # ...but never below this
+
 
 def crf(rate: float, years: int) -> float:
     """Capital recovery factor: fraction of overnight capex paid per year."""
@@ -68,3 +78,27 @@ def fixed_om_per_mwyr(idr_per_kw: float, tech: str, fx: float = FX_RATE) -> floa
 def idr_to_usd(idr: float, fx: float = FX_RATE) -> float:
     """Plain currency conversion (for reporting absolute capex in USD)."""
     return idr / fx
+
+
+def connection_cost_per_yr(dist_km: float,
+                           fixed_idr: float = CONNECT_FIXED_IDR,
+                           idr_per_km: float = CONNECT_IDR_PER_KM,
+                           fx: float = FX_RATE,
+                           rate: float = DISCOUNT_RATE) -> int:
+    """Annualised village grid-interconnection cost (USD/yr) from distance.
+
+    Overnight capex = fixed tap cost + MV feeder length x cost/km, annualised
+    with the grid-asset CRF. `dist_km` should be the distance to the nearest
+    grid substation (`hubdist_km` from the siting pipeline) where known.
+    Feeds `village_connection.csv::Cost_per_yr`, which gates the co-optimised
+    connect-vs-island decision (`vVIL_CONNECT` in the objective).
+    """
+    capex_idr = fixed_idr + max(0.0, dist_km) * idr_per_km
+    return round(idr_to_usd(capex_idr, fx) * crf(rate, LIFETIME_YEARS["grid"]))
+
+
+def connect_max_mw(peak_mw: float,
+                   factor: float = CONNECT_MAX_FACTOR,
+                   floor_mw: float = CONNECT_MAX_FLOOR_MW) -> float:
+    """Interconnection capacity cap (MW): peak demand x margin, floored."""
+    return round(max(peak_mw * factor, floor_mw), 4)
