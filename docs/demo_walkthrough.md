@@ -77,13 +77,19 @@ and `coordination_value.md` into the coordinated run's directory. See
 [`coordination_value.md`](coordination_value.md) for the metric definitions and
 caveats.
 
-> **Read the result honestly.** On this 4-village synthetic case the coordination
-> value is small — the villages are already cheaply self-served by solar+storage,
-> and the model currently prices grid import at a flat rate rather than a
-> distance-based extension cost (a documented limitation). The value is expected
-> to matter more on real geography with remote, grid-distant villages. The point
-> of the demo is that the number is produced transparently and can be argued
-> about — not that it is large.
+> **Read the result honestly.** Each demo village carries a stylised distance to
+> the nearest substation (wini 3 km → raijua 90 km), priced into its annual
+> connection cost (`village_connection.csv`, ~$9k/yr → ~$240k/yr). At these
+> distances and demo costs the model keeps **all four villages islanded** —
+> solar+storage beats grid imports plus an MV feeder — so the coordination value
+> is ~0, and the per-village *decision* (and the price at which it would flip) is
+> the real output. For contrast: with the connection file removed (connection
+> free — the old default), all four villages connect and the value looks bigger;
+> the distance pricing is what makes the number defensible rather than
+> optimistic. The interesting version of this question — hundreds of real
+> villages, some MW-scale and half a kilometre from a substation (real Timor:
+> 780 villages, median 17 km, min 0.6 km) — is exactly the Phase-1
+> demonstration proposed in the concept note.
 
 ## What needs more than a laptop
 

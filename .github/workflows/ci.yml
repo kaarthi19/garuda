@@ -33,7 +33,7 @@ jobs:
           done < <(find data_indonesia -name generators.csv | sort)
           exit $rc
       - name: Unit tests (no solver)
-        run: python -m pytest tests/test_fishing_calculator.py tests/test_coordination_value.py -q
+        run: python -m pytest tests -q
 
   julia:
     name: Julia — data core + real dispatch solve (HiGHS)

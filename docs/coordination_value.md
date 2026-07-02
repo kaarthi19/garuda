@@ -26,6 +26,15 @@ interconnection. Under `relax_uc` both plans are LP lower bounds (measured UC ga
 ≈0.8 %), so a value below ~1 % of total cost is indistinguishable from zero. A
 dispatch-engine pair measures operations-only value (no new build).
 
+**Two `relax_uc` reading notes.** (1) The connect binary is LP-relaxed along with
+the UC binaries, so a village can connect *fractionally* (pay 1 % of the cost for
+1 % of the capacity); the "villages grid-connected" row counts `Connected > 0.5`,
+and `--exact-uc` forces the true 0/1 decision. (2) The comparison is only
+meaningful if the reference dataset carries real connection costs
+(`village_connection.csv`, derived from `hubdist_km` by
+`tools/connection_cost.py`) — with the file absent, connection is **free**, every
+village connects, and the coordination value is overstated.
+
 ## Usage
 
 ```bash
