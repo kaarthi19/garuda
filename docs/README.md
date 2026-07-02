@@ -19,7 +19,8 @@ Audience-oriented entry points — each routes you to the detailed docs below.
 |-------|-----|
 | [guide_data_consumer.md](guide_data_consumer.md) | **Developers / data engineers** — load, validate, transform, and export the zonal data |
 | [guide_analyst.md](guide_analyst.md) | **Modellers / researchers** — choose an engine, scenario and solver; read results |
-| [guide_policy.md](guide_policy.md) | **Government / partners** — what Garuda answers, how to read a report, what to watch for |
+| [guide_policy.md](guide_policy.md) | **Government / CSOs / partners** — what Garuda answers, how to read a report, what to watch for |
+| [guide_policy_id.md](guide_policy_id.md) | **Panduan kebijakan (Bahasa Indonesia)** — terjemahan panduan di atas |
 
 ## Inputs & data
 
