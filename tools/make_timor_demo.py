@@ -123,6 +123,12 @@ GRID_GENS = [
 # villages: 1 amfoang, 2 boking, 3 raijua, 4 wini — all in zone 2
 VILLAGES = ["amfoang", "boking", "raijua", "wini"]
 DIESEL_CAP = [0.40, 0.25, 0.15, 0.50]
+# stylised distance to the nearest grid substation (km) — drives the
+# distance-based connection cost so the connect-vs-island choice differs by
+# village: Wini is a border town near the TTU grid; Amfoang (interior) and
+# Boking (south coast) are remote; Raijua is an island beyond Sawu (distance
+# includes a stylised sea crossing — effectively unconnectable).
+VILLAGE_HUB_KM = [45.0, 30.0, 90.0, 3.0]
 
 VILLAGE_GENS = []
 rid = 1
@@ -249,6 +255,20 @@ def main():
     write_csv(OUT / "village_generators_variability.csv",
               ["r_id"] + [g[3] for g in VILLAGE_GENS],
               variability_rows(VILLAGE_GENS, 4))
+
+    # village_connection.csv — distance-based interconnection cost, gating the
+    # co-optimised connect-vs-island decision (vVIL_CONNECT). Same cost model as
+    # tools/ntt/costs.py::connection_cost_per_yr, inlined to keep this script
+    # stdlib-only: (Rp 150M fixed + km x Rp 400M MV feeder) / Rp 16,000 per USD,
+    # annualised at 10% over 30 years.
+    r, n = 0.10, 30
+    crf = r * (1 + r) ** n / ((1 + r) ** n - 1)
+    conn_rows = []
+    for v, (km, peak) in enumerate(zip(VILLAGE_HUB_KM, VILLAGE_PEAK), start=1):
+        capex_usd = (150e6 + km * 400e6) / 16000.0
+        conn_rows.append([v, round(capex_usd * crf), round(max(peak * 1.5, 0.02), 4)])
+    write_csv(OUT / "village_connection.csv",
+              ["Village", "Cost_per_yr", "Max_Connect_MW"], conn_rows)
 
 
 if __name__ == "__main__":

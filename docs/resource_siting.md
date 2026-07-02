@@ -43,6 +43,12 @@ python -m tools.ntt.solar_potential \
 # 3) The model enforces it. functions/optimizer.jl upper-bounds each village's new
 #    solar build to its Max_Cap_MW (the VIL_ED_NEW loop). Max_Cap_MW = 0 = unbounded.
 julia run_model.jl jobs/timor_belu_test/config.json
+
+# 4) Price the grid side of the choice: derive each village's interconnection
+#    cost from its distance to the nearest substation (hubdist_km, written by
+#    step 2 into village_solar_potential.csv) -> village_connection.csv. This is
+#    what the optimiser trades against islanded solar+storage (vVIL_CONNECT).
+python tools/connection_cost.py data_indonesia/2030/timor_belu
 ```
 
 **Verified (Belu, 81 villages):** the land caps (per-village 0.9–4.5 GW within 5 km;
