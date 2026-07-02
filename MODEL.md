@@ -35,16 +35,26 @@ capacity with new/retire components; `vT_CAP[l]`, `vNEW_T_CAP[l]`,
 **Village** — mirrored: `vVIL_CAP`, `vVIL_E_CAP` (+ new/retire),
 `vVIL_GEN`, `vVIL_GEN_HEAT`, `vVIL_CHARGE`, `vVIL_SOC`, `vVIL_NSE`,
 `vVIL_NSE_HEAT`, binaries `vVIL_COMMIT/START/SHUT`; and, in `Grid` scenarios,
-imports `vVIL_IMPORT[t,vil] ≥ 0` (94–99). New village storage energy is bounded
-per unit by `village_storage_max_mwh` (109–111). Village exports are not
-modelled (commented `vVIL_EXPORT`).
+the interconnection block `vVIL_IMPORT`, `vVIL_EXPORT`, and the connection
+binary `vVIL_CONNECT[vil]` (89–107), with import and export each capped by
+`village_connect_max × vVIL_CONNECT`. New-build onsite capacity is bounded by the
+per-village `Max_Cap_MW` land/resource ceiling when positive (109–125); new
+village storage energy is bounded per unit by `village_storage_max_mwh`.
+
+`vVIL_EXPORT` supplies the zonal balance (132–140) and is debited from the
+village balance in `Grid` scenarios (341–364), but it carries **no revenue term
+in the objective** — so it is only ever a free spill path for surplus that would
+otherwise be curtailed, and is 0 in every shipped reference run. Non-`Grid`
+scenarios omit the export term entirely (374–398). A feed-in / export-tariff
+term is a known follow-up.
 
 ## Constraints
 
 **Zonal power balance** (117–136): for each `t, z` —
 generation + NSE − storage charging − demand − line flows (incidence `z<i>` ∈
-{+1, −1}) − village imports of villages in zone `z` (via `village_zone`) = 0.
-Transport flow model; the DC power-flow variant is commented out (203–206).
+{+1, −1}) − village imports + village exports of villages in zone `z` (via
+`village_zone`) = 0. Transport flow model; the DC power-flow variant is commented
+out (203–206).
 
 **Capacity limits** (142–169): `vGEN ≤ variability×vCAP` for ED;
 `vGEN ≤ Existing_Cap×vCOMMIT` and `vGEN ≥ Min_Power×Existing_Cap×vCOMMIT` for
@@ -73,8 +83,8 @@ vGEN/Eff_Down`, with periodic wrap inside each representative period.
 - *Heat balance* (309–314): UC-unit heat output + heat NSE = heat demand.
 - *Electricity balance* (316–380): generators allowed to serve village demand
   depend on the scenario — `VIL_UC` only (no `VillageBuild`), all `VIL_G`
-  (`VillageBuild`), or `VIL_ED`-only (`NoCoal`); plus `vVIL_IMPORT` when `Grid`
-  is active; minus storage charging.
+  (`VillageBuild`), or `VIL_ED`-only (`NoCoal`); plus `vVIL_IMPORT` minus
+  `vVIL_EXPORT` when `Grid` is active; minus storage charging.
 - Capacity, ramping, commitment, and SOC mirror the grid (382–536).
 
 **Policy constraints** (539–572):
@@ -96,22 +106,53 @@ Minimise total annual cost:
 + transmission:   Σ (FOM + reinforcement cost)×vT_CAP
 + variable costs: Σ_t w_t × VarCost_g × vGEN             (VarCost = VOM + fuel×heat-rate)
 + start-up costs: Σ_t w_t × StartCost × vSTART × unit size
-+ imports:        Σ_t w_t × ImportPrice × vVIL_IMPORT
++ imports:        Σ_t w_t × ImportPrice × vVIL_IMPORT    (Grid scenarios)
++ interconnect:   Σ village_connect_cost × vVIL_CONNECT  (Grid scenarios; annualised)
 + reliability:    Σ_t w_t × (VOLL×segment cost) × NSE    (grid, village, village heat)
 ```
+
+Village exports carry no objective term (no feed-in revenue). The interconnection
+cost `eVILConnectCost` is what the coordinated (`gridvillage`) run trades against
+avoided village generation/storage — the source of the coordination value.
 
 Emission rates and variable costs are precomputed per generator in
 `input_data.jl` (87–104) from `fuels_data.csv`.
 
-## Solver settings (optimizer.jl 3–9)
+## Solver settings (`functions/solver.jl`)
 
-Gurobi; `MIPGap = mipgap` (config key, default 0.01), `TimeLimit` 72 h,
-`Crossover 0`. An optional Benders decomposition
-(`functions/benders_decomposition.jl`, not loaded by default) splits investment
-(master) from dispatch (subproblem) for very large instances.
+**HiGHS by default** (open-source, no licence) — `mip_rel_gap = mipgap` (config
+key, default 0.01). **Gurobi optional** (`"solver":"gurobi"`), imported only when
+requested, for the fast MILP path on large instances; there `MIPGap = mipgap`,
+`TimeLimit` 72 h, `Crossover 0`.
+
+`relax_uc` (config key) LP-relaxes the unit-commitment binaries
+(`vCOMMIT/START/SHUT`, grid and village) to `[0,1]` via `_relax_binaries!`,
+turning the MILP into an LP that HiGHS solves in seconds — default **on** for the
+dispatch engine, **off** (exact MILP) for expansion. On `timor_demo` the relaxed
+expansion LP is ~0.8 % below the exact MILP cost (a measured lower bound;
+reproduce with `tools/uc_relaxation_gap.jl`).
+
+An optional Benders decomposition (`functions/benders_decomposition.jl`, an
+inherited stub, not loaded) would split investment (master) from dispatch
+(subproblem) for very large instances.
 
 ## Known formulation limitations
 
-Flagged for follow-up: grid-only RE share, unenforced village `Max_Cap_MW`, flat
-import price, no village exports, no reserve constraints, and annual-only result
-extraction.
+Flagged for follow-up:
+
+- **Grid-only policy scope** — the CO₂ cap and RE-share floor apply to grid
+  generation only; village generation is outside both (avoids double-counting,
+  but a village can run on diesel without touching the grid target).
+- **Unpriced village exports** — `vVIL_EXPORT` is modelled but earns no revenue,
+  so surplus solar is spilled rather than sold to the grid.
+- **Flat import price** — `import_price` is a single $/MWh; the per-village
+  distance to the grid (`hubdist_km`, computed by the siting pipeline) is not yet
+  used to derive a distance-based extension cost.
+- **Single-year snapshots** — 2030 and 2035 are solved independently; no vintage
+  linkage, retirement-by-age, or learning curves across years.
+- **No reserve constraints** — adequacy is represented only by priced non-served
+  energy, not an explicit reserve margin.
+- **Representative-period sums in result extraction** — energy columns in the
+  generator / NSE / import result CSVs are sums over representative hours, not
+  annualised; costs, emissions, and the dispatch reliability tables are annual.
+  See `docs/outputs_guide.md`.
