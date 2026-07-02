@@ -47,15 +47,18 @@ identical data (see `docs/outputs_guide.md`).
 
 - **RE share counts grid generation only.** Village solar does not contribute
   to the `RE_limit` constraint in `clean` runs.
-- **Village `Max_Cap_MW` is not enforced** — village solar/battery power
-  capacity is unbounded; storage energy is capped per unit by
-  `village_storage_max_mwh` (config key, default 208 MWh). Set realistic caps
-  via the config or re-enable the bound in `optimizer.jl` if land/network
-  limits matter.
-- **`import_price` is a flat $/MWh** — no time-of-day structure, no PPA/tariff
-  detail, no export compensation (`vVIL_EXPORT` exists in the code but is
-  commented out). Export of surplus village solar to the grid is currently
-  **not modelled** — a known limitation for the village solar study.
+- **Village `Max_Cap_MW` is enforced when positive** — new-build onsite power
+  capacity is bounded per village by the `Max_Cap_MW` land/resource ceiling
+  (e.g. the developable-solar MW from `tools/resource_siting.py`);
+  `Max_Cap_MW == 0` means unbounded (no land data). Storage energy is
+  additionally capped per unit by `village_storage_max_mwh` (config key,
+  default 208 MWh).
+- **`import_price` is a flat $/MWh** — no time-of-day structure and no PPA/tariff
+  detail; the per-village distance to the grid (`hubdist_km`) is not yet priced.
+  Grid import is co-optimised against a per-village connection cost, but **export
+  of surplus village solar earns no revenue**: `vVIL_EXPORT` is a live variable
+  in `Grid` scenarios but has no objective term, so it is only a free spill path
+  and is 0 in practice. A feed-in / export-tariff term is a known follow-up.
 - **Unit commitment on small gensets**: village diesel with `Commit = 1` gets
   binary start/stop variables per hour. With many villages this dominates solve
   time; consider `Commit = 0` with `Min_Power_MW = 0` for sub-100 kW gensets if

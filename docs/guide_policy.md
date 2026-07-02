@@ -1,7 +1,8 @@
 # Policy guide
 
-*For government and development-partner stakeholders: what Garuda answers, how to
-read a result, and what to be careful about — no modelling background assumed.*
+*For government, civil-society (CSO) and development-partner stakeholders: what
+Garuda answers, how to read a result, and what to be careful about — no modelling
+background assumed.*
 
 You do not need to run the model to use this guide; it explains how to interpret a
 Garuda report and where the tool fits. To commission a run, an analyst can follow
@@ -82,15 +83,18 @@ A model is a decision aid, not an oracle. Before quoting a number:
    relaxes some thermal-plant operating limits, so unserved energy is a lower-ish
    estimate where those bind.
 4. **The "RE share" can be mislabelled.** It follows a per-unit renewable flag in
-   the data, and in places some existing fossil units carry that flag — which can
-   inflate the figure. Cross-check against the generation mix in the same report.
+   the data. One such case — fossil units mistakenly flagged renewable in the
+   maluku dataset — was found and corrected precisely because the model is open
+   and auditable; other islands' flags remain research-grade, so cross-check the
+   figure against the generation mix in the same report.
 5. **Costs are comparative.** Use cost differences between scenarios; the absolute
    M$/yr depends on modelling scope.
 
 ## Open, auditable, reproducible
 
 Garuda runs on the open-source **HiGHS** solver — no commercial licence — so any
-ministry, developer or researcher can run and audit it, and results are
-byte-reproducible. An auditable model also surfaces errors proprietary tools hide
-(this work has already found and corrected modelling bugs in the inherited code).
-For a plan several institutions must trust, that transparency is itself a feature.
+ministry, CSO, developer or researcher can run and audit it on a laptop, and
+results are byte-reproducible. An auditable model also surfaces errors proprietary
+tools hide (this work has already found and corrected modelling bugs in the
+inherited code). For a plan several institutions must trust, that transparency is
+itself a feature.

@@ -72,8 +72,9 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
             vVIL_COMMIT[inputs.T, inputs.VIL_UC], Bin #commitment variable for onsite UC units
             vVIL_START[inputs.T, inputs.VIL_UC], Bin #start up variable for onsite UC units
             vVIL_SHUT[inputs.T, inputs.VIL_UC], Bin #shut down variable for onsite UC units
-            #vVIL_CONNECT[inputs.VIL], Bin #binary variable for grid connection 
     end)
+    # vVIL_CONNECT is declared below in the `if Grid` block (it only exists when
+    # the grid layer is active).
 
     #operational decision variables for industrial
     @variables(CE, begin
@@ -88,7 +89,11 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     if Grid
         @variables(CE, begin
             vVIL_IMPORT[inputs.T, inputs.VIL]  >= 0  #grid import for the villages
-            vVIL_EXPORT[inputs.T, inputs.VIL]  >= 0  #grid export (surplus solar) from the villages
+            #grid export (surplus solar) from the villages. Modelled in the balance
+            #but UNREMUNERATED (no revenue term in the objective), so it is only a
+            #free spill path and is 0 in practice — see MODEL.md. A feed-in term
+            #is a known follow-up.
+            vVIL_EXPORT[inputs.T, inputs.VIL]  >= 0
             vVIL_CONNECT[inputs.VIL], Bin            #1 = village is connected to the grid
         end)
         #a village can only import from / export to the grid if it is connected;
