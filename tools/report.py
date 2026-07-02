@@ -28,13 +28,22 @@ import sys
 try:
     import numpy as np
     import pandas as pd
+except ImportError:  # pragma: no cover
+    print("report requires pandas + numpy", file=sys.stderr)
+    sys.exit(3)
+
+# matplotlib is needed to RENDER a report, not to import this module — helpers
+# like parse_scenario / load_results are reused by other tools (e.g.
+# tools/coordination_value.py), which must import cleanly without it. main()
+# checks _HAS_MPL and exits 3 with the install hint at run time instead.
+try:  # pragma: no cover
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_pdf import PdfPages
+    _HAS_MPL = True
 except ImportError:  # pragma: no cover
-    print("report requires pandas + numpy + matplotlib", file=sys.stderr)
-    sys.exit(3)
+    _HAS_MPL = False
 
 NA = dict(keep_default_na=False, na_values=[""])
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -354,6 +363,10 @@ def main(argv):
     ap.add_argument("--open", action="store_true", help="open the HTML when done")
     args = ap.parse_args(argv[1:])
 
+    if not _HAS_MPL:
+        print("report requires matplotlib to render charts/PDF "
+              "(pip install matplotlib)", file=sys.stderr)
+        return 3
     if not os.path.isdir(args.results_dir):
         print(f"results folder not found: {args.results_dir}", file=sys.stderr)
         return 2
