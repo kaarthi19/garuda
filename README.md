@@ -19,9 +19,11 @@ screen to a full capacity-expansion optimisation.
 
 *Indonesia resolved into **33 grid zones** across **8 island systems** — in the four
 multi-zone systems (Sumatera, Jawa–Bali, Kalimantan, Sulawesi) the zones are
-provinces; each zone further resolves to individual village / industrial sites (not
-shown). Province boundaries from public Indonesian administrative data; regenerate
-with `python tools/plot_zones_map.py`.*
+provinces; zones further resolve to individual village / industrial sites where the
+data supports it (e.g. the Timor / NTT case — see
+[`docs/case_study_timor.md`](docs/case_study_timor.md)). Province boundaries from
+public Indonesian administrative data; regenerate with `python
+tools/plot_zones_map.py`.*
 
 ---
 
@@ -49,10 +51,12 @@ engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 | **Parity check** | Prove the export reproduces the garuda dispatch engine (system-total unserved matches to 0.0000 % on maluku and a 6-zone grid-only sulawesi case) | `python tools/validate_pypsa_parity.py <folder> --reference <results_dir>` |
 | **Run launcher** | Validate inputs, preview scenario size + ETA, scaffold a config, optionally launch | `python tools/launcher.py --island maluku --year 2030 --scenario base --clean reference` |
 | **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability) | `python tools/report.py results/base_maluku_2030_reference` |
+| **Coordination value** | The standalone-vs-coordinated delta (cost, diesel, emissions, unserved energy avoided) as one command — compare two runs, or solve both on HiGHS then compare | `python tools/coordination_value.py run --island timor_demo --year 2030` |
 
-See [`docs/pypsa_export.md`](docs/pypsa_export.md) and
-[`docs/experience_layer.md`](docs/experience_layer.md). The PyPSA export and the
-report's PDF need `pip install pypsa matplotlib jinja2`.
+See [`docs/pypsa_export.md`](docs/pypsa_export.md),
+[`docs/experience_layer.md`](docs/experience_layer.md) and
+[`docs/coordination_value.md`](docs/coordination_value.md). The PyPSA export and
+the report's PDF need `pip install pypsa matplotlib jinja2`.
 
 ---
 
@@ -187,9 +191,12 @@ headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 | [`docs/outputs_guide.md`](docs/outputs_guide.md) | Result files and headline metrics |
 | [`docs/pypsa_export.md`](docs/pypsa_export.md) | PyPSA export + dispatch-parity validation |
 | [`docs/experience_layer.md`](docs/experience_layer.md) | Guided run launcher + HTML/PDF auto-report |
+| [`docs/coordination_value.md`](docs/coordination_value.md) | Coordination value — the grid-vs-coordinated delta as one command |
+| [`docs/case_study_timor.md`](docs/case_study_timor.md) | Worked Timor / NTT demonstration (siting → per-village solar) |
 | [`docs/village_adaptation.md`](docs/village_adaptation.md) | Site (village/industrial) modelling and scenario semantics |
 | [`docs/environment_setup.md`](docs/environment_setup.md) | Julia / Python / optional Gurobi setup |
 | [`MODEL.md`](MODEL.md) | Mathematical formulation, cross-referenced to the code |
+| [`docs/README.md`](docs/README.md) | **Full documentation index** (everything, by topic) |
 
 ---
 

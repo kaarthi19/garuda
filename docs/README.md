@@ -38,6 +38,9 @@ Audience-oriented entry points — each routes you to the detailed docs below.
 | [outputs_guide.md](outputs_guide.md) | Result files, columns, and headline metrics |
 | [pypsa_export.md](pypsa_export.md) | Export the zonal network to PyPSA + dispatch-parity validation (Phase 4) |
 | [experience_layer.md](experience_layer.md) | The guided run launcher and the HTML/PDF auto-report (Phase 5) |
+| [coordination_value.md](coordination_value.md) | Coordination value — the standalone-vs-coordinated delta as one command |
+| [case_study_timor.md](case_study_timor.md) | Worked Timor / NTT demonstration (siting → per-village solar → coordination) |
+| [demo_walkthrough.md](demo_walkthrough.md) | The laptop demo sequence, HiGHS-only (no licence) |
 
 ## Renewable resource & siting
 
