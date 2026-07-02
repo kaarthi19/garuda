@@ -161,6 +161,7 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 | `RE_limit` | `0.34` | minimum grid renewable share (`clean` runs) |
 | `import_price` | `59.0` $/MWh | flat price sites pay for grid imports |
 | `export_price` | `0.0` $/MWh | feed-in price sites earn for exporting surplus to the grid; `0` = exports are an unremunerated spill (keep ≤ `import_price`) |
+| `policy_scope` | `"grid"` | scope of the `clean` policy constraints: `"grid"` (CO₂ cap + RE floor on grid generation only) or `"system"` (village layer included in both) |
 | `village_storage_max_mwh` | `208.0` | per-unit cap on new site storage energy |
 
 ---

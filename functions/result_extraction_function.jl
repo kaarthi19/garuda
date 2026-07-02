@@ -272,7 +272,8 @@ function result_extraction(
         CO2_Emissions      = value.(solution.CO2Emissions),
         CO2_Emissions_Grid = value.(solution.CO2EmissionsGrid),
         CO2_Emissions_Village   = value.(solution.CO2EmissionsVIL),
-        Grid_REShare       = value.(solution.REShare)
+        Grid_REShare       = value.(solution.REShare),
+        System_REShare     = value.(solution.REShareSystem)
     )
 
     # 11) Write CSVs into the scenario folder

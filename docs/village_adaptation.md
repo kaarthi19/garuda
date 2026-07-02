@@ -45,8 +45,11 @@ identical data (see `docs/outputs_guide.md`).
 
 ## Things to know before trusting village results
 
-- **RE share counts grid generation only.** Village solar does not contribute
-  to the `RE_limit` constraint in `clean` runs.
+- **RE share counts grid generation only — by default.** Village solar does not
+  contribute to the `RE_limit` constraint in `clean` runs unless
+  `policy_scope: "system"` is set, which also extends the CO₂ cap to cover
+  village emissions. Both shares are reported either way
+  (`Grid_REShare` / `System_REShare` in `clean_energy_results.csv`).
 - **Village `Max_Cap_MW` is enforced when positive** — new-build onsite power
   capacity is bounded per village by the `Max_Cap_MW` land/resource ceiling
   (e.g. the developable-solar MW from `tools/resource_siting.py`);

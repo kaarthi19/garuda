@@ -173,7 +173,9 @@ def load_metrics(run_dir, data_root, no_annualise=False):
     """Return (meta, metrics dict, notes list) for one results dir."""
     meta = parse_scenario(run_dir)
     meta["engine"] = infer_engine(run_dir, meta)
-    meta["export_price"] = _sidecar_cfg(run_dir, meta).get("export_price", 0.0)
+    sidecar = _sidecar_cfg(run_dir, meta)
+    meta["export_price"] = sidecar.get("export_price", 0.0)
+    meta["policy_scope"] = sidecar.get("policy_scope", "grid")
     notes = []
     factor, anote = (1.0, "raw representative-period sums (not annualised)") \
         if no_annualise else annualisation(meta, data_root, quiet=True)
@@ -294,6 +296,10 @@ def guard(ref_meta, coord_meta, allow_mismatch):
         warns.append(f"export_price differs between the runs "
                      f"({ref_meta.get('export_price')} vs {coord_meta.get('export_price')}) — "
                      "the delta mixes a feed-in change into the coordination value")
+    if ref_meta.get("policy_scope", "grid") != coord_meta.get("policy_scope", "grid"):
+        warns.append(f"policy_scope differs between the runs "
+                     f"({ref_meta.get('policy_scope')} vs {coord_meta.get('policy_scope')}) — "
+                     "the delta mixes a policy-scope change into the coordination value")
     return problems, warns
 
 
