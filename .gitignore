@@ -27,3 +27,6 @@ CHANGES.md
 
 # Cached province GeoJSON (fetched on demand by the plot scripts)
 tools/idn_prov.json
+
+# Local partner/funder draft (kept local, like capability_note.md)
+concept_note.md
