@@ -2,7 +2,7 @@
 # on the model `CE` and returns the variable/expression references the result
 # extractor reads. It performs NO solve, so engines (capacity expansion, dispatch,
 # Benders) can share one model definition; the caller creates `CE` and solves it.
-function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0)
+function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0)
 
     #DECISION VARIABLES
 
@@ -711,10 +711,24 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         @expression(CE, eVILConnectCost, 0);
     end
 
+    # village export remuneration (feed-in). OFF by default (export_price = 0):
+    # with no revenue term, vVIL_EXPORT is only a free spill path for surplus —
+    # see MODEL.md. A positive export_price makes selling surplus village solar
+    # to the grid an economic choice, bounded per village by the interconnection
+    # cap (village_connect_max x vVIL_CONNECT). Keep export_price <= import_price
+    # or an import->export arbitrage becomes profitable; run_model.jl warns.
+    if Grid && export_price > 0
+        @expression(CE, eVILExportRevenue,
+            sum(inputs.sample_weight[t]*export_price*vVIL_EXPORT[t,vil] for t in inputs.T, vil in inputs.VIL)
+        );
+    else
+        @expression(CE, eVILExportRevenue, 0);
+    end
+
     @expression(CE, eCostObjective,
-    eFixedCostsGeneration + eFixedCostsVILGeneration + 
+    eFixedCostsGeneration + eFixedCostsVILGeneration +
     eFixedCostsStorage + eVILFixedCostsStorage +
-    eFixedCostsTransmission + eGridImportCosts + eVILConnectCost +
+    eFixedCostsTransmission + eGridImportCosts + eVILConnectCost - eVILExportRevenue +
     eVariableCostsGrid + eVariableCostsVILED + eVariableCostsVILUC +
     eNSECosts + eVILNSECosts + eVILNSEHeatCosts +
     eStartCostsGrid + eStartCostsVIL
@@ -758,6 +772,7 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         VariableCostsGrid = eVariableCostsGrid,
         VariableCostsVIL = eVariableCostsVILED + eVariableCostsVILUC,
         GridImportCosts = eGridImportCosts,
+        VILExportRevenue = eVILExportRevenue,
         StartCostsGrid = eStartCostsGrid,
         StartCostsVIL = eStartCostsVIL,
         CO2Emissions = eCO2EmissionsGrid + eCO2EmissionsVIL,
@@ -782,11 +797,12 @@ end
 # (fractional commitment and grid-connection), under-counting start-up / minimum
 # up-down effects. Use it for fast license-free expansion where the empirically
 # measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0)
     CE = make_solver(solver; mipgap = mipgap)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
-                        village_storage_max_mwh = village_storage_max_mwh)
+                        village_storage_max_mwh = village_storage_max_mwh,
+                        export_price = export_price)
 
     relax_uc && _relax_binaries!(CE, UC_BINARIES)
 

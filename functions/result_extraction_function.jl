@@ -262,6 +262,7 @@ function result_extraction(
         VILNSECosts               = value.(solution.VILNSECosts) / 1e6,
         VILNSEHeatCosts           = value.(solution.VILNSEHeatCosts) / 1e6,
         Grid_Import_Costs        = value.(solution.GridImportCosts) / 1e6,
+        Village_Export_Revenue   = value.(solution.VILExportRevenue) / 1e6,
         StartCostsGrid           = value.(solution.StartCostsGrid) / 1e6,
         StartCostsVIL             = value.(solution.StartCostsVIL) / 1e6
 
