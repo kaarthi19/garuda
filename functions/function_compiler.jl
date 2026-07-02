@@ -25,7 +25,8 @@ function function_compiler(
         village_storage_max_mwh::Float64 = 208.0,
         solver::AbstractString = "highs",
         engine::AbstractString = "expansion",
-        relax_uc::Bool = true
+        relax_uc::Bool = true,
+        export_price::Float64 = 0.0
     )
     # 1) Load inputs into the Layer A data core (engine-agnostic ZonalSystem)
     inputs = build_system(filepath)
@@ -35,13 +36,15 @@ function function_compiler(
         solution = dispatch_only(
             inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
-            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc
+            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc,
+            export_price = export_price
         )
     else
         solution = capacity_expansion(
             inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
-            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc
+            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc,
+            export_price = export_price
         )
     end
 
