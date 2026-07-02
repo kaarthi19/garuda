@@ -47,19 +47,23 @@ segment × zone (or site): `Total_NSE_MWh`, `NSE_Percent_of_Demand`,
 `Total_Costs`, `Fixed_Costs_Generation/Storage/Transmission` (grid),
 `Fixed_Costs_Village`, `Fixed_Costs_Village_Storage`,
 `Variable_Costs_Grid/Village`, `NSE_Costs`, `VILNSECosts`, `VILNSEHeatCosts`,
-`Grid_Import_Costs`, `StartCostsGrid`, `StartCostsVIL`.
+`Grid_Import_Costs`, `Village_Export_Revenue` (feed-in earnings, 0 unless the
+`export_price` config key is set; already subtracted inside `Total_Costs`),
+`StartCostsGrid`, `StartCostsVIL`.
 
 **`clean_energy_results.csv`** — `CO2_Emissions` (total), `_Grid`, `_Village`,
 and `Grid_REShare` (grid generation only — village solar is excluded). Annual.
 
 **`site_connection_results.csv`** (grid* scenarios) — per site: `Connected`
 (the co-optimised interconnection decision), `Total_Import_MWh`,
-`Total_Export_MWh`. Exports are modelled but **unremunerated** (see `MODEL.md`),
-so a nonzero `Total_Export_MWh` is never revenue-driven — it is a degenerate
-free spill of surplus solar (curtailing would cost the same); do not interpret
-it economically. Under `relax_uc` the connect binary is LP-relaxed, so
-`Connected` can be fractional (a village paying 1 % of the connection cost for
-1 % of the capacity); the exact-UC MILP forces a 0/1 decision.
+`Total_Export_MWh`. Exports are **unremunerated by default** (see `MODEL.md`):
+at `export_price = 0` a nonzero `Total_Export_MWh` is a degenerate free spill of
+surplus solar (curtailing would cost the same) — do not interpret it
+economically. With `export_price` set, exports are revenue-driven and earn
+`Village_Export_Revenue` in `cost_results.csv`. Under `relax_uc` the connect
+binary is LP-relaxed, so `Connected` can be fractional (a village paying 1 % of
+the connection cost for 1 % of the capacity); the exact-UC MILP forces a 0/1
+decision.
 
 **`transmission_results.csv`** — per corridor: existing, optimised, and change
 in transfer capacity. `Change_in_Transfer_Capacity > 0` is grid reinforcement.

@@ -49,6 +49,14 @@ relax_uc = Bool(get(cfg, "relax_uc", engine == "dispatch"))
 Grid = preflight.flags.Grid
 VillageBuild = preflight.flags.VillageBuild
 ImportPrice = Float64(get(cfg, "import_price", preflight.flags.ImportPrice)) # $/MWh village grid imports
+# Feed-in price ($/MWh) paid for village exports to the grid. Default 0 keeps
+# exports an unremunerated spill path (the shipped-reference behaviour).
+export_price = Float64(get(cfg, "export_price", 0.0))
+if export_price > ImportPrice
+    println("WARNING: export_price ($(export_price)) > import_price ($(ImportPrice)) — " *
+            "a connected village profits from importing and re-exporting; results " *
+            "will be distorted by that arbitrage (bounded only by the interconnection cap).")
+end
 NoCoal = preflight.flags.NoCoal
 
 if preflight_only
@@ -81,5 +89,6 @@ function_compiler(
     village_storage_max_mwh = village_storage_max_mwh,
     solver = solver,
     engine = engine,
-    relax_uc = relax_uc
+    relax_uc = relax_uc,
+    export_price = export_price
 )
