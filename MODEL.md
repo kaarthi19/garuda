@@ -42,11 +42,14 @@ per-village `Max_Cap_MW` land/resource ceiling when positive (109–125); new
 village storage energy is bounded per unit by `village_storage_max_mwh`.
 
 `vVIL_EXPORT` supplies the zonal balance (132–140) and is debited from the
-village balance in `Grid` scenarios (341–364), but it carries **no revenue term
-in the objective** — so it is only ever a free spill path for surplus that would
-otherwise be curtailed, and is 0 in every shipped reference run. Non-`Grid`
-scenarios omit the export term entirely (374–398). A feed-in / export-tariff
-term is a known follow-up.
+village balance in `Grid` scenarios (341–364). **By default it earns nothing**
+(`export_price = 0`, the config default) — a free spill path for surplus that
+would otherwise be curtailed, 0 in every shipped reference run. Setting the
+`export_price` config key ($/MWh) adds a feed-in revenue term to the objective,
+making surplus export an economic choice bounded per village by the
+interconnection cap; keep it ≤ `import_price` or import→re-export arbitrage
+becomes profitable (`run_model.jl` warns). Non-`Grid` scenarios omit the export
+term entirely (374–398).
 
 ## Constraints
 
@@ -108,12 +111,15 @@ Minimise total annual cost:
 + start-up costs: Σ_t w_t × StartCost × vSTART × unit size
 + imports:        Σ_t w_t × ImportPrice × vVIL_IMPORT    (Grid scenarios)
 + interconnect:   Σ village_connect_cost × vVIL_CONNECT  (Grid scenarios; annualised)
+− export revenue: Σ_t w_t × export_price × vVIL_EXPORT   (Grid scenarios; 0 by default)
 + reliability:    Σ_t w_t × (VOLL×segment cost) × NSE    (grid, village, village heat)
 ```
 
-Village exports carry no objective term (no feed-in revenue). The interconnection
-cost `eVILConnectCost` is what the coordinated (`gridvillage`) run trades against
-avoided village generation/storage — the source of the coordination value.
+Village exports earn revenue only when `export_price > 0` (config key; default 0
+preserves the unremunerated-spill behaviour of the shipped references). The
+interconnection cost `eVILConnectCost` is what the coordinated (`gridvillage`)
+run trades against avoided village generation/storage — the source of the
+coordination value; a feed-in price shifts that trade in favour of connecting.
 
 Emission rates and variable costs are precomputed per generator in
 `input_data.jl` (87–104) from `fuels_data.csv`.
@@ -143,8 +149,10 @@ Flagged for follow-up:
 - **Grid-only policy scope** — the CO₂ cap and RE-share floor apply to grid
   generation only; village generation is outside both (avoids double-counting,
   but a village can run on diesel without touching the grid target).
-- **Unpriced village exports** — `vVIL_EXPORT` is modelled but earns no revenue,
-  so surplus solar is spilled rather than sold to the grid.
+- **Village exports unpriced by default** — `vVIL_EXPORT` earns revenue only
+  when the `export_price` config key is set; at the default 0, surplus solar is
+  spilled rather than sold. No shipped scenario sets a feed-in price (there is
+  no official tariff to anchor it to yet).
 - **Flat import *energy* price** — `import_price` is a single $/MWh with no
   time-of-day or tariff structure. (The interconnection *capex* side is
   distance-based: `village_connection.csv::Cost_per_yr` is derived from each

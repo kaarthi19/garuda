@@ -57,10 +57,14 @@ identical data (see `docs/outputs_guide.md`).
   detail. The *connection* side is distance-based: grid import is co-optimised
   against a per-village interconnection cost derived from `hubdist_km`
   (`village_connection.csv`, regenerate with `tools/connection_cost.py`), so
-  remote villages pay more to connect than near ones. But **export of surplus
-  village solar earns no revenue**: `vVIL_EXPORT` is a live variable in `Grid`
-  scenarios but has no objective term, so it is only a free spill path and is 0
-  in practice. A feed-in / export-tariff term is a known follow-up.
+  remote villages pay more to connect than near ones.
+- **Exports earn revenue only if you price them** — by default (`export_price`
+  = 0) surplus village solar is a free spill path and `Total_Export_MWh` is 0 in
+  practice. Setting `export_price` ($/MWh, keep ≤ `import_price`) in the config
+  adds feed-in revenue, and near-grid villages may then connect and *oversize*
+  solar to sell surplus (reported as `Village_Export_Revenue` in
+  `cost_results.csv`). There is no shipped default because no official tariff
+  anchors it yet.
 - **Unit commitment on small gensets**: village diesel with `Commit = 1` gets
   binary start/stop variables per hour. With many villages this dominates solve
   time; consider `Commit = 0` with `Min_Power_MW = 0` for sub-100 kW gensets if

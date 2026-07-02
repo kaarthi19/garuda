@@ -130,18 +130,23 @@ def annualisation(meta, data_root, quiet=False):
 
 # ------------------------------------------------------------------- run metrics
 
-def infer_engine(run_dir, meta):
-    """dispatch | expansion | unknown. Config sidecar wins; else infer."""
+def _sidecar_cfg(run_dir, meta):
     sidecar = os.path.join(os.path.dirname(os.path.normpath(run_dir)),
                            meta["name"] + ".config.json")
     if os.path.isfile(sidecar):
         try:
             with open(sidecar) as fh:
-                eng = json.load(fh).get("engine")
-            if eng in ("dispatch", "expansion"):
-                return eng
+                return json.load(fh)
         except Exception:
             pass
+    return {}
+
+
+def infer_engine(run_dir, meta):
+    """dispatch | expansion | unknown. Config sidecar wins; else infer."""
+    eng = _sidecar_cfg(run_dir, meta).get("engine")
+    if eng in ("dispatch", "expansion"):
+        return eng
     # infer: a *fresh* reliability_results.csv is the dispatch-only signature
     rel = os.path.join(run_dir, "reliability_results.csv")
     cost = os.path.join(run_dir, "cost_results.csv")
@@ -168,6 +173,7 @@ def load_metrics(run_dir, data_root, no_annualise=False):
     """Return (meta, metrics dict, notes list) for one results dir."""
     meta = parse_scenario(run_dir)
     meta["engine"] = infer_engine(run_dir, meta)
+    meta["export_price"] = _sidecar_cfg(run_dir, meta).get("export_price", 0.0)
     notes = []
     factor, anote = (1.0, "raw representative-period sums (not annualised)") \
         if no_annualise else annualisation(meta, data_root, quiet=True)
@@ -256,6 +262,7 @@ ROWS = [
     ("cost.Fixed_Costs_Transmission","  transmission fixed cost","M$/yr", True),
     ("cost.Fixed_Costs_Village",     "  village generation capex","M$/yr", True),
     ("cost.Fixed_Costs_Village_Storage", "  village storage capex","M$/yr", True),
+    ("cost.Village_Export_Revenue",  "  village export revenue", "M$/yr", False),
     ("cost.NSE_Costs",               "  grid unserved-energy cost","M$/yr", True),
     ("CO2_Emissions",                "CO₂ emissions",            "tCO₂/yr", True),
     ("grid_diesel_gwh",              "grid diesel generation",   "GWh/yr", True),
@@ -283,6 +290,10 @@ def guard(ref_meta, coord_meta, allow_mismatch):
         warns.append(f"reference scenario {ref_meta.get('scenario')!r} is not one of {sorted(REF_SCENARIOS)}")
     if coord_meta.get("scenario") not in COORD_SCENARIOS:
         warns.append(f"coordinated scenario {coord_meta.get('scenario')!r} is not one of {sorted(COORD_SCENARIOS)}")
+    if ref_meta.get("export_price", 0.0) != coord_meta.get("export_price", 0.0):
+        warns.append(f"export_price differs between the runs "
+                     f"({ref_meta.get('export_price')} vs {coord_meta.get('export_price')}) — "
+                     "the delta mixes a feed-in change into the coordination value")
     return problems, warns
 
 
