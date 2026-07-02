@@ -90,15 +90,21 @@ vGEN/Eff_Down`, with periodic wrap inside each representative period.
   `vVIL_EXPORT` when `Grid` is active; minus storage charging.
 - Capacity, ramping, commitment, and SOC mirror the grid (382–536).
 
-**Policy constraints** (539–572):
+**Policy constraints** (565–625), scoped by the `policy_scope` config key
+(default `"grid"` — the shipped-reference behaviour):
 
-- CO₂ cap on grid emissions: `eCO2EmissionsGrid ≤ CO2_limit` (active in
-  `clean` runs).
+- CO₂ cap (active in `clean` runs): `eCO2EmissionsGrid ≤ CO2_limit` under
+  `"grid"` scope; `eCO2EmissionsGrid + eCO2EmissionsVIL ≤ CO2_limit` under
+  `"system"` scope.
 - 2035 village-emissions cut: `eCO2EmissionsVIL ≤ 0.65×BAU` when
-  `CO235reduction`.
-- RE share: weighted RE-flagged grid generation ≥ `RE_limit` × total grid
-  demand (active in `clean` runs). **Grid-only**: village generation is in
-  neither numerator nor denominator.
+  `CO235reduction` (either scope).
+- RE share (active in `clean` runs): under `"grid"` scope, weighted RE-flagged
+  grid generation ≥ `RE_limit` × total grid demand — village generation is in
+  neither numerator nor denominator. Under `"system"` scope, RE-flagged village
+  generation joins the numerator and village electricity demand the denominator
+  (village heat is out of scope either way). Both share expressions are always
+  built and reported (`Grid_REShare`, `System_REShare` in
+  `clean_energy_results.csv`); only the constrained one depends on the scope.
 
 ## Objective (574–687)
 
@@ -146,9 +152,10 @@ inherited stub, not loaded) would split investment (master) from dispatch
 
 Flagged for follow-up:
 
-- **Grid-only policy scope** — the CO₂ cap and RE-share floor apply to grid
-  generation only; village generation is outside both (avoids double-counting,
-  but a village can run on diesel without touching the grid target).
+- **Grid-only policy scope by default** — the CO₂ cap and RE-share floor apply
+  to grid generation only unless `policy_scope: "system"` is set (avoids
+  double-counting by default, but a village can run on diesel without touching
+  the grid target; the system scope closes that gap).
 - **Village exports unpriced by default** — `vVIL_EXPORT` earns revenue only
   when the `export_price` config key is set; at the default 0, surplus solar is
   spilled rather than sold. No shipped scenario sets a feed-in price (there is
