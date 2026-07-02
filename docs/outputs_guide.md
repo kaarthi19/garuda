@@ -52,7 +52,10 @@ segment × zone (or site): `Total_NSE_MWh`, `NSE_Percent_of_Demand`,
 `StartCostsGrid`, `StartCostsVIL`.
 
 **`clean_energy_results.csv`** — `CO2_Emissions` (total), `_Grid`, `_Village`,
-and `Grid_REShare` (grid generation only — village solar is excluded). Annual.
+`Grid_REShare` (grid generation only — village solar excluded) and
+`System_REShare` (grid + village generation over grid + village electricity
+demand). Both shares are always reported; which one the `clean` constraints
+enforce depends on the `policy_scope` config key (default `"grid"`). Annual.
 
 **`site_connection_results.csv`** (grid* scenarios) — per site: `Connected`
 (the co-optimised interconnection decision), `Total_Import_MWh`,

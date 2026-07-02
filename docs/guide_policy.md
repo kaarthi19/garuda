@@ -70,7 +70,9 @@ energy is the policy-relevant result, not any one absolute figure.
   benefit.
 - **reference vs clean** — `clean` imposes a JETP-style CO₂ cap and a minimum
   renewable share; `reference` does not. Comparing them shows the cost and build
-  implications of the policy.
+  implications of the policy. By default the cap and floor apply to the **grid
+  layer only**; an analyst can extend both to include village generation and
+  demand (`policy_scope: "system"`), and the report shows both shares either way.
 
 ## What to be careful about
 
