@@ -4,6 +4,10 @@
 Garuda answers, how to read a result, and what to be careful about — no modelling
 background assumed.*
 
+*Tersedia dalam Bahasa Indonesia: [`guide_policy_id.md`](guide_policy_id.md).
+The auto-report can also be rendered in Indonesian
+(`python tools/report.py <results_dir> --lang id`).*
+
 You do not need to run the model to use this guide; it explains how to interpret a
 Garuda report and where the tool fits. To commission a run, an analyst can follow
 [`guide_analyst.md`](guide_analyst.md) and hand you the auto-generated report.

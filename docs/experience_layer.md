@@ -44,7 +44,14 @@ Turn a finished scenario's result CSVs into one shareable **HTML** file and a
 ```bash
 python tools/report.py results/base_maluku_2030_reference            # writes report.html + report.pdf
 python tools/report.py results/gridvillage_timor_demo_2030_reference --open
+python tools/report.py results/base_maluku_2030_reference --lang id  # Bahasa Indonesia → report_id.html/.pdf
 ```
+
+`--lang id` renders every title, label, caption and the footer in Bahasa
+Indonesia (terminology follows common ESDM / PLN usage; the translation is a
+careful draft — partner review welcome). Table **column names stay canonical**
+(they are the documented output schema), and the language-suffixed filenames
+mean an Indonesian render never overwrites the English one.
 
 It reads whatever result CSVs are present (`cost_results`,
 `clean_energy_results`, `generator_results`, `reliability_results`, …) and

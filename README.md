@@ -1,5 +1,7 @@
 # Garuda — Grid And Renewable Utilization & Deployment Analysis
 
+[![ci](https://github.com/kaarthi19/garuda/actions/workflows/ci.yml/badge.svg)](https://github.com/kaarthi19/garuda/actions/workflows/ci.yml)
+
 **A sub-national, open-source energy-transition platform for Indonesia.**
 
 Garuda is a zonal capacity-expansion and operational model that resolves
@@ -50,7 +52,7 @@ engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 | **PyPSA export** | Hand the zonal network to [PyPSA](https://pypsa.org) (buses, links, generators, storage, loads, snapshots) instead of competing with it | `python tools/export_pypsa.py data_indonesia/2030/sulawesi --netcdf out.nc` |
 | **Parity check** | Prove the export reproduces the garuda dispatch engine (system-total unserved matches to 0.0000 % on maluku and a 6-zone grid-only sulawesi case) | `python tools/validate_pypsa_parity.py <folder> --reference <results_dir>` |
 | **Run launcher** | Validate inputs, preview scenario size + ETA, scaffold a config, optionally launch | `python tools/launcher.py --island maluku --year 2030 --scenario base --clean reference` |
-| **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability) | `python tools/report.py results/base_maluku_2030_reference` |
+| **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability); `--lang id` renders it in Bahasa Indonesia | `python tools/report.py results/base_maluku_2030_reference` |
 | **Coordination value** | The standalone-vs-coordinated delta (cost, diesel, emissions, unserved energy avoided) as one command — compare two runs, or solve both on HiGHS then compare | `python tools/coordination_value.py run --island timor_demo --year 2030` |
 
 See [`docs/pypsa_export.md`](docs/pypsa_export.md),
@@ -181,7 +183,8 @@ headline metrics. Import the CSVs into Python (pandas) or Julia for analysis.
 **New here? Start with the audience guide that fits you:**
 [data consumer](docs/guide_data_consumer.md) (developers) ·
 [analyst](docs/guide_analyst.md) (modellers) ·
-[policy](docs/guide_policy.md) (government / partners).
+[policy](docs/guide_policy.md) (government / CSOs / partners —
+[Bahasa Indonesia](docs/guide_policy_id.md)).
 
 | Document | Covers |
 |----------|--------|
