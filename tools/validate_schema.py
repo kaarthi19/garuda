@@ -134,6 +134,33 @@ def validate_dataset(folder: str):
     if "Max_Cap_MW" not in gens.columns:
         warn("generators.csv: no Max_Cap_MW column (new-build capacity will be unbounded)")
 
+    # ---- RE-flag consistency (warnings) ---------------------------------
+    # The RE flag feeds the RE-share floor and the reported Grid_REShare. Two
+    # inconsistency patterns have occurred in real data: fossil-fuelled units
+    # flagged RE=1 (inflates the share — the maluku a0cf7d5 class), and
+    # renewable technologies left at RE=0 (deflates it, against the datasets'
+    # own convention of flagging hydro/geothermal/bio/waste as RE).
+    RENEWABLE_TECHS = ("solar", "wind", "hydro", "geothermal", "biomass",
+                       "biogas", "trash")
+    if {"RE", "Fuel"} <= set(gens.columns) and "CO2_content_tons_per_MMBtu" in fuels.columns:
+        co2 = dict(zip(fuels["Fuel"].astype(str),
+                       pd.to_numeric(fuels["CO2_content_tons_per_MMBtu"], errors="coerce").fillna(0)))
+        re_flag = pd.to_numeric(gens["RE"], errors="coerce").fillna(0)
+        gco2 = gens["Fuel"].astype(str).map(co2).fillna(0)
+        hr = pd.to_numeric(gens.get("Heat_Rate_MMBTU_per_MWh", 0), errors="coerce").fillna(0)
+        name = gens["Resource"].astype(str) if "Resource" in gens.columns else gens["R_ID"].astype(str)
+        fossil_re = name[(re_flag == 1) & (gco2 > 0) & (hr > 0)].tolist()
+        if fossil_re:
+            warn("generators.csv: RE=1 on fossil-fuelled unit(s) — inflates the RE share "
+                 f"and weakens the RE_limit constraint: {fossil_re}")
+        if "technology" in gens.columns:
+            tech = gens["technology"].astype(str).str.lower()
+            is_ren = tech.str.contains("|".join(RENEWABLE_TECHS), na=False)
+            unflagged = name[(re_flag == 0) & is_ren & (gco2 == 0)].tolist()
+            if unflagged:
+                warn("generators.csv: renewable technology with RE=0 — excluded from the "
+                     f"RE share against the data convention: {unflagged}")
+
     # ---- demand.csv: time structure ------------------------------------
     P = H = T = None
     for c in ("Rep_Periods", "Timesteps_per_Rep_Period", "Sub_Weights", "r_id"):
