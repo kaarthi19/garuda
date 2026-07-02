@@ -54,8 +54,12 @@ and `Grid_REShare` (grid generation only — village solar is excluded). Annual.
 
 **`site_connection_results.csv`** (grid* scenarios) — per site: `Connected`
 (the co-optimised interconnection decision), `Total_Import_MWh`,
-`Total_Export_MWh`. `Total_Export_MWh` is structurally 0: exports are modelled
-but unremunerated (see `MODEL.md`), so the solver never chooses to export.
+`Total_Export_MWh`. Exports are modelled but **unremunerated** (see `MODEL.md`),
+so a nonzero `Total_Export_MWh` is never revenue-driven — it is a degenerate
+free spill of surplus solar (curtailing would cost the same); do not interpret
+it economically. Under `relax_uc` the connect binary is LP-relaxed, so
+`Connected` can be fractional (a village paying 1 % of the connection cost for
+1 % of the capacity); the exact-UC MILP forces a 0/1 decision.
 
 **`transmission_results.csv`** — per corridor: existing, optimised, and change
 in transfer capacity. `Change_in_Transfer_Capacity > 0` is grid reinforcement.

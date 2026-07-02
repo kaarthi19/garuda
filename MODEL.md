@@ -145,9 +145,11 @@ Flagged for follow-up:
   but a village can run on diesel without touching the grid target).
 - **Unpriced village exports** — `vVIL_EXPORT` is modelled but earns no revenue,
   so surplus solar is spilled rather than sold to the grid.
-- **Flat import price** — `import_price` is a single $/MWh; the per-village
-  distance to the grid (`hubdist_km`, computed by the siting pipeline) is not yet
-  used to derive a distance-based extension cost.
+- **Flat import *energy* price** — `import_price` is a single $/MWh with no
+  time-of-day or tariff structure. (The interconnection *capex* side is
+  distance-based: `village_connection.csv::Cost_per_yr` is derived from each
+  village's `hubdist_km` — see `tools/connection_cost.py` — and datasets without
+  the file fall back to free connection.)
 - **Single-year snapshots** — 2030 and 2035 are solved independently; no vintage
   linkage, retirement-by-age, or learning curves across years.
 - **No reserve constraints** — adequacy is represented only by priced non-served
