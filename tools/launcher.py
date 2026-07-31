@@ -117,6 +117,8 @@ def build_config(args):
         "solver": args.solver,
         "mipgap": float(args.mipgap),
     }
+    if str(args.run_tag).strip():
+        cfg["run_tag"] = str(args.run_tag).strip()
     return cfg
 
 
@@ -133,6 +135,10 @@ def main(argv):
     ap.add_argument("--exact-uc", dest="relax_uc", action="store_false",
                     help="keep an exact UC (MILP) dispatch instead of the LP relaxation")
     ap.add_argument("--mipgap", type=float, default=0.01)
+    ap.add_argument("--run-tag", dest="run_tag", default="",
+                    help="suffix the results folder (results/<scenario>_<island>_<year>_"
+                         "<clean>__<tag>/) so runs differing only by config keys "
+                         "do not overwrite each other")
     ap.add_argument("--co2-limit", dest="co2_limit", default=1.0e12,
                     help="CO2 cap (tCO2) for clean runs; default effectively unconstrained")
     ap.add_argument("--bau", default=0.0, help="BAU CO2 emissions (tCO2) for 2035 clean runs")
@@ -143,7 +149,10 @@ def main(argv):
     args = ap.parse_args(argv[1:])
 
     folder = os.path.join(args.data_root, str(args.year), args.island)
-    name = f"{args.scenario}_{args.island}_{args.year}_{args.clean}"
+    # Same name (with the optional run_tag suffix) as functions/preflight.jl builds.
+    tag = str(args.run_tag).strip()
+    name = (f"{args.scenario}_{args.island}_{args.year}_{args.clean}"
+            + (f"__{tag}" if tag else ""))
     print(f"== garuda launcher — {name} ==")
     print(f"input folder: {folder}")
     if not os.path.isdir(folder):

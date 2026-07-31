@@ -14,21 +14,25 @@ energy, connections) move. One-at-a-time by default; full grid opt-in.
 
 Two kinds of axis, both expressed as multipliers on the base:
 
-- **Dataset axes** (`fuel`, `demand`, `solar_cf`) copy the input folder to an
-  auditable sibling variant — e.g. `data_indonesia/2030/timor_demo__fuel1.2/` —
-  and scale the relevant CSV columns there (fuel: `fuels_data.csv::
-  Cost_per_MMBtu`; demand: every `demand_z*` and site demand column; solar_cf:
-  every solar resource's availability column, clipped to [0,1]). Variants are
-  plain datasets: they pass `validate_schema.py` and any tool can inspect them.
-  They are derived artifacts, gitignored (`data_indonesia/*/*__*/`).
+- **Dataset axes** (`fuel`, `demand`, `solar_cf`, `connection_cost`,
+  `connect_cap`) copy the input folder to an auditable sibling variant — e.g.
+  `data_indonesia/2030/timor_demo__fuel1.2/` — and scale the relevant CSV columns
+  there (fuel: `fuels_data.csv::Cost_per_MMBtu`; demand: every `demand_z*` and
+  site demand column; solar_cf: every solar resource's availability column,
+  clipped to [0,1]). Variants are plain datasets:
+  they pass `validate_schema.py` and any tool can inspect them. They are derived
+  artifacts, gitignored (`data_indonesia/*/*__*/`).
 - **Config axes** (`import_price`, `export_price`) need no dataset copy — the
   multiplier applies to the base value in the run's `config.json`.
 
 Each run solves through the normal pipeline (`run_model.jl`; LP-relaxed
 expansion on HiGHS by default, same as the demo walkthrough) into the standard
-`results/<scenario>_<island>__<tag>_<year>_<clean>/` folders, so every variant
-result is a first-class run — reportable with `tools/report.py`, comparable
-with `tools/coordination_value.py`.
+results folders, so every variant result is a first-class run — reportable with
+`tools/report.py`, comparable with `tools/coordination_value.py`. A dataset-axis
+run is named after its variant dataset
+(`results/<scenario>_<island>__<tag>_<year>_<clean>/`); a config-axis run reuses
+the base dataset and is separated by a `run_tag` suffix instead
+(`results/<scenario>_<island>_<year>_<clean>__<tag>/`).
 
 Outputs: `results/sensitivity_<scenario>_<island>_<year>_<clean>/`
 `sensitivity_results.csv` (one row per run × headline metrics) and
@@ -192,7 +196,13 @@ def base_config(args):
 
 
 def run_one(cfg, results_root):
-    name = f"{cfg['scenario']}_{cfg['island']}_{cfg['year']}_{cfg['clean']}"
+    # Mirrors the results-folder name built in functions/preflight.jl (including
+    # the optional run_tag suffix) so the `<name>.config.json` sidecar stays
+    # paired with its run — coordination_value.load_metrics finds the sidecar by
+    # the run folder's basename.
+    tag = str(cfg.get("run_tag", "")).strip()
+    name = (f"{cfg['scenario']}_{cfg['island']}_{cfg['year']}_{cfg['clean']}"
+            + (f"__{tag}" if tag else ""))
     cfg_path = os.path.join(results_root, name + ".config.json")
     os.makedirs(results_root, exist_ok=True)
     with open(cfg_path, "w") as fh:
@@ -314,9 +324,15 @@ def main(argv):
     for tag, changes in plan:
         cfg = base_config(args)
         ds_changes = [(a, m) for a, m in sorted(changes.items()) if a in DATASET_AXES]
-        for axis, mult in changes.items():
-            if axis in CONFIG_AXES:
-                cfg[axis] = round(cfg[axis] * mult, 6)
+        cfg_changes = {a: m for a, m in changes.items() if a in CONFIG_AXES}
+        for axis, mult in cfg_changes.items():
+            cfg[axis] = round(cfg[axis] * mult, 6)
+        # A config-axis variant reuses the base dataset, so its results folder
+        # would collide with the base run's (and with every other config-axis
+        # point) — each run would overwrite the last and the summary would report
+        # one run eight times. run_tag suffixes the folder to keep them distinct.
+        if cfg_changes:
+            cfg["run_tag"] = "_".join(f"{a}{m:g}" for a, m in sorted(cfg_changes.items()))
         if ds_changes:
             variant = make_variant(args.data_root, args.year, args.island, ds_changes)
             errors, _w = validate_dataset(os.path.join(args.data_root, str(args.year), variant))
