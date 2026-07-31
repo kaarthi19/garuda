@@ -41,6 +41,14 @@ binary `vVIL_CONNECT[vil]` (89–107), with import and export each capped by
 per-village `Max_Cap_MW` land/resource ceiling when positive (109–125); new
 village storage energy is bounded per unit by `village_storage_max_mwh`.
 
+Site storage power and energy are **co-optimised independently** by default, so
+the built duration floats to whatever the dispatch wants. Setting the
+`battery_duration_h` config key (> 0) adds `cVILStorDuration`,
+`vVIL_E_CAP = battery_duration_h × vVIL_CAP` over new site storage — a
+fixed-duration battery product, which is what makes the power capex
+(`Inv_Cost_per_MWyr`) bind the energy build. `0` (the default) omits the
+constraint entirely.
+
 `vVIL_EXPORT` supplies the zonal balance (132–140) and is debited from the
 village balance in `Grid` scenarios (341–364). **By default it earns nothing**
 (`export_price = 0`, the config default) — a free spill path for surplus that
