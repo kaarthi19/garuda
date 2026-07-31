@@ -33,3 +33,7 @@ concept_note.md
 
 # Sensitivity-sweep dataset variants (derived from the base by tools/sensitivity.py)
 data_indonesia/*/*__*/
+
+# ERA5 download + derived hourly CF (~87 MB; regenerate with
+# tools/solar_resource_era5.py, which defaults --out-dir here)
+solar_era5/

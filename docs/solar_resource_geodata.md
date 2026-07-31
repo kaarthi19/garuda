@@ -71,15 +71,24 @@ equator-facing (azimuth 0 = North in the southern hemisphere). Override with
 ## Wiring into the model
 
 `village_generators_variability.csv` uses the model's representative periods
-(currently 8 weeks × 168 h = 1,344 hours, not full 8760). To connect:
+(currently 8 weeks × 168 h = 1,344 hours, not full 8760). This script writes the
+same `village_solar_cf_hourly.csv` layout as the ERA5 path, so use the same tool
+to connect it:
 
-1. Run this script → `village_solar_cf_hourly.csv` (full year).
-2. Subset/average those 8760 hours to the **same representative weeks** the
-   demand files use (the rep-period structure is defined in `demand.csv`; pick
-   the same `corresponding_week` hours).
-3. Write the result as the solar columns of `village_generators_variability.csv`,
-   one column per village solar generator in `R_ID` order (see
-   `data_indonesia/README.md` for the variability-file convention).
+```bash
+python -m tools.ntt.wire_era5_solar \
+    --cf <out-dir>/village_solar_cf_hourly.csv \
+    --dataset data_indonesia/2030/timor \
+    --out-dataset timor_geodata
+```
+
+It reads the representative weeks from the **target dataset's own**
+`demand.csv::corresponding_week` (they differ per dataset — `timor` uses
+2, 9, 16, 24, 32, 40, 46, 52; `nusa_tenggara` uses 24, 3, 4, 45, 8, 46, 39, 5),
+maps each profile onto its solar unit's `R_ID` position via an explicit join on
+`village_generators.csv`, keeps diesel/battery flat at 1.0, and schema-validates
+the result. See [`solar_resource_era5.md`](solar_resource_era5.md#wiring-into-the-model)
+for the two silent failure modes it closes.
 
 The annual `mean_cf` can also feed the spatial weighting in
 `resource_siting.py` if you want per-village solar *quality* to modulate the
