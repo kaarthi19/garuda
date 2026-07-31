@@ -80,16 +80,51 @@ after +8 the PV peak lands at local hour 12 with a clean midday bell curve.
 ## Wiring into the model
 
 `village_generators_variability.csv` uses the model's representative periods
-(8 weeks × 168 h = 1,344 h), not full 8760. To connect:
+(8 weeks × 168 h = 1,344 h), not the full 8760. `tools/ntt/wire_era5_solar.py`
+does the slicing and the column mapping in one non-destructive step:
 
-1. Run this script → `village_solar_cf_hourly.csv` (full year).
-2. Subset those hours to the **same representative weeks** the demand files use
-   (defined by `corresponding_week` in `demand.csv`).
-3. Write the result as the solar columns of `village_generators_variability.csv`,
-   one per village solar generator in `R_ID` order (see `data_indonesia/README.md`).
+```bash
+python -m tools.ntt.wire_era5_solar \
+    --cf solar_era5/village_solar_cf_hourly.csv \
+    --dataset data_indonesia/2030/timor \
+    --out-dataset timor_era5
+```
+
+It copies the dataset, patches the copy's solar columns, verifies every non-solar
+column is still flat 1.0 and every value is in [0, 1], and runs the schema
+validator. Omit `--out-dataset` for a dry run that only reports.
+
+**The representative weeks belong to the dataset, not to the tool.** They are
+read from the target's own `demand.csv::corresponding_week` — `timor` uses
+2, 9, 16, 24, 32, 40, 46, 52 while `nusa_tenggara` uses 24, 3, 4, 45, 8, 46, 39, 5.
+This is the trap the tool exists to close: slicing the wrong dataset's weeks still
+produces 8 × 168 rows, so a row-count check cannot detect it, and the solar profile
+silently stops lining up with the demand hours. `--weeks` overrides, with a warning.
+
+**Columns map to generators by position.** `input_data.jl` drops the first column
+and indexes the rest by `R_ID`, so a profile is written at the solar unit's `R_ID`
+position; which village it belongs to comes from an explicit join on
+`village_generators.csv` (`technology == 'solar'` → `Resource`, `Village`). Pairing
+the Nth `plts_*` column with the Nth village happens to work on `timor` today, but
+one village with two solar units shifts every later column by one.
 
 `mean_cf` can also weight the developable-MW figure from `resource_siting.py`
 (sunnier villages weighted up), and `--target-flh` keeps annual energy honest.
+
+### Resolution caveat — read before quoting an inter-village correlation
+
+ERA5's grid is ~28 km, and **153 of Timor's 780 villages carry no coordinates**
+in `timor_villages_manifest.csv` (verifiable: `lat`/`lon` are blank for exactly
+153 rows). Those villages fall back to the island centroid of the located ones,
+`(-9.69766, 124.36616)`, so they all sample the *same* ERA5 cell. Together with
+the grid spacing, 780 villages collapse onto a few dozen distinct profiles.
+A high inter-village CF correlation is therefore **partly a data artifact**, not
+only real weather synchrony — do not present it as evidence that village solar
+output is genuinely coincident across Timor.
+
+The downloads and derived CF live in `solar_era5/`, which is **gitignored**
+(~87 MB, and regenerable by this script). Nothing in the repo depends on it being
+present; `wire_era5_solar.py` fails with a pointer to this page if it is missing.
 
 ## Related
 
