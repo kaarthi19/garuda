@@ -136,6 +136,50 @@ def test_launcher_run_tag_is_optional():
     assert cfg["run_tag"] == "cc0.0", "the tag must be stripped, matching preflight.jl"
 
 
+def test_shipped_scenario_yamls_only_set_keys_that_survive():
+    """A YAML key outside PASSTHROUGH_KEYS is silently dropped — the D1 failure mode.
+
+    Guards the scenario files themselves, not just the generators: it is just as
+    easy to write `export_price: 40` into a YAML that the generator will ignore.
+    """
+    import glob
+
+    import yaml
+
+    structural = {"islands", "years", "scenarios", "cleans", "island_params", "co2_limits"}
+    allowed = set(generate_jobs.PASSTHROUGH_KEYS)
+    offenders = {}
+    files = sorted(glob.glob(os.path.join(REPO_ROOT, "scenario_*.yml")))
+    assert files, "expected shipped scenario YAMLs"
+    for path in files:
+        with open(path, encoding="utf-8") as fh:
+            data = yaml.safe_load(fh) or {}
+        dropped = sorted(set(data) - structural - allowed)
+        if dropped:
+            offenders[os.path.basename(path)] = dropped
+    assert not offenders, (
+        f"these scenario YAMLs set keys the job generators drop: {offenders}. "
+        "Either add the key to PASSTHROUGH_KEYS (and make the model read it) or "
+        "remove it from the YAML — as written it does nothing."
+    )
+
+
+def test_coordination_scenarios_come_in_pairs():
+    """Coordination value is a difference, so a lone `gridvillage` answers nothing."""
+    import yaml
+
+    for name in ("scenario_timor.yml", "scenario_timor_market.yml"):
+        path = os.path.join(REPO_ROOT, name)
+        if not os.path.isfile(path):
+            continue
+        with open(path, encoding="utf-8") as fh:
+            scenarios = set(yaml.safe_load(fh)["scenarios"])
+        assert {"village", "gridvillage"} <= scenarios, (
+            f"{name} runs {sorted(scenarios)}; the OFF/ON pair is needed to compute "
+            "a coordination value at all"
+        )
+
+
 def test_generate_jobs_writes_optional_keys(tmp_path, monkeypatch):
     """End-to-end: a YAML key in the whitelist reaches the job's config.json."""
     from click.testing import CliRunner
