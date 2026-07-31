@@ -100,6 +100,14 @@ A model is a decision aid, not an oracle. Before quoting a number:
    same report.
 5. **Costs are comparative.** Use cost differences between scenarios; the absolute
    M$/yr depends on modelling scope.
+6. **The coordination value can be zero — and on the only case measured at full
+   scale, it is.** On all 780 real Timor villages the island-wide benefit of
+   coordinating is at most **$2,569/yr on a $64.6 M/yr system (0.004 %)**, and at
+   full interconnection cost **no village connects**: standalone solar + storage
+   beats a wire. A zero is a finding, not a failed run — it says build local rather
+   than interconnect *for these villages, at these distances*. The measurement,
+   with its scope limits, is in
+   [`coordination_findings_timor.md`](coordination_findings_timor.md).
 
 ## Open, auditable, reproducible
 

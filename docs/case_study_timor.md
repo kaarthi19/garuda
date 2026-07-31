@@ -87,3 +87,9 @@ standalone (`village`) and coordinated (`gridvillage`) scenarios, and quantify
 the **coordination value** — the grid reinforcement and diesel avoided when
 village solar and grid expansion are planned together — with
 [`tools/coordination_value.py`](coordination_value.md).
+
+On this case that value has been measured, and it is **~0**: at most $2,569/yr on
+a $64.6 M/yr system, with no village connecting at full interconnection cost.
+Standalone solar + storage beats a wire for villages this small and this far
+apart. See [`coordination_findings_timor.md`](coordination_findings_timor.md) for
+the numbers and, importantly, the limits of what they show.

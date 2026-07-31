@@ -41,6 +41,8 @@ Audience-oriented entry points — each routes you to the detailed docs below.
 | [pypsa_export.md](pypsa_export.md) | Export the zonal network to PyPSA + dispatch-parity validation (Phase 4) |
 | [experience_layer.md](experience_layer.md) | The guided run launcher and the HTML/PDF auto-report (Phase 5) |
 | [coordination_value.md](coordination_value.md) | Coordination value — the standalone-vs-coordinated delta as one command |
+| [coordination_findings_timor.md](coordination_findings_timor.md) | **The measured result** on all 780 Timor villages — why the coordination value is ~0, and what that does and does not mean |
+| [scenario_design_timor.md](scenario_design_timor.md) | **Read before designing a Timor run** — the three scenario paths, and the register of scenarios that are *void, not null* |
 | [sensitivity.md](sensitivity.md) | Sensitivity sweeps — perturb fuel/demand/CF/prices, solve variants, summarise robustness |
 | [case_study_timor.md](case_study_timor.md) | Worked Timor / NTT demonstration (siting → per-village solar → coordination) |
 | [demo_walkthrough.md](demo_walkthrough.md) | The laptop demo sequence, HiGHS-only (no licence) |

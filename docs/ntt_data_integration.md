@@ -163,7 +163,13 @@ sheet-by-sheet translation and validation table.
 - **Shared grid backstop** — a minimal single-zone grid (`generators.csv` with one
   PLN diesel, zero separate grid demand, plus `demand.csv`,
   `generators_variability.csv`, `fuels_data.csv`, single-zone `network.csv`) so
-  the bus can supply/absorb and the model can exercise the grid scenario.
+  the bus can **supply** village imports and the model can exercise the grid
+  scenario. It cannot **absorb** village exports for their own sake: `vGEN >= 0`
+  means a generator cannot sink power, this dataset has no grid storage (the
+  `STOR` set is empty), and `demand_z1` is 0 for all 1344 hours — so the zonal
+  balance forces `Σ village export ≤ Σ village import` every hour. Village↔village
+  sharing is fully representable; village→grid **sales** are not. Add a grid load
+  first (§6a).
 - **`timor_villages_manifest.csv`** — village → kabupaten / archetype / GHI /
   households / coords / demand, for re-joining results.
 
@@ -184,6 +190,109 @@ connection made cheap, **18/81 connect and surplus solar flows village→bus→v
 many villages connect is sensitive to the interconnection-cost calibration and
 to village heterogeneity (GHI/demand diversity); tune `village_connection.csv`
 for the study.
+
+---
+
+## 6a. Giving the grid bus a real load (`build_grid_demand.py`)
+
+`timor` ships `demand_z1 = 0` for all 1344 hours. That is deliberate and it is
+fine for the coordination question, but it makes any **export** question
+unanswerable: with no grid load, no grid storage and `vGEN ≥ 0`, the zonal
+balance forces `Σ village export ≤ Σ village import` in every hour. A run on
+plain `timor` with `export_price > 0` measures a data artifact — village↔village
+sharing — not village→grid sales.
+
+```bash
+# inspect the derivation (writes nothing)
+python -m tools.ntt.build_grid_demand --share 0.42
+
+# build the market dataset
+python -m tools.ntt.build_grid_demand --share 0.42 \
+    --out-dataset timor__market --fleet rescale
+```
+
+**Where the load comes from.** `nusa_tenggara` is the only committed dataset
+covering NTT, and its **zone 2 is East Nusa Tenggara** — the province Timor sits
+in. The donor ships no `zones.csv`, so the zone identity is read from
+`generators.csv::Province` (`east_nusa_tenggara` → zone 2), overridable with
+`--donor-zone`.
+
+**Annualisation must use the donor's own `Sub_Weights`.** They are non-uniform
+(2022, 505, 168, 2527, 1516, 842, 337, 843 hours; the target's are a uniform
+1095), so the two annualisations disagree:
+
+| | GWh/yr |
+|---|---:|
+| donor zone 2, **weighted** (correct) | **2,919** |
+| donor zone 2, equal-weight (wrong, +2.9 %) | 3,003 |
+
+**The derivation**, at the default `--share 0.42`:
+
+| Step | Value |
+|---|---:|
+| donor zone 2, weighted | 2,919 GWh/yr, peak 419 MW, LF 0.82 |
+| × Timor share 42 % → gross Timor system | 1,226 GWh/yr, peak 176 MW |
+| − village load (already separate nodes) | 544 GWh/yr |
+| **= `demand_z1`** | **682 GWh/yr, peak 124 MW, LF 0.63** |
+
+The share is an assumption sitting in front of the headline: 0.42 is PLN's
+Sistem Timor peak (131 MW) over NTT's (296.6 MW), bracketed by 0.33 (population
+share) and 0.47. At 0.42 the implied growth from Timor's actual 131 MW in 2025 is
++6.1 %/yr, consistent with Flores at 8.26 %/yr.
+
+**Two things the tool is careful about.**
+
+- **Double counting.** The 780 villages are already modelled as their own nodes
+  *and* they sit inside the provincial total, so village load is netted out hour
+  by hour: `demand_z1[t] = share × donor_z2[t] − Σ village demand[t]`. At 0.42 six
+  of 1344 hours net slightly below zero (village load exceeds Timor's share of
+  the provincial load in those hours — an artifact of differencing a top-down
+  provincial forecast against a bottom-up household build-up); they are clipped
+  to 0, which adds 0.24 GWh/yr, and both numbers are printed. The clipped hours
+  disappear at `--share 0.47`.
+- **The donor's calendar weeks differ.** Donor weeks are 24, 3, 4, 45, 8, 46, 39,
+  5; the target's are 2, 9, 16, 24, 32, 40, 46, 52. The hourly shape is carried
+  across position-for-position and rescaled so the gross annual is exact under the
+  *target's* weights. This transplants load **shape, not season** — defensible for
+  NTT's weakly seasonal load, but it is an assumption.
+
+**`--fleet` is mandatory when writing a dataset.** `timor/generators.csv` is one
+non-expandable 122 MW diesel. Write ~124 MW of grid peak against it and the
+balance closes on segment-1 non-served energy at
+`Voll × Max_Demand_Curtailment` = **$2,000/MWh**, which values every exported
+village MWh at scarcity — garbage that reads as a spectacular business case. So:
+
+- `--fleet rescale` transplants the donor zone's fleet onto the Timor bus.
+  **Existing** units are allocated by name (`--existing named`, the default):
+  `pltu_kupang_ftp1`, `pltu_timor_1` and `pltu_atambua` are physically on Timor and
+  carried at 100 % (157 MW); `pltu_ende_ftp1`, `pltu_alor` and `pltu_rote_ndao` are
+  on other islands in the same province and dropped. `--existing rescale` instead
+  gives Timor `--share` of every plant. **Candidates** are scaled by `--share`.
+- `--fleet none` keeps the base fleet and prints the warning above.
+
+Two donor-data traps the tool handles, both worth knowing if you write another
+transplant:
+
+- **Fuel prices disagree between the datasets.** `nusa_tenggara` prices diesel at
+  **$0.5659/MMBtu**; `timor` prices it at **$18/MMBtu** (the NTT field number
+  behind the ~$197/MWh grid-diesel marginal cost). `--fuel-source target` (the
+  default) keeps the target's prices and adds only the fuels it lacks (coal, gas,
+  biomass, biogas); `--fuel-source donor` takes the donor table wholesale and
+  **replaces** the diesel price. Getting this wrong moves grid diesel from
+  ~$197/MWh to ~$14/MWh and decides the export result by itself.
+- **`generators_variability.csv` maps to generators by POSITION, not by name.**
+  `input_data.jl` drops the first column and indexes the rest by `R_ID`, padding
+  missing trailing columns with 1.0. The donor repeats 26 resource names
+  (`plts_sumba` nine times), so its CSV has duplicate headers and its column names
+  stop matching its own generator order from position 9 on. A by-name lookup
+  silently wires the wrong profile onto a unit.
+
+**Known limitation.** The transplanted candidate set carries NTT-*wide*
+renewable potential scaled by `--share`, not Timor-sited potential: at 0.42 that
+is 4,290 MW of wind and 3,132 MW of solar against a 124 MW peak. Most of it will
+never be built, but it does set the marginal price. Use `--drop-tech wind` (and
+inspect the printed candidate-by-technology table) when that matters, and treat
+the grid-side new-build costs as a swept parameter rather than a given.
 
 ---
 

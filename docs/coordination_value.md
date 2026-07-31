@@ -68,6 +68,33 @@ that); `--solver gurobi` selects it.
 - **Sign check** — a coordinated plan that costs *more* than the reference is
   flagged (settings mismatch or a non-optimal solve).
 
+## What it measures in practice
+
+This tool has been run at full scale, and the answer was **zero** — worth knowing
+before you interpret your own output.
+
+On all 780 real Timor villages the island-wide coordination value is at most
+**$2,569/yr against a $64.6 M/yr system (0.004 %)**, and at full interconnection
+cost **no village connects**. That is 250–1400× below the ~1 % threshold this page
+already calls "indistinguishable from zero", so it is not a marginal call. Note
+also that the $2,569/yr was measured with connection made *free* — precisely the
+overstated case the [Definition](#definition) warns about — so the real value is
+lower still, not higher.
+
+Two things to carry into your own reading:
+
+- **A zero here is a result, not a broken run.** It says standalone solar +
+  storage beats a wire for these villages at these distances. The useful output in
+  that case is the per-village *decision* (`site_connection_results.csv`), not the
+  headline delta.
+- **Check what your pair actually varies.** On a dataset whose grid zone has no
+  load, "coordination" can only mean village↔village sharing — the grid bus cannot
+  absorb exports for their own sake. That is a different question from whether
+  villages could sell into the grid.
+
+Full measurement, scope limits and reproduction commands:
+[`coordination_findings_timor.md`](coordination_findings_timor.md).
+
 ## Outputs
 
 A console table plus, in the coordinated run's directory (or `--out`):

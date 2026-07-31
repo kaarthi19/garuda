@@ -21,16 +21,31 @@ islands:
 years:
   - "2030"
 
+# Both halves of the coordination question. Running only `gridvillage` gives a
+# cost with nothing to compare it against — the coordination value is the
+# DIFFERENCE between the two, so a lone gridvillage run answers nothing.
 scenarios:
-  - gridvillage
+  - village       # coordination OFF — each village an islanded solar+battery+diesel microgrid
+  - gridvillage   # coordination ON  — villages may connect and trade surplus
 
 cleans:
   - reference
 
-# Optional model parameters passed through to every job's config.json
+# Optional model parameters passed through to every job's config.json.
+# Every key here must also appear in PASSTHROUGH_KEYS in generate_jobs.py /
+# generate_jobs_local.py, or it is silently dropped and the run solves at the
+# model default while the output CSVs look completely normal.
 mipgap: 0.01
 
-# Baseline BAU CO2 emissions (tonnes CO2) — placeholder for clean runs
+# Baseline BAU CO2 emissions (tonnes CO2).
+#
+# WARNING — PLACEHOLDER, DO NOT RUN A DECARBONISATION SCENARIO OFF THIS.
+# Timor's actual village fleet emits roughly 75,000 tCO2/yr (~98 GWh of village
+# diesel at ~0.77 tCO2/MWh), so 3,000,000 t is about 40x slack: the cap cannot
+# bind, and a `clean` run would report "the CO2 constraint costs nothing" as a
+# modelling artifact rather than a result. Set these from measured emissions
+# (clean_energy_results.csv::CO2_Emissions_Village on a reference run) before
+# using them. See docs/scenario_design_timor.md.
 island_params:
   timor: 3000000
 

@@ -28,6 +28,9 @@ def _dataset(folder):
       .to_csv(os.path.join(folder, "generators.csv"), index=False)
     pd.DataFrame({"r_id": [1, 2], "pltd_x": [1.0, 1.0], "plts_x": [0.6, 0.9]}) \
       .to_csv(os.path.join(folder, "generators_variability.csv"), index=False)
+    pd.DataFrame({"Village": [1, 2], "Cost_per_yr": [10000, 50000],
+                  "Max_Connect_MW": [0.1, 0.25]}) \
+      .to_csv(os.path.join(folder, "village_connection.csv"), index=False)
 
 
 def test_perturb_fuel_skips_none(tmp_path):
@@ -55,6 +58,53 @@ def test_perturb_solar_cf_clips_and_targets_solar_only(tmp_path):
     assert abs(float(v.plts_x.iloc[0]) - 0.9) < 1e-12   # 0.6*1.5
     assert float(v.plts_x.iloc[1]) == 1.0               # 0.9*1.5 clipped
     assert list(v.pltd_x) == [1.0, 1.0]                 # non-solar untouched
+
+
+def test_perturb_connection_cost_scales_cost_only(tmp_path):
+    """The connect-vs-island price moves; the interconnection capacity does not."""
+    f = str(tmp_path / "ds"); _dataset(f)
+    sx.perturb_connection_cost(f, 0.0)
+    c = pd.read_csv(os.path.join(f, "village_connection.csv"))
+    assert list(c.Cost_per_yr) == [0.0, 0.0], "connection made free"
+    assert list(c.Max_Connect_MW) == [0.1, 0.25], "capacity must be untouched"
+    assert list(c.Village) == [1, 2]
+
+
+def test_perturb_connect_cap_scales_cap_only(tmp_path):
+    """Export headroom moves; the price of connecting does not."""
+    f = str(tmp_path / "ds"); _dataset(f)
+    sx.perturb_connect_cap(f, 20.0)
+    c = pd.read_csv(os.path.join(f, "village_connection.csv"))
+    assert list(c.Max_Connect_MW) == [2.0, 5.0]
+    assert list(c.Cost_per_yr) == [10000, 50000], "cost must be untouched"
+
+
+def test_connection_axes_are_independent(tmp_path):
+    """Both applied together must not interfere — they are separate columns."""
+    f = str(tmp_path / "ds"); _dataset(f)
+    sx.perturb_connection_cost(f, 0.5)
+    sx.perturb_connect_cap(f, 4.0)
+    c = pd.read_csv(os.path.join(f, "village_connection.csv"))
+    assert list(c.Cost_per_yr) == [5000.0, 25000.0]
+    assert list(c.Max_Connect_MW) == [0.4, 1.0]
+
+
+def test_connection_perturbations_are_noops_without_the_file(tmp_path):
+    f = str(tmp_path / "ds"); _dataset(f)
+    os.remove(os.path.join(f, "village_connection.csv"))
+    sx.perturb_connection_cost(f, 0.0)     # must not raise
+    sx.perturb_connect_cap(f, 5.0)
+    assert not os.path.isfile(os.path.join(f, "village_connection.csv"))
+
+
+def test_new_axes_are_registered():
+    for axis in ("connection_cost", "connect_cap"):
+        assert axis in sx.DATASET_AXES
+        assert axis in sx.AXES
+        assert axis in sx.PERTURB
+    assert "battery_duration_h" in sx.CONFIG_AXES
+    # every dataset axis must have a perturbation, or make_variant KeyErrors mid-sweep
+    assert set(sx.DATASET_AXES) == set(sx.PERTURB)
 
 
 def test_make_variant_copies_and_tags(tmp_path):
