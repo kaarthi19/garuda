@@ -19,7 +19,8 @@ Two kinds of axis, both expressed as multipliers on the base:
   `data_indonesia/2030/timor_demo__fuel1.2/` — and scale the relevant CSV columns
   there (fuel: `fuels_data.csv::Cost_per_MMBtu`; demand: every `demand_z*` and
   site demand column; solar_cf: every solar resource's availability column,
-  clipped to [0,1]). Variants are plain datasets:
+  clipped to [0,1]; connection_cost: `*_connection.csv::Cost_per_yr`;
+  connect_cap: `*_connection.csv::Max_Connect_MW`). Variants are plain datasets:
   they pass `validate_schema.py` and any tool can inspect them. They are derived
   artifacts, gitignored (`data_indonesia/*/*__*/`).
 - **Config axes** (`import_price`, `export_price`) need no dataset copy — the
@@ -68,7 +69,7 @@ except ImportError:  # pragma: no cover
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DATASET_AXES = ("fuel", "demand", "solar_cf")
+DATASET_AXES = ("fuel", "demand", "solar_cf", "connection_cost", "connect_cap")
 CONFIG_AXES = ("import_price", "export_price", "battery_duration_h")
 AXES = DATASET_AXES + CONFIG_AXES
 
@@ -141,7 +142,51 @@ def perturb_solar_cf(folder, mult):
         _write(v, vp)
 
 
-PERTURB = {"fuel": perturb_fuel, "demand": perturb_demand, "solar_cf": perturb_solar_cf}
+CONNECTION_FILES = ("site_connection.csv", "village_connection.csv", "ip_connection.csv")
+
+
+def _perturb_connection(folder, mult, column):
+    """Scale one column of whichever connection file the dataset uses."""
+    for name in CONNECTION_FILES:
+        p = os.path.join(folder, name)
+        if not os.path.isfile(p):
+            continue
+        c = _read(p)
+        if column not in c.columns:
+            continue
+        c[column] = pd.to_numeric(c[column], errors="coerce") * mult
+        _write(c, p)
+
+
+def perturb_connection_cost(folder, mult):
+    """Scale every site's grid-interconnection Cost_per_yr (Max_Connect_MW untouched).
+
+    This is the connect-vs-island price. `connection_cost=0` makes interconnection
+    free, which is the upper bound on coordination value: whatever the coordinated
+    plan saves when the connection itself costs nothing, it can never save more.
+    """
+    _perturb_connection(folder, mult, "Cost_per_yr")
+
+
+def perturb_connect_cap(folder, mult):
+    """Scale every site's Max_Connect_MW (Cost_per_yr untouched).
+
+    Interconnection is sized at `CONNECT_MAX_FACTOR` (1.5) x the site's *own* peak
+    demand (tools/ntt/costs.py), which on timor leaves a mean of only ~0.07 MW of
+    headroom above peak — so a village cannot export much however much solar it
+    builds, and an export study run at the shipped cap measures a sizing assumption
+    rather than economics. Sweeping this axis is how you separate the two.
+
+    Note the shipped `Cost_per_yr` depends only on distance, not on MW, so scaling
+    the cap alone buys extra export capacity for free. Pair it with
+    `connection_cost` (or add an MW term to the cost) before reading the result as
+    a business case.
+    """
+    _perturb_connection(folder, mult, "Max_Connect_MW")
+
+
+PERTURB = {"fuel": perturb_fuel, "demand": perturb_demand, "solar_cf": perturb_solar_cf,
+           "connection_cost": perturb_connection_cost, "connect_cap": perturb_connect_cap}
 
 
 def make_variant(data_root, year, island, changes):

@@ -24,9 +24,28 @@ All perturbations are **multipliers on the base value**.
 | `fuel` | `fuels_data.csv::Cost_per_MMBtu`, every fuel (the `None` fuel stays 0) | dataset variant |
 | `demand` | every zonal `demand_z*` and site `demand_*` electricity column (heat untouched) | dataset variant |
 | `solar_cf` | every solar resource's availability column, grid and site layers, clipped to [0, 1] | dataset variant |
+| `connection_cost` | `village_connection.csv` / `site_connection.csv` / `ip_connection.csv` `::Cost_per_yr` — the connect-vs-island price (`Max_Connect_MW` untouched) | dataset variant |
+| `connect_cap` | the same files' `::Max_Connect_MW` — how much a site may import/export (`Cost_per_yr` untouched) | dataset variant |
 | `import_price` | the `import_price` config value | config only |
 | `export_price` | the `export_price` config value | config only |
 | `battery_duration_h` | the `battery_duration_h` config value (fixed site-storage duration) | config only |
+
+**Two axes worth knowing what they mean.**
+
+- `connection_cost=0` makes interconnection free. That is the **upper bound on
+  coordination value**: whatever the coordinated plan saves when the connection
+  itself is free, it can never save more at any positive cost. It is the cheapest
+  way to ask "is there anything here at all?" before spending runtime on a
+  full-cost sweep.
+- `connect_cap` exists because interconnection is sized at 1.5 × each site's *own*
+  peak demand (`CONNECT_MAX_FACTOR` in `tools/ntt/costs.py`). On `timor` that
+  leaves a mean of ~0.07 MW of headroom above peak, so a village cannot export
+  much however much solar it builds — an export study at the shipped cap measures
+  a **sizing assumption**, not economics. Sweep it (e.g. `connect_cap=5,20`) to
+  separate the two. Caveat: `Cost_per_yr` depends only on distance, not on MW, so
+  scaling the cap alone buys extra capacity for free — pair it with
+  `connection_cost`, or add an MW term to the cost, before reading the result as a
+  business case.
 
 **A multiplier on a zero base is still zero.** `export_price` and
 `battery_duration_h` both default to `0`, so sweeping either without also passing
@@ -50,6 +69,23 @@ result is a first-class run under
 `tools/report.py`, comparable with `tools/coordination_value.py`). Variants are
 derived artifacts and gitignored (`data_indonesia/*/*__*/`); delete them freely
 and re-run to regenerate.
+
+## Related: load-shape diversity
+
+The perturbation axes scale existing numbers; they cannot change the *shape* of a
+load. When the question is whether coordination value depends on villages being
+load-shape clones (they largely are — the profiles come from a handful of
+archetype curves), build the heterogeneous counterfactual instead:
+
+```bash
+python -m tools.ntt.make_diverse_demand --dataset data_indonesia/2030/timor
+# -> data_indonesia/2030/timor__diverse, half the villages moved to a midday peak
+```
+
+The reshaping is energy-preserving **per representative period**, so weighted
+annual energy is unchanged for any `Sub_Weights` — only the hour the load falls
+in moves. On `timor` it shifts the busiest hour-of-day from 18 to 12 for half the
+villages and drops the system coincident peak from 128.2 to 108.9 MW.
 
 ## Plan shapes
 
