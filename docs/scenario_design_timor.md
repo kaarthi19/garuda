@@ -137,10 +137,23 @@ Two coherent readings, and they are not equivalent:
   tariff. Then it should be a wheeling charge, not an energy price — and it should
   probably be symmetric.
 
-Until this is settled, read "coordination value is ~0 on Timor" as having **two**
-candidate explanations that no run has yet separated: genuine solar synchrony plus
-cheap storage, or this one-sided transfer charge. Changing the semantics in the
-same commit as anything else would confound the attribution permanently.
+**Partly settled, for the Timor case.** The shipped Timor scenario files now set
+`import_price: 0`, on the reasoning that the system-optimal deliverable should not
+charge a transfer on top of a resource cost it already counts. That removes the
+one-sided charge from the default runs. The model's own default is unchanged at
+59.0, so nothing outside this case moves, and
+[`run_plan_timor.md` A5](run_plan_timor.md) sweeps the axis so the choice is
+measured rather than assumed.
+
+What remains open is the symmetric question: if the grid is a physical bus, should
+an *export* earn the zonal marginal cost automatically rather than needing
+`export_price`? Under a central-planner objective it effectively does once the bus
+carries load — which is why the export study needs `timor__market` and not a
+tariff.
+
+Until the A5 sweep is run, read "coordination value is ~0 on Timor" as having
+**two** candidate explanations: genuine solar synchrony plus cheap storage, or the
+one-sided transfer charge that was in force when it was measured.
 
 ## Sequencing
 
