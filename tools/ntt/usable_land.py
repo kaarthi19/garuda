@@ -161,34 +161,40 @@ def allocate(poly, vx, vy, vids, max_radius_km, mode="shared", report=print):
     no village with land nearby is left at zero. `nearest` is kept for comparison.
     """
     import numpy as np
-    from scipy.spatial import cKDTree
 
-    px = np.asarray(poly["x"]); py = np.asarray(poly["y"])
+    px = np.asarray(poly["x"], dtype=float); py = np.asarray(poly["y"], dtype=float)
     pa = np.asarray(poly["area"], dtype=float)
-    if len(px) == 0 or len(vx) == 0:
+    vxa = np.asarray(vx, dtype=float); vya = np.asarray(vy, dtype=float)
+    if len(px) == 0 or len(vxa) == 0:
         return {}, float(pa.sum()), 0.0
 
-    tree = cKDTree(np.column_stack([vx, vy]))
-    pts = np.column_stack([px, py])
-    out = defaultdict(float)
+    r2 = (max_radius_km * 1000.0) ** 2
+    totals = np.zeros(len(vxa))
     unallocated = 0.0
+    # Chunked over polygons: the full distance matrix would be
+    # len(polygons) x len(villages), which is ~14 M entries on the real layer.
+    # numpy only — scipy is not among the project's CI dependencies.
+    CHUNK = 2048
+    for lo in range(0, len(px), CHUNK):
+        hi = min(lo + CHUNK, len(px))
+        d2 = ((px[lo:hi, None] - vxa[None, :]) ** 2
+              + (py[lo:hi, None] - vya[None, :]) ** 2)
+        area = pa[lo:hi]
+        if mode == "nearest":
+            idx = d2.argmin(axis=1)
+            within = d2[np.arange(hi - lo), idx] <= r2
+            np.add.at(totals, idx[within], area[within])
+            unallocated += float(area[~within].sum())
+        else:
+            near = d2 <= r2
+            counts = near.sum(axis=1)
+            has = counts > 0
+            unallocated += float(area[~has].sum())
+            if has.any():
+                share = np.where(has, area / np.maximum(counts, 1), 0.0)
+                totals += (near * share[:, None]).sum(axis=0)
 
-    if mode == "nearest":
-        dist, idx = tree.query(pts, k=1)
-        within = dist <= max_radius_km * 1000.0
-        for i, a in zip(idx[within], pa[within]):
-            out[int(vids[i])] += float(a)
-        unallocated = float(pa[~within].sum())
-    else:
-        neighbours = tree.query_ball_point(pts, r=max_radius_km * 1000.0)
-        for nb, a in zip(neighbours, pa):
-            if not nb:
-                unallocated += float(a)
-                continue
-            share = float(a) / len(nb)
-            for i in nb:
-                out[int(vids[i])] += share
-
+    out = {int(vids[i]): float(t) for i, t in enumerate(totals) if t > 0}
     allocated = float(pa.sum()) - unallocated
     report(f"  {mode} allocation: {allocated/1e6:,.1f} km² across {len(out):,} village(s) "
            f"within {max_radius_km:g} km; {unallocated/1e6:,.1f} km² beyond any village")
