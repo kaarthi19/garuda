@@ -7,6 +7,18 @@ from pathlib import Path
 import click
 import yaml
 
+# Optional per-run keys copied from the scenario YAML into each job's config.json.
+# This list must cover every optional key the model actually reads — `run_model.jl`
+# (`get(cfg, ...)`, plus "solver" read straight from the JSON) and
+# `functions/preflight.jl` ("run_tag"). A key missing here is silently dropped:
+# the YAML sets it, the job config never carries it, and the model solves at its
+# default while the result CSVs look entirely normal. Keep it in sync when a new
+# config key is added to the model.
+PASSTHROUGH_KEYS = (
+    'mipgap', 'RE_limit', 'import_price', 'village_storage_max_mwh',
+    'export_price', 'policy_scope', 'engine', 'relax_uc', 'solver', 'run_tag',
+)
+
 @click.command()
 @click.option('--scenarios-file', '-s',
               type=click.Path(exists=True),
@@ -38,8 +50,11 @@ def main(scenarios_file, submit_script, output_root, submit):
     jobs_root = Path(output_root)
     jobs_root.mkdir(parents=True, exist_ok=True)
 
+    run_tag = str(data.get('run_tag', '')).strip()
+    tag_suffix = f"__{run_tag}" if run_tag else ""
+
     for isl, yr, scn, cln in product(islands, years, scns, cleans):
-        name    = f"{scn}_{isl}_{yr}_{cln}"
+        name    = f"{scn}_{isl}_{yr}_{cln}{tag_suffix}"
         job_dir = jobs_root / name
         job_dir.mkdir(parents=True, exist_ok=True)
 
@@ -66,7 +81,7 @@ def main(scenarios_file, submit_script, output_root, submit):
             'CO2_limit':          co2_lim
         }
         # optional model parameters passed through from the scenario YAML
-        for key in ('mipgap', 'RE_limit', 'import_price', 'village_storage_max_mwh'):
+        for key in PASSTHROUGH_KEYS:
             if key in data:
                 cfg[key] = data[key]
         (job_dir / 'config.json').write_text(json.dumps(cfg, indent=2))

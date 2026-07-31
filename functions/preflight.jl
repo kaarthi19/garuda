@@ -180,7 +180,15 @@ function run_preflight(config_path::AbstractString, repo_root::AbstractString)
     clean_flags = clean_settings(cfg["clean"])
     solver = lowercase(get(cfg, "solver", "highs"))
     inputs_path = joinpath(repo_root, "data_indonesia", cfg["year"], cfg["island"])
-    results_dir = joinpath(repo_root, "results", "$(cfg["scenario"])_$(cfg["island"])_$(cfg["year"])_$(cfg["clean"])")
+    # Optional run_tag distinguishes runs that differ only by config keys (e.g. an
+    # export_price sweep on one dataset), which would otherwise share — and
+    # overwrite — a results folder. The suffix goes AFTER `clean` so the
+    # <scenario>_<island>_<year>_<clean> convention that tools/report.py's
+    # parse_scenario relies on still resolves the island.
+    run_tag = strip(String(get(cfg, "run_tag", "")))
+    tag_suffix = isempty(run_tag) ? "" : "__$(run_tag)"
+    results_dir = joinpath(repo_root, "results",
+        "$(cfg["scenario"])_$(cfg["island"])_$(cfg["year"])_$(cfg["clean"])$(tag_suffix)")
 
     validate_solver(solver)
     validate_input_files(inputs_path, flags)
