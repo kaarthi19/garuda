@@ -37,3 +37,14 @@ data_indonesia/*/*__*/
 # ERA5 download + derived hourly CF (~87 MB; regenerate with
 # tools/solar_resource_era5.py, which defaults --out-dir here)
 solar_era5/
+
+# Large GIS source layers (hundreds of MB; keep beside the repo, not in it)
+usable_land_ntt/
+*.shp
+*.dbf
+*.shx
+*.sbn
+*.sbx
+
+# HPC handoff brief (generated locally to copy to the cluster agent)
+hpc_handoff.md
