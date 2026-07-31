@@ -177,8 +177,16 @@ def load_metrics(run_dir, data_root, no_annualise=False):
     meta["export_price"] = sidecar.get("export_price", 0.0)
     meta["policy_scope"] = sidecar.get("policy_scope", "grid")
     notes = []
-    factor, anote = (1.0, "raw representative-period sums (not annualised)") \
-        if no_annualise else annualisation(meta, data_root, quiet=True)
+    # Energy columns in the result CSVs are ALREADY annual: since the
+    # sample-weight fix, result_extraction_function.jl weights every rep-period
+    # energy sum by sample_weight. Applying an 8760/T factor here would
+    # double-count it (6.518x on Timor). Kept as an explicit 1.0 so the reason is
+    # visible rather than implied by absence.
+    factor = 1.0
+    anote = ("energy columns read as annual (result extraction applies "
+             "sample_weight; no post-hoc 8760/T factor)")
+    if no_annualise:
+        anote += " — --no-annualise no longer has an effect and is deprecated"
     notes.append(anote)
     m = {}
 
@@ -460,7 +468,8 @@ def main(argv):
     c.add_argument("--allow-mismatch", action="store_true",
                    help="downgrade island/year/engine guard failures to warnings")
     c.add_argument("--no-annualise", action="store_true",
-                   help="report raw representative-period energy sums")
+                   help="DEPRECATED and ignored — result energy columns are annual "
+                        "at source now that result extraction applies sample_weight")
 
     r = sub.add_parser("run", help="scaffold + solve both scenarios, then compare")
     r.add_argument("--island", required=True)

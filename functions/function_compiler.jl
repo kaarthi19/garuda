@@ -29,7 +29,8 @@ function function_compiler(
         export_price::Float64 = 0.0,
         policy_scope::AbstractString = "grid",
         lp_method::Int = -1,
-        battery_duration_h::Float64 = 0.0
+        battery_duration_h::Float64 = 0.0,
+        export_backed_by_generation::Bool = false
     )
     # 1) Load inputs into the Layer A data core (engine-agnostic ZonalSystem)
     inputs = build_system(filepath)
@@ -41,7 +42,8 @@ function function_compiler(
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
             village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc,
             export_price = export_price, policy_scope = policy_scope, lp_method = lp_method,
-            battery_duration_h = battery_duration_h
+            battery_duration_h = battery_duration_h,
+            export_backed_by_generation = export_backed_by_generation
         )
     else
         solution = capacity_expansion(
@@ -49,7 +51,8 @@ function function_compiler(
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
             village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc,
             export_price = export_price, policy_scope = policy_scope, lp_method = lp_method,
-            battery_duration_h = battery_duration_h
+            battery_duration_h = battery_duration_h,
+            export_backed_by_generation = export_backed_by_generation
         )
     end
 

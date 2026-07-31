@@ -21,84 +21,96 @@ Each hour `t` carries `sample_weight[t] = Sub_Weights[p]/Timesteps_per_Rep_Perio
 (= 168 in the shipped datasets), scaling representative-period operations to
 annual quantities.
 
-## Decision variables (optimizer.jl 16–111)
+## Decision variables (optimizer.jl 7–135)
 
 **Grid investment** — `vCAP[g]` total power capacity; `vNEW_CAP_*`/`vRET_CAP_*`
 new-build and retirement for ED and UC units; `vE_CAP[g]` storage energy
 capacity with new/retire components; `vT_CAP[l]`, `vNEW_T_CAP[l]`,
 `vRET_T_CAP[l]` transmission. New-build bounded by `Max_Cap_MW` when positive
-(42–53).
+(36–42).
 
 **Grid operations** — `vGEN[t,g]`, `vCHARGE[t,g]`, `vSOC[t,g]`, `vNSE[t,s,z]`,
-`vFLOW[t,l]`; binaries `vCOMMIT/vSTART/vSHUT[t,g∈UC]` (36–38).
+`vFLOW[t,l]`; binaries `vCOMMIT/vSTART/vSHUT[t,g∈UC]` (30–32).
 
 **Village** — mirrored: `vVIL_CAP`, `vVIL_E_CAP` (+ new/retire),
 `vVIL_GEN`, `vVIL_GEN_HEAT`, `vVIL_CHARGE`, `vVIL_SOC`, `vVIL_NSE`,
 `vVIL_NSE_HEAT`, binaries `vVIL_COMMIT/START/SHUT`; and, in `Grid` scenarios,
 the interconnection block `vVIL_IMPORT`, `vVIL_EXPORT`, and the connection
-binary `vVIL_CONNECT[vil]` (89–107), with import and export each capped by
+binary `vVIL_CONNECT[vil]` (89–106), with import and export each capped by
 `village_connect_max × vVIL_CONNECT`. New-build onsite capacity is bounded by the
-per-village `Max_Cap_MW` land/resource ceiling when positive (109–125); new
-village storage energy is bounded per unit by `village_storage_max_mwh`.
+per-village `Max_Cap_MW` land/resource ceiling when positive (108–119); new
+village storage energy is bounded per unit by `village_storage_max_mwh` (121–123).
 
 Site storage power and energy are **co-optimised independently** by default, so
 the built duration floats to whatever the dispatch wants. Setting the
-`battery_duration_h` config key (> 0) adds `cVILStorDuration`,
+`battery_duration_h` config key (> 0) adds `cVILStorDuration` (125–135),
 `vVIL_E_CAP = battery_duration_h × vVIL_CAP` over new site storage — a
 fixed-duration battery product, which is what makes the power capex
 (`Inv_Cost_per_MWyr`) bind the energy build. `0` (the default) omits the
 constraint entirely.
 
-`vVIL_EXPORT` supplies the zonal balance (132–140) and is debited from the
-village balance in `Grid` scenarios (341–364). **By default it earns nothing**
+`vVIL_EXPORT` supplies the zonal balance (140–148) and is debited from the
+village balance in `Grid` scenarios (346–377). **By default it earns nothing**
 (`export_price = 0`, the config default) — a free spill path for surplus that
 would otherwise be curtailed, 0 in every shipped reference run. Setting the
 `export_price` config key ($/MWh) adds a feed-in revenue term to the objective,
 making surplus export an economic choice bounded per village by the
 interconnection cap; keep it ≤ `import_price` or import→re-export arbitrage
 becomes profitable (`run_model.jl` warns). Non-`Grid` scenarios omit the export
-term entirely (374–398).
+term entirely (379–408).
+
+**Exports are not tied to generation by default.** `vVIL_EXPORT` is bounded only
+by the interconnection cap, so on a dataset whose grid zone has no load — where
+the zonal balance forces `Σ export ≤ Σ import` — a *pair* of sites can transact
+with no physical generation at all, booking `export_price − import_price` per MWh
+of pure accounting margin. `build_model!` **refuses** that configuration
+(`export_price > import_price` **and** zero weighted grid demand). Setting
+`export_backed_by_generation = true` adds `cVILExportBacked`,
+`vVIL_EXPORT[t,v] ≤ Σ vVIL_GEN[t,g]` over that site's RE-flagged units, which
+makes the trade structurally impossible; it is off by default because it adds a
+row per hour × site.
 
 ## Constraints
 
-**Zonal power balance** (117–136): for each `t, z` —
+**Zonal power balance** (138–161): for each `t, z` —
 generation + NSE − storage charging − demand − line flows (incidence `z<i>` ∈
 {+1, −1}) − village imports + village exports of villages in zone `z` (via
 `village_zone`) = 0. Transport flow model; the DC power-flow variant is commented
-out (203–206).
+out (225–228).
 
-**Capacity limits** (142–169): `vGEN ≤ variability×vCAP` for ED;
+**Capacity limits** (164–191): `vGEN ≤ variability×vCAP` for ED;
 `vGEN ≤ Existing_Cap×vCOMMIT` and `vGEN ≥ Min_Power×Existing_Cap×vCOMMIT` for
 UC (note: UC unit size is `Existing_Cap_MW`, so UC new-build adds copies of the
 existing unit size); charge ≤ power capacity and SOC ≤ energy capacity for
 storage; `vNSE ≤ NSE_Max×demand` per segment; |flow| ≤ `vT_CAP`.
 
-**Capacity accounting** (171–201): total = existing − retired (OLD) or = new
+**Capacity accounting** (194–223): total = existing − retired (OLD) or = new
 build (NEW), for power, storage energy, and transmission
 (`vT_CAP = Line_Max_Flow + vNEW_T_CAP − vRET_T_CAP`, expansion bounded by
 `Line_Max_Reinforcement_MW`).
 
-**Ramping** (209–258): up/down limits as fractions of capacity; for UC units
+**Ramping** (231–281): up/down limits as fractions of capacity; for UC units
 the start/shut terms allow jumps to/from `Min_Power`. Each constraint has a
 wrap-around twin linking the first and last hour of each representative period.
 
-**Commitment** (260–303): min up/down times via rolling sums of `vSTART`/
-`vSHUT`; commitment-state recursion `vCOMMIT[t+1] = vCOMMIT[t] + vSTART − vSHUT`;
-commit/start/shut bounded by installed units (`vCAP/Existing_Cap`).
+**Commitment** (282–292, 307–332): min up/down times via rolling sums of
+`vSTART`/`vSHUT`; commitment-state recursion
+`vCOMMIT[t+1] = vCOMMIT[t] + vSTART − vSHUT`; commit/start/shut bounded by
+installed units (`vCAP/Existing_Cap`).
 
-**Storage SOC** (271–279): `vSOC[t] = vSOC[t−1] + Eff_Up×vCHARGE −
+**Storage SOC** (293–303): `vSOC[t] = vSOC[t−1] + Eff_Up×vCHARGE −
 vGEN/Eff_Down`, with periodic wrap inside each representative period.
 
-**Village blocks** (307–536): structurally identical, per village:
+**Village blocks** (336–570): structurally identical, per village:
 
-- *Heat balance* (309–314): UC-unit heat output + heat NSE = heat demand.
-- *Electricity balance* (316–380): generators allowed to serve village demand
+- *Heat balance* (338–343): UC-unit heat output + heat NSE = heat demand.
+- *Electricity balance* (346–408): generators allowed to serve village demand
   depend on the scenario — `VIL_UC` only (no `VillageBuild`), all `VIL_G`
   (`VillageBuild`), or `VIL_ED`-only (`NoCoal`); plus `vVIL_IMPORT` minus
   `vVIL_EXPORT` when `Grid` is active; minus storage charging.
-- Capacity, ramping, commitment, and SOC mirror the grid (382–536).
+- Capacity, ramping, commitment, and SOC mirror the grid (411–570).
 
-**Policy constraints** (565–625), scoped by the `policy_scope` config key
+**Policy constraints** (575–631), scoped by the `policy_scope` config key
 (default `"grid"` — the shipped-reference behaviour):
 
 - CO₂ cap (active in `clean` runs): `eCO2EmissionsGrid ≤ CO2_limit` under
@@ -114,7 +126,7 @@ vGEN/Eff_Down`, with periodic wrap inside each representative period.
   built and reported (`Grid_REShare`, `System_REShare` in
   `clean_energy_results.csv`); only the constrained one depends on the scope.
 
-## Objective (574–687)
+## Objective (633–770)
 
 Minimise total annual cost:
 
@@ -186,7 +198,8 @@ Flagged for follow-up:
   linkage, retirement-by-age, or learning curves across years.
 - **No reserve constraints** — adequacy is represented only by priced non-served
   energy, not an explicit reserve margin.
-- **Representative-period sums in result extraction** — energy columns in the
-  generator / NSE / import result CSVs are sums over representative hours, not
-  annualised; costs, emissions, and the dispatch reliability tables are annual.
-  See `docs/outputs_guide.md`.
+- **Result energy columns are annualised** — `result_extraction_function.jl`
+  weights every rep-period energy sum by `sample_weight`, so generation, imports,
+  exports, flows and unserved energy are annual, consistent with costs and
+  emissions. Power columns (peaks, capacities) stay instantaneous. See
+  `docs/outputs_guide.md`; this changed, and older result CSVs are not comparable.

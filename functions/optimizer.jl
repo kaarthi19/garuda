@@ -2,7 +2,16 @@
 # on the model `CE` and returns the variable/expression references the result
 # extractor reads. It performs NO solve, so engines (capacity expansion, dispatch,
 # Benders) can share one model definition; the caller creates `CE` and solves it.
-function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0, policy_scope = "grid", battery_duration_h::Float64 = 0.0)
+function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0, policy_scope = "grid", battery_duration_h::Float64 = 0.0, export_backed_by_generation::Bool = false)
+
+    # Weighted annual grid-zone demand. It is DATA, not a variable, so it can be
+    # evaluated up front — and on a site-only dataset (Timor ships demand_z1 = 0
+    # for all 1344 h) it is exactly zero. Several things downstream depend on
+    # knowing that: the grid RE share is undefined, and village exports have
+    # nothing to serve, which is what makes a wash trade possible.
+    grid_demand_weighted = sum(inputs.sample_weight[t]*inputs.demand[t,z]
+                               for t in inputs.T, z in inputs.Z)
+    grid_demand_positive = grid_demand_weighted > 0
 
     #DECISION VARIABLES
 
@@ -103,6 +112,40 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
             cVILExportConnect[t in inputs.T, vil in inputs.VIL],
                 vVIL_EXPORT[t,vil] <= inputs.village_connect_max[vil]*vVIL_CONNECT[vil]
         end)
+
+        # WASH-TRADE GUARD.
+        #
+        # Nothing above ties an export to any physical generation. On a dataset
+        # whose grid zone has no load, the zonal balance forces
+        # Σ export <= Σ import, so a PAIR of villages can transact with zero
+        # generation between them: A imports a MWh at import_price, B exports it
+        # at export_price, and the objective books (export_price - import_price)
+        # per MWh of pure accounting margin — bounded only by the aggregate
+        # interconnection cap. It scales to hundreds of millions of dollars a year
+        # on Timor and would dominate every other term while looking spectacular.
+        #
+        # This is the fabricating configuration; refuse it outright.
+        if export_price > ImportPrice && !grid_demand_positive && !export_backed_by_generation
+            error("export_price ($(export_price)) > import_price ($(ImportPrice)) on a " *
+                  "dataset with NO grid demand. Villages can then trade with each other " *
+                  "at a profit without generating anything, and the result is fabricated " *
+                  "rather than merely wrong. Give the grid zone a real load " *
+                  "(tools/ntt/build_grid_demand.py), set export_price <= import_price, " *
+                  "or set export_backed_by_generation = true.")
+        end
+
+        # Optional: an exported MWh must come out of that site's own renewable
+        # generation in the same hour — the rule a real feed-in contract imposes,
+        # and a structural bar to the trade above. Off by default: it adds one row
+        # per (hour, site), which is ~1.05 M rows on the 780-village Timor case.
+        if export_backed_by_generation
+            vil_re_units = Dict(vil => [g for g in inputs.VIL_G
+                                        if inputs.village_generators.Village[g] == vil &&
+                                           inputs.village_generators.RE[g] == 1]
+                                for vil in inputs.VIL)
+            @constraint(CE, cVILExportBacked[t in inputs.T, vil in inputs.VIL],
+                vVIL_EXPORT[t,vil] <= sum(vVIL_GEN[t,g] for g in vil_re_units[vil]; init = 0.0))
+        end
     end
 
     # Per-village land/resource ceiling on new-build onsite capacity.
@@ -578,8 +621,15 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     sum(inputs.sample_weight[t]*inputs.generators.CO2_Per_Start[g]*vSTART[t,g] for t in inputs.T, g in inputs.UC))
     );
 
+    # Emissions from EVERY site generator (VIL_G), not only the committed ones.
+    # VIL_UC is the Commit==1 subset; on the real Timor datasets every village
+    # diesel is Commit=0, so VIL_UC is EMPTY and this expression was identically
+    # zero — CO2_Emissions_Village reported 0.0 while 780 diesels burned ~98 GWh
+    # of fuel a year, and a CO2 cap on the village layer constrained nothing.
+    # timor_demo hides the bug (its village diesel is Commit=1), which is how it
+    # survived. Start-up emissions stay over VIL_UC: vVIL_START only exists there.
     @expression(CE, eCO2EmissionsVIL,
-    (sum(inputs.sample_weight[t]*inputs.village_generators.CO2_Rate[g]*(vVIL_GEN[t,g] + vVIL_GEN_HEAT[t,g]) for t in inputs.T, g in inputs.VIL_UC) +
+    (sum(inputs.sample_weight[t]*inputs.village_generators.CO2_Rate[g]*(vVIL_GEN[t,g] + vVIL_GEN_HEAT[t,g]) for t in inputs.T, g in inputs.VIL_G) +
     sum(inputs.sample_weight[t]*inputs.village_generators.CO2_Per_Start[g]*vVIL_START[t,g] for t in inputs.T, g in inputs.VIL_UC))
     );
     
@@ -605,10 +655,21 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     end
 
     #renewable energy share (grid layer)
-    @expression(CE, eREShare,
-    (sum(inputs.sample_weight[t]*inputs.generators.RE[g]*vGEN[t,g] for t in inputs.T, g in inputs.G) /
-    sum(inputs.sample_weight[t]*inputs.demand[t,z] for t in inputs.T, z in inputs.Z))
-    );
+    #
+    # The denominator (grid_demand_weighted, computed at the top of this function)
+    # is exactly zero on a site-only dataset. Dividing by it built an expression
+    # with Inf/NaN coefficients: Grid_REShare came out NaN in every report and
+    # sweep row, and a `clean` run would have handed the solver a NaN constraint.
+    # Guard it, and report the share as undefined (NaN) rather than a misleading
+    # 0 % — see the extractor.
+    @expression(CE, eREGenGrid,
+        sum(inputs.sample_weight[t]*inputs.generators.RE[g]*vGEN[t,g] for t in inputs.T, g in inputs.G))
+    if grid_demand_positive
+        @expression(CE, eREShare, eREGenGrid / grid_demand_weighted)
+    else
+        # structurally zero (all coefficients 0), so nothing NaN enters the model
+        @expression(CE, eREShare, 0 * eREGenGrid)
+    end
 
     # system-wide RE share: adds RE-flagged village generation to the numerator
     # and village electricity demand to the denominator. Built as an expression
@@ -625,6 +686,14 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         if policy_scope == "system"
             @constraint(CE, cREShareSystem, eREShareSystem >= RE_limit);
         else
+            # A renewable SHARE of zero grid demand is not a constraint, it is a
+            # division by zero. Fail loudly rather than hand the solver nonsense.
+            grid_demand_positive || error(
+                "clean run with policy_scope=\"grid\" needs grid demand, but this " *
+                "dataset's weighted grid demand is 0 (every demand_z* column is " *
+                "zero), so the grid RE share is undefined. Use policy_scope=" *
+                "\"system\" to constrain the site layer, or give the grid zone a " *
+                "real load (tools/ntt/build_grid_demand.py).")
             #setting renewable energy share constraint to 34% as per JETP agreement
             @constraint(CE, cREShare, eREShare >= RE_limit);
         end
@@ -813,6 +882,9 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         CO2EmissionsVIL = eCO2EmissionsVIL,
         REShare = eREShare,
         REShareSystem = eREShareSystem,
+        # false when the dataset has no grid demand — the grid RE share is then
+        # undefined, and the extractor reports NaN rather than a misleading 0 %.
+        GridDemandPositive = grid_demand_positive,
         NSECosts = eNSECosts,
         VILNSECosts = eVILNSECosts,
         VILNSEHeatCosts = eVILNSEHeatCosts,
@@ -831,13 +903,14 @@ end
 # (fractional commitment and grid-connection), under-counting start-up / minimum
 # up-down effects. Use it for fast license-free expansion where the empirically
 # measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, battery_duration_h::Float64 = 0.0)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, battery_duration_h::Float64 = 0.0, export_backed_by_generation::Bool = false)
     CE = make_solver(solver; mipgap = mipgap, lp_method = lp_method)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
                         village_storage_max_mwh = village_storage_max_mwh,
                         export_price = export_price, policy_scope = policy_scope,
-                        battery_duration_h = battery_duration_h)
+                        battery_duration_h = battery_duration_h,
+                        export_backed_by_generation = export_backed_by_generation)
 
     relax_uc && _relax_binaries!(CE, UC_BINARIES)
 

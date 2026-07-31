@@ -54,6 +54,15 @@ connection costs, the synthetic demo case, and priced village battery power.
 - **`Sub_Weights` are non-uniform for maluku** (2022/505/…), so representative-
   period energy sums annualise only approximately there — see the note in
   [`docs/outputs_guide.md`](../docs/outputs_guide.md).
+- **ERA5-derived solar profiles are coarser than 780 villages.** ERA5's grid is
+  ~28 km, and **153 of the 780 villages carry no coordinates** in
+  `timor_villages_manifest.csv` (`lat`/`lon` blank for exactly 153 rows) — they all
+  fall back to the island centroid of the located ones, `(-9.69766, 124.36616)`,
+  and therefore sample one identical ERA5 cell. So a high inter-village capacity
+  factor correlation is **partly a data artifact** and must not be presented as
+  evidence that village solar output is genuinely coincident across Timor. The
+  wiring tool (`tools/ntt/wire_era5_solar.py`) reports the number of distinct
+  profiles it wired for exactly this reason.
 - **`build_timor.py` no longer byte-reproduces the committed `timor` folder**, so
   the battery-power change above was applied as a targeted column patch rather
   than by regenerating. Measured 2026-07 (`--src-dir` pointed at the committed

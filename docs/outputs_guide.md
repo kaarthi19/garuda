@@ -2,20 +2,25 @@
 
 Each job writes `results/<scenario>_<island>_<year>_<clean>/`.
 
-**On annualisation — read this before summing energy.** Not every energy column
-is annual. `cost_results.csv` (**$M/yr**), `clean_energy_results.csv` (tCO₂/yr and
-RE share), and the dispatch-only reliability tables are already annual (they apply
-the representative-period sample weights). But the energy columns in
-`generator_results.csv` / `site_generator_results.csv` (`GWh`,
-`Electricity_GWh`), `site_import_results.csv`, and `nse_results.csv` /
-`site_nse_results.csv` (`Total_NSE_MWh`) are **sums over the representative hours,
-not annual** — `result_extraction_function.jl` sums the raw variables without the
-weights. To annualise them, multiply by `8760 / (Rep_Periods ×
-Timesteps_per_Rep_Period)` (read from the input `demand.csv`). This factor is
-exact only when `Sub_Weights` are uniform (as in `timor_demo`); for non-uniform
-weights (e.g. maluku) it is approximate and a weighted reconstruction is needed
-for exact annual figures. The `tools/coordination_value.py` helper does this for
-you.
+**On annualisation — every energy column is now annual.** Costs (`$M/yr`),
+emissions, RE shares, generation (`GWh`, `Electricity_GWh`), imports and exports,
+transmission flows and all `Total_NSE_MWh` columns are annual figures:
+`result_extraction_function.jl` weights every rep-period sum by `sample_weight`
+(`Sub_Weights[p] / Timesteps_per_Rep_Period`), the same weighting the objective
+already applied to costs. Power columns — `Peak_*_MW`, `Max_NSE_MW`, `Total_MW`,
+capacities — are instantaneous and deliberately unweighted.
+
+> **Changed behaviour.** These columns used to be raw sums over the modelled
+> hours, i.e. *the sample, not the year*. On Timor that under-reported annual
+> energy by **6.518×** (8760/1344); on a dataset with non-uniform `Sub_Weights`
+> such as maluku, whose per-hour weights range 1.0–15.04, there was no single
+> correction factor at all and even the generation *mix* (`Percent_GWh`) was
+> distorted. Any figure taken from these columns before this change needs
+> re-deriving — do not compare old and new result CSVs directly.
+
+Multiplying by `8760 / (Rep_Periods × Timesteps_per_Rep_Period)` is therefore no
+longer needed, and doing it now double-counts. `tools/coordination_value.py`
+still applies its own annualisation to the CSVs it reads — see the note there.
 
 ## File-by-file
 
