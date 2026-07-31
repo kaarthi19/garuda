@@ -76,6 +76,13 @@ export_price = Float64(get(cfg, "export_price", 0.0))
 policy_scope = lowercase(String(get(cfg, "policy_scope", "grid")))
 policy_scope in ("grid", "system") ||
     error("config key policy_scope must be \"grid\" or \"system\", got \"$(policy_scope)\"")
+# Require every exported MWh to come out of that site's own renewable generation
+# in the same hour — the rule a real feed-in contract imposes. Off by default (a
+# strict no-op); it adds one constraint row per (hour, site), ~1.05 M on Timor.
+# Its purpose is to make a wash trade structurally impossible: without it, on a
+# dataset with no grid demand, two villages can trade at a profit while
+# generating nothing. build_model! refuses that configuration outright.
+export_backed_by_generation = Bool(get(cfg, "export_backed_by_generation", false))
 if export_price > ImportPrice
     println("WARNING: export_price ($(export_price)) > import_price ($(ImportPrice)) — " *
             "a connected village profits from importing and re-exporting; results " *
@@ -117,5 +124,6 @@ function_compiler(
     export_price = export_price,
     policy_scope = policy_scope,
     lp_method = lp_method,
-    battery_duration_h = battery_duration_h
+    battery_duration_h = battery_duration_h,
+    export_backed_by_generation = export_backed_by_generation
 )
