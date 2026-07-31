@@ -18,7 +18,7 @@ import yaml
 PASSTHROUGH_KEYS = (
     'mipgap', 'RE_limit', 'import_price', 'village_storage_max_mwh',
     'export_price', 'policy_scope', 'engine', 'relax_uc', 'solver', 'run_tag',
-    'lp_method',
+    'lp_method', 'battery_duration_h',
 )
 
 
