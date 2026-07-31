@@ -23,7 +23,10 @@ Two kinds of axis, both expressed as multipliers on the base:
   they pass `validate_schema.py` and any tool can inspect them. They are derived
   artifacts, gitignored (`data_indonesia/*/*__*/`).
 - **Config axes** (`import_price`, `export_price`) need no dataset copy — the
-  multiplier applies to the base value in the run's `config.json`.
+  multiplier applies to the base value in the run's `config.json`. Note the
+  multiplier is applied to the *base* value, so an axis whose base is `0`
+  (`export_price` by default) stays 0 at every point and the sweep reads as
+  perfectly flat — pass a non-zero `--export-price` to sweep it.
 
 Each run solves through the normal pipeline (`run_model.jl`; LP-relaxed
 expansion on HiGHS by default, same as the demo walkthrough) into the standard
@@ -66,7 +69,7 @@ except ImportError:  # pragma: no cover
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DATASET_AXES = ("fuel", "demand", "solar_cf")
-CONFIG_AXES = ("import_price", "export_price")
+CONFIG_AXES = ("import_price", "export_price", "battery_duration_h")
 AXES = DATASET_AXES + CONFIG_AXES
 
 # headline metrics carried into the summary (key in load_metrics -> label, unit)
@@ -192,6 +195,7 @@ def base_config(args):
         "engine": args.engine, "relax_uc": not args.exact_uc, "solver": args.solver,
         "mipgap": 0.01, "import_price": float(args.import_price),
         "export_price": float(args.export_price), "policy_scope": args.policy_scope,
+        "battery_duration_h": float(args.battery_duration_h),
     }
 
 
@@ -301,6 +305,9 @@ def main(argv):
                    help="every combination of the multipliers (default: one-at-a-time)")
     r.add_argument("--import-price", type=float, default=59.0)
     r.add_argument("--export-price", type=float, default=0.0)
+    r.add_argument("--battery-duration-h", type=float, default=0.0,
+                   help="base fixed site-storage duration in hours (0 = power/energy "
+                        "co-optimised); pass a non-zero base to sweep it")
     r.add_argument("--policy-scope", default="grid", choices=("grid", "system"))
     r.add_argument("--co2-limit", type=float, default=1.0e12)
     r.add_argument("--re-limit", type=float, default=0.34)
@@ -312,6 +319,17 @@ def main(argv):
     params = parse_params(args.param)
     if not params:
         raise SystemExit("give at least one --param axis=multipliers")
+    # A config axis is a multiplier on the base config value, so sweeping one
+    # whose base is 0 gives 0 at every point: the sweep runs, costs hours, and
+    # reads as perfectly flat. Refuse it rather than report a fake null.
+    zero_base = sorted(a for a in params
+                       if a in CONFIG_AXES and float(base_config(args).get(a, 0.0)) == 0.0)
+    if zero_base:
+        flags = ", ".join("--" + a.replace("_", "-") for a in zero_base)
+        raise SystemExit(
+            f"axis {zero_base} has a base value of 0, and the multipliers apply to the "
+            f"base — every point would be 0 and the sweep would look flat. Pass a "
+            f"non-zero base ({flags}) or drop the axis.")
     plan = build_plan(params, args.full_grid)
     n_dataset_variants = sum(1 for _t, ch in plan if any(a in DATASET_AXES for a in ch))
     print(f"== sensitivity sweep — {args.scenario} {args.island} {args.year} ({args.clean}) ==")

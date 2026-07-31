@@ -166,6 +166,7 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 | `export_price` | `0.0` $/MWh | feed-in price sites earn for exporting surplus to the grid; `0` = exports are an unremunerated spill (keep ≤ `import_price`) |
 | `policy_scope` | `"grid"` | scope of the `clean` policy constraints: `"grid"` (CO₂ cap + RE floor on grid generation only) or `"system"` (village layer included in both) |
 | `village_storage_max_mwh` | `208.0` | per-unit cap on new site storage energy |
+| `battery_duration_h` | `0.0` h | fix new site storage to a duration (energy MWh = `battery_duration_h` × power MW). `0` = power and energy co-optimised independently, so the built duration floats; a positive value makes storage a fixed-duration product and lets the battery *power* capex bind the energy build. |
 | `run_tag` | `""` | suffix for the results folder (`results/<scenario>_<island>_<year>_<clean>__<tag>/`). Empty = the plain name. Use it when two runs differ **only** by config keys — e.g. an `export_price` sweep on one dataset — which would otherwise share, and overwrite, one folder. |
 
 Every key in this table is read by the model *and* copied through by both job

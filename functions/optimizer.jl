@@ -2,7 +2,7 @@
 # on the model `CE` and returns the variable/expression references the result
 # extractor reads. It performs NO solve, so engines (capacity expansion, dispatch,
 # Benders) can share one model definition; the caller creates `CE` and solves it.
-function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0, policy_scope = "grid")
+function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, export_price = 0.0, policy_scope = "grid", battery_duration_h::Float64 = 0.0)
 
     #DECISION VARIABLES
 
@@ -122,8 +122,17 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
         set_upper_bound(vVIL_NEW_E_CAP[g], village_storage_max_mwh)
     end
 
-
-    
+    # Optional fixed battery duration: energy (MWh) = duration_h x power (MW).
+    # 0 = off (power and energy co-optimised independently, the shipped default).
+    # A positive value makes site storage a fixed-duration product, so the battery
+    # *power* capex (Inv_Cost_per_MWyr) actually binds the energy build; left free,
+    # duration floats to whatever the dispatch wants (~5.3 h in the measured Timor
+    # case) and a priced power block has little effect. Safe in the dispatch
+    # engine: indexed over VIL_NEW, where `_existing_cap` fixes both sides to 0.
+    if battery_duration_h > 0
+        @constraint(CE, cVILStorDuration[g in intersect(inputs.VIL_STOR, inputs.VIL_NEW)],
+            vVIL_E_CAP[g] == battery_duration_h * vVIL_CAP[g])
+    end
 
     #CONSTRAINTS
     if Grid
@@ -822,12 +831,13 @@ end
 # (fractional commitment and grid-connection), under-counting start-up / minimum
 # up-down effects. Use it for fast license-free expansion where the empirically
 # measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, battery_duration_h::Float64 = 0.0)
     CE = make_solver(solver; mipgap = mipgap, lp_method = lp_method)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
                         village_storage_max_mwh = village_storage_max_mwh,
-                        export_price = export_price, policy_scope = policy_scope)
+                        export_price = export_price, policy_scope = policy_scope,
+                        battery_duration_h = battery_duration_h)
 
     relax_uc && _relax_binaries!(CE, UC_BINARIES)
 
