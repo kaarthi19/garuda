@@ -160,6 +160,7 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 | `engine` | `"expansion"` | `"expansion"` or `"dispatch"` |
 | `relax_uc` | engine-dependent | LP-relax unit commitment to a fast, license-free LP. Default **on** for dispatch, **off** (exact MILP) for expansion; set `true` on expansion for a fast solve (~0.8 % above the exact cost on the demo). |
 | `mipgap` | `0.01` | relative MIP gap |
+| `lp_method` | `-1` | Gurobi LP algorithm (`Method`) for the root relaxation and node LPs: `-1` automatic, `0` primal simplex, `1` dual simplex, `2` barrier, `3`–`5` concurrent variants. No HiGHS equivalent (ignored, with a warning). `2` avoids the concurrent-spin overhead Gurobi reports on the 780-village Timor MILP. |
 | `RE_limit` | `0.34` | minimum grid renewable share (`clean` runs) |
 | `import_price` | `59.0` $/MWh | flat price sites pay for grid imports |
 | `export_price` | `0.0` $/MWh | feed-in price sites earn for exporting surplus to the grid; `0` = exports are an unremunerated spill (keep ≤ `import_price`) |

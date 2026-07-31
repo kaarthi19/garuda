@@ -137,6 +137,15 @@ key, default 0.01). **Gurobi optional** (`"solver":"gurobi"`), imported only whe
 requested, for the fast MILP path on large instances; there `MIPGap = mipgap`,
 `TimeLimit` 72 h, `Crossover 0`.
 
+`lp_method` (config key, default `-1` = automatic) sets Gurobi's `Method` — the
+LP algorithm used for the root relaxation and the node LPs (`0` primal simplex,
+`1` dual simplex, `2` barrier, `3`–`5` concurrent variants). At `-1` nothing is
+set, so it is a strict no-op. It matters at island scale: on the 780-village
+Timor expansion MILP, Gurobi's automatic choice runs the root LP concurrently
+and reports ~535 s of "concurrent spin time … can be avoided by choosing
+Method=3"; `"lp_method": 2` (barrier) removes that overhead. There is no HiGHS
+analogue — under HiGHS the key is ignored and `run_model.jl` says so.
+
 `relax_uc` (config key) LP-relaxes the unit-commitment binaries
 (`vCOMMIT/START/SHUT`, grid and village) to `[0,1]` via `_relax_binaries!`,
 turning the MILP into an LP that HiGHS solves in seconds — default **on** for the

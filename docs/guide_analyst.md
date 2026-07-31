@@ -71,10 +71,14 @@ the headline comparison — its delta is the **coordination value**
 
 The launcher writes the config — the required keys (`island`, `year`, `scenario`,
 `clean`, `CO235reduction`, `BAUCO2emissions`, `CO2_limit`) plus `engine`, `solver`,
-`relax_uc` and `mipgap` (0.01). `run_model.jl` accepts three further keys, read
-with a default when absent (the launcher does **not** scaffold these — add them by
-hand if needed): `RE_limit` (0.34), `import_price` (59.0),
-`village_storage_max_mwh` (208.0).
+`relax_uc`, `mipgap` (0.01) and `run_tag` (`--run-tag`, when given).
+`run_model.jl` accepts further optional keys, each read with a default when
+absent (the launcher does **not** scaffold these — add them to the scenario YAML
+or the `config.json` by hand): `RE_limit` (0.34), `import_price` (59.0),
+`export_price` (0.0), `policy_scope` (`"grid"`),
+`village_storage_max_mwh` (208.0) and `lp_method` (−1, Gurobi's LP `Method`;
+`2` = barrier is the useful one at island scale). The full list with meanings is
+the per-run options table in the [README](../README.md#scenarios--configuration).
 
 ## Reading results
 
