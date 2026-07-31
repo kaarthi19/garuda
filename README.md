@@ -53,7 +53,7 @@ engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 | **Parity check** | Prove the export reproduces the garuda dispatch engine (system-total unserved matches to 0.0000 % on maluku and a 6-zone grid-only sulawesi case) | `python tools/validate_pypsa_parity.py <folder> --reference <results_dir>` |
 | **Run launcher** | Validate inputs, preview scenario size + ETA, scaffold a config, optionally launch | `python tools/launcher.py --island maluku --year 2030 --scenario base --clean reference` |
 | **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability); `--lang id` renders it in Bahasa Indonesia | `python tools/report.py results/base_maluku_2030_reference` |
-| **Coordination value** | The standalone-vs-coordinated delta (cost, diesel, emissions, unserved energy avoided) as one command — compare two runs, or solve both on HiGHS then compare | `python tools/coordination_value.py run --island timor_demo --year 2030` |
+| **Coordination value** | The standalone-vs-coordinated delta (cost, diesel, emissions, unserved energy avoided) as one command — compare two runs, or solve both on HiGHS then compare. | `python tools/coordination_value.py run --island timor_demo --year 2030` |
 | **Sensitivity sweeps** | How robust is the plan? Perturb fuel price / demand / solar CF / import & export prices around a base case (auditable dataset variants), solve each, summarise the ranges | `python tools/sensitivity.py run --island timor_demo --year 2030 --scenario gridvillage --param fuel=0.8,1.2` |
 
 See [`docs/pypsa_export.md`](docs/pypsa_export.md),
@@ -165,6 +165,13 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 | `export_price` | `0.0` $/MWh | feed-in price sites earn for exporting surplus to the grid; `0` = exports are an unremunerated spill (keep ≤ `import_price`) |
 | `policy_scope` | `"grid"` | scope of the `clean` policy constraints: `"grid"` (CO₂ cap + RE floor on grid generation only) or `"system"` (village layer included in both) |
 | `village_storage_max_mwh` | `208.0` | per-unit cap on new site storage energy |
+| `run_tag` | `""` | suffix for the results folder (`results/<scenario>_<island>_<year>_<clean>__<tag>/`). Empty = the plain name. Use it when two runs differ **only** by config keys — e.g. an `export_price` sweep on one dataset — which would otherwise share, and overwrite, one folder. |
+
+Every key in this table is read by the model *and* copied through by both job
+generators (`PASSTHROUGH_KEYS` in `generate_jobs.py` / `generate_jobs_local.py`).
+Adding a config key to the model means adding it there too: a key the generators
+do not copy is silently dropped from `config.json`, so the run solves at the
+default and the result CSVs look perfectly normal.
 
 ---
 
