@@ -65,9 +65,40 @@ interconnection cost data being right:
    anything for interconnection can only make the coordinated plan worse.
 
 So **$2,569/yr is an upper bound on the island-wide coordination value at any
-interconnection cost.** For scale: garuda's *cheapest single* village
-interconnection is **$2,493/yr**. The entire island-wide benefit of coordinating
-780 villages is worth about one village's cheapest connection.
+interconnection cost** — *at the import price those runs used*, see the caveat
+below. For scale: garuda's *cheapest single* village interconnection is
+**$2,493/yr**. The entire island-wide benefit of coordinating 780 villages is
+worth about one village's cheapest connection.
+
+> ### The ceiling is conditional on a tariff that should not have been there
+>
+> Every one of these runs charged `import_price = 59 $/MWh` on each MWh a village
+> imported. In a single central-planner cost minimisation that is hard to justify,
+> for two reasons that compound:
+>
+> - **On this dataset the charge has no offsetting resource cost at all.** With
+>   `demand_z1 = 0`, export must equal import, so the grid's generation *nets to
+>   zero* when villages trade with each other. The $59 was a pure penalty on
+>   inter-village sharing — the exact behaviour being measured — not a cost of
+>   anything.
+> - **Where the grid does generate** (a dataset with real grid load), the fuel and
+>   O&M are already in the objective as `eVariableCostsGrid`. A tariff on top
+>   counts the same MWh twice.
+>
+> $59 is also an **industrial** tariff; PLN household rates are roughly $26/MWh on
+> the subsidised lifeline and ~$90/MWh non-subsidised.
+>
+> **What this means for the number above.** The ceiling was measured with
+> connection made free but the transfer charge still in force, so it bounds
+> coordination value *under that tariff*, not in general. The monotonicity
+> argument in `Cost_per_yr` still holds — the tariff is a separate axis it says
+> nothing about. The Timor scenario files now set `import_price: 0`, and
+> [`run_plan_timor.md` group A5](run_plan_timor.md) sweeps it.
+>
+> **Do not quote the "one village's cheapest connection" line without this caveat**
+> until A5 has run. If coordination value rises materially at `import_price = 0`,
+> the published null was in part an artifact of the tariff rather than a fact about
+> Timor's geography.
 
 ## The result that is not zero
 
@@ -123,7 +154,9 @@ never separated:
    construction.
 
 Experiment #3 is suggestive — adding load diversity made trade *fall*, which is
-hard to explain by synchrony alone — but it is not decisive. **Do not publish
+hard to explain by synchrony alone — but it is not decisive. Mechanism 2 is now
+directly testable rather than merely suspected: set `import_price` to 0 and
+re-measure ([group A5](run_plan_timor.md)). **Do not publish
 solar synchrony as the cause** until a sweep of `export_price` on plain `timor`
 separates the two (raising `export_price` removes the tax without creating a
 buyer, so the difference against the same sweep on a dataset *with* grid load
