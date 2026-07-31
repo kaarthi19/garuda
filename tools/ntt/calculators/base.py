@@ -96,7 +96,12 @@ class Calculator:
     solar_cf = 0.16                      # annual PV capacity factor
     battery_to_pv_ratio = 2.0            # BESS kWh per PV kWp (rule of thumb)
     solar_idr_per_kwp = 8_600_000        # KDKMP PV all-in (Rp/kWp)
-    battery_idr_per_kw = 0.0
+    # Battery capex splits into a power block (inverter/PCS, Rp/kW) and an energy
+    # block (cells, Rp/kWh). The power block was 0 — free battery MW — which let
+    # the optimiser buy unlimited charge/discharge power against a priced energy
+    # build, so the built duration floated (~5.3 h in the Timor case) instead of
+    # being an economic choice. 3.27 MRp/kW annualises to ~$30k/MW-yr.
+    battery_idr_per_kw = 3_270_700
     battery_idr_per_kwh = 4_500_000      # KDKMP BESS all-in (Rp/kWh)
 
     def demand(self, village: "Village") -> "DemandResult":
@@ -125,7 +130,12 @@ class Calculator:
             solar_fom_per_mwyr=C.fixed_om_per_mwyr(self.solar_idr_per_kwp, "solar"),
             battery_inv_per_mwyr=C.annualise_idr_per_kw(self.battery_idr_per_kw, "battery"),
             battery_inv_per_mwhyr=C.annualise_idr_per_kwh(self.battery_idr_per_kwh, "battery"),
-            battery_fom_per_mwyr=C.fixed_om_per_mwyr(self.battery_idr_per_kw or 1_000_000, "battery"),
+            # Deliberate literal, not `self.battery_idr_per_kw`: battery fixed O&M is
+            # benchmarked to a 1 MRp/kW power block (-> $1,250/MW-yr). This used to
+            # ride on the `or 1_000_000` fallback firing because the power capex was
+            # 0; pricing the power block would otherwise have moved Fixed_OM to
+            # $4,088/MW-yr as a silent side effect of an investment-cost change.
+            battery_fom_per_mwyr=C.fixed_om_per_mwyr(1_000_000, "battery"),
             capex_idr={
                 "solar": sizing.solar_kwp * self.solar_idr_per_kwp,
                 "battery": sizing.battery_kwh * self.battery_idr_per_kwh,
