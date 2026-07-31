@@ -85,9 +85,13 @@ function benders_master_problem(inputs, mipgap, CO2_constraint, CO2_limit, RE_co
             vVIL_CAP[g] == vVIL_NEW_CAP_UC[g]
         cVILCapEnergyOld[g in intersect(inputs.VIL_STOR, inputs.VIL_OLD)], 
             vVIL_E_CAP[g] == inputs.village_generators.Existing_Cap_MWh[g] - vVIL_RET_E_CAP[g]
-        cVILCapEnergyNew[g in intersect(inputs.VIL_STOR, inputs.VIL_NEW)], 
+        cVILCapEnergyNew[g in intersect(inputs.VIL_STOR, inputs.VIL_NEW)],
             vVIL_E_CAP[g] == vVIL_NEW_E_CAP[g]
     end)
+    # NOTE: this file is an inherited stub — it is NOT in function_compiler.jl's
+    # include list and holds its own copy of the village-storage formulation. It
+    # does not honour the `battery_duration_h` config key (optimizer.jl's
+    # cVILStorDuration); wiring Benders up again means porting that constraint here.
     
     # Fixed cost objective (first-stage costs)
     @expression(MASTER, eFixedCosts,

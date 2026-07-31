@@ -26,6 +26,20 @@ All perturbations are **multipliers on the base value**.
 | `solar_cf` | every solar resource's availability column, grid and site layers, clipped to [0, 1] | dataset variant |
 | `import_price` | the `import_price` config value | config only |
 | `export_price` | the `export_price` config value | config only |
+| `battery_duration_h` | the `battery_duration_h` config value (fixed site-storage duration) | config only |
+
+**A multiplier on a zero base is still zero.** `export_price` and
+`battery_duration_h` both default to `0`, so sweeping either without also passing
+a non-zero base (`--export-price`, `--battery-duration-h`) would solve every point
+at 0 and report a perfectly flat — and completely fake — null result. The harness
+refuses that combination rather than spend the runtime.
+
+**Config-axis runs are separated by `run_tag`.** A dataset-axis variant gets its
+own island name, so its results folder is distinct. A config-axis variant reuses
+the base dataset, so the harness sets `run_tag` and the run lands in
+`results/<scenario>_<island>_<year>_<clean>__<tag>/` — without it every point of
+a price sweep would overwrite the same folder and the summary would report the
+last run once per row.
 
 **Dataset variants are honest datasets.** Each one is a full copy of the base
 folder at `data_indonesia/<year>/<island>__<tag>/` (e.g. `timor_demo__fuel1.3`)

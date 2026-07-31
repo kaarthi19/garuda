@@ -39,6 +39,11 @@ CO2_constraint = preflight.clean_flags.CO2_constraint
 RE_constraint  = preflight.clean_flags.RE_constraint
 RE_limit       = Float64(get(cfg, "RE_limit", 0.34))          # min RE share (clean runs)
 village_storage_max_mwh = Float64(get(cfg, "village_storage_max_mwh", 208.0)) # per-unit cap on new village storage
+# Fixed-duration site storage: energy (MWh) = battery_duration_h x power (MW).
+# 0 (default) leaves power and energy co-optimised independently — a strict no-op.
+battery_duration_h = Float64(get(cfg, "battery_duration_h", 0.0))
+battery_duration_h >= 0 ||
+    error("config key battery_duration_h must be >= 0 hours (0 = off), got $(battery_duration_h)")
 engine   = lowercase(get(cfg, "engine", "expansion"))        # "expansion" | "dispatch"
 # LP-relax the unit-commitment binaries. Default ON for dispatch (fast operational
 # LP) and OFF for expansion (exact MILP — the decision-grade default); set
@@ -111,5 +116,6 @@ function_compiler(
     relax_uc = relax_uc,
     export_price = export_price,
     policy_scope = policy_scope,
-    lp_method = lp_method
+    lp_method = lp_method,
+    battery_duration_h = battery_duration_h
 )
