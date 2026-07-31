@@ -55,6 +55,7 @@ engine and [`MODEL.md`](MODEL.md) for the optimisation formulation.
 | **Auto-report** | Result CSVs → one shareable HTML + PDF (headline metrics, mix/cost charts, per-zone reliability); `--lang id` renders it in Bahasa Indonesia | `python tools/report.py results/base_maluku_2030_reference` |
 | **Coordination value** | The standalone-vs-coordinated delta (cost, diesel, emissions, unserved energy avoided) as one command — compare two runs, or solve both on HiGHS then compare. | `python tools/coordination_value.py run --island timor_demo --year 2030` |
 | **Sensitivity sweeps** | How robust is the plan? Perturb fuel price / demand / solar CF / import & export prices around a base case (auditable dataset variants), solve each, summarise the ranges | `python tools/sensitivity.py run --island timor_demo --year 2030 --scenario gridvillage --param fuel=0.8,1.2` |
+| **Grid demand for Timor** | Give the Timor grid bus a real load (derived from the NTT zone-2 series, net of village load) plus a transplanted fleet, so village→grid **export** becomes a question the model can answer at all | `python -m tools.ntt.build_grid_demand --share 0.42 --out-dataset timor__market --fleet rescale` |
 
 See [`docs/pypsa_export.md`](docs/pypsa_export.md),
 [`docs/experience_layer.md`](docs/experience_layer.md),

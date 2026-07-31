@@ -250,7 +250,13 @@ def build(villages, out_dir, year, solar_cap=False, gis_dir="~/Desktop/QGIS_NEW"
               ["Village", "Cost_per_yr", "Max_Connect_MW"], conn_rows)
 
     # --- minimal shared grid backstop (Zone 1) ------------------------------
-    # one existing PLN diesel so the bus can supply/absorb; zero separate grid demand.
+    # One existing PLN diesel, and zero separate grid demand. The bus can SUPPLY
+    # village imports; it cannot absorb village exports for their own sake —
+    # vGEN >= 0 means a generator cannot sink power, this dataset has no grid
+    # storage (STOR set is empty) and demand_z1 is 0, so the zonal balance forces
+    # Σ village export <= Σ village import in every hour. Village-to-grid *sales*
+    # therefore cannot be studied on this dataset; give the bus a real load first
+    # (tools/ntt/build_grid_demand.py).
     grid_peak = round(sum(d.peak_mw for d in demands), 3)
     grid_gen_rows = [
         [1, 1, "pln_timor_diesel", "diesel", "pln", round(grid_peak, 3), 0, 0, 0,
