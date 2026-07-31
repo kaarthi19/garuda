@@ -113,6 +113,15 @@ Model adalah alat bantu keputusan, bukan ramalan. Sebelum mengutip sebuah angka:
    laporan yang sama.
 5. **Biaya bersifat komparatif.** Gunakan selisih biaya antar skenario; angka
    mutlak juta US$/tahun bergantung pada cakupan pemodelan.
+6. **Nilai koordinasi bisa nol — dan pada satu-satunya kasus yang diukur pada
+   skala penuh, memang nol.** Pada seluruh 780 desa nyata di Timor, manfaat
+   koordinasi sepulau paling banyak **US$2.569/tahun pada sistem US$64,6
+   juta/tahun (0,004 %)**, dan pada biaya interkoneksi penuh **tidak ada desa yang
+   tersambung**: surya + baterai mandiri lebih murah daripada jaringan. Nol adalah
+   sebuah temuan, bukan proses yang gagal — artinya bangun lokal alih-alih
+   interkoneksi *untuk desa-desa ini, pada jarak ini*. Pengukurannya, beserta
+   batas cakupannya, ada di
+   [`coordination_findings_timor.md`](coordination_findings_timor.md).
 
 ## Terbuka, dapat diaudit, dapat direproduksi
 
