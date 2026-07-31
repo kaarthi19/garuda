@@ -46,6 +46,31 @@ cleans:
 # ---------------------------------------------------------------------------
 mipgap: 0.01
 
+# ---------------------------------------------------------------------------
+# Grid import price ($/MWh a site pays for an imported MWh).
+#
+# SET TO 0 DELIBERATELY. This model is a single central-planner cost
+# minimisation, and the objective already contains `eVariableCostsGrid` — the
+# fuel and O&M the grid burns to generate whatever a site imports (the zonal
+# balance forces it to). `import_price` adds `eGridImportCosts` ON TOP of that,
+# so a non-zero value charges the same MWh twice: at Timor's diesel margin,
+# ~$197/MWh of real resource cost plus the tariff.
+#
+# A tariff is a TRANSFER between parties, not a resource cost. It belongs in a
+# merchant or affordability framing, not in a system-optimal one — and the
+# system-optimal result is the agreed deliverable.
+#
+# The shipped default of 59.0 is also an industrial/commercial tariff, not a
+# village one: PLN household rates are roughly $26/MWh on the subsidised
+# lifeline or ~$90/MWh non-subsidised.
+#
+# This matters for the headline. With a non-zero import price and no offsetting
+# export credit (export_price = 0), every inter-village transfer carries a
+# one-sided deadweight charge — one of the two candidate explanations for the
+# measured "coordination value is ~0" that no run has yet separated. Sweep it:
+#   docs/run_plan_timor.md, group A5.
+import_price: 0.0
+
 # Feed-in price ($/MWh) paid for village exports. 0 = exports are an
 # unremunerated spill path (the shipped reference behaviour).
 #
