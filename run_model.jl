@@ -44,6 +44,18 @@ engine   = lowercase(get(cfg, "engine", "expansion"))        # "expansion" | "di
 # LP) and OFF for expansion (exact MILP — the decision-grade default); set
 # "relax_uc" in the config to override either, e.g. fast license-free expansion.
 relax_uc = Bool(get(cfg, "relax_uc", engine == "dispatch"))
+# Gurobi LP algorithm (its "Method" attribute) for the root relaxation and node
+# LPs: -1 automatic (the default — a strict no-op), 0 primal simplex, 1 dual
+# simplex, 2 barrier, 3 concurrent, 4/5 deterministic concurrent. On the
+# 780-village Timor MILP, Gurobi's automatic choice spends its whole root solve
+# in concurrent mode (~535 s of "concurrent spin time" it reports as avoidable);
+# Method=2 removes that. No HiGHS equivalent — ignored there.
+lp_method = Int(get(cfg, "lp_method", -1))
+-1 <= lp_method <= 5 ||
+    error("config key lp_method must be in -1..5 (Gurobi Method), got $(lp_method)")
+if lp_method >= 0 && solver != "gurobi"
+    println("WARNING: lp_method=$(lp_method) is a Gurobi attribute and is ignored by solver \"$(solver)\".")
+end
 
 # 4) Scenario toggles
 Grid = preflight.flags.Grid
@@ -98,5 +110,6 @@ function_compiler(
     engine = engine,
     relax_uc = relax_uc,
     export_price = export_price,
-    policy_scope = policy_scope
+    policy_scope = policy_scope,
+    lp_method = lp_method
 )

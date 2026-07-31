@@ -822,8 +822,8 @@ end
 # (fractional commitment and grid-connection), under-counting start-up / minimum
 # up-down effects. Use it for fast license-free expansion where the empirically
 # measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid")
-    CE = make_solver(solver; mipgap = mipgap)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1)
+    CE = make_solver(solver; mipgap = mipgap, lp_method = lp_method)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
                         village_storage_max_mwh = village_storage_max_mwh,
