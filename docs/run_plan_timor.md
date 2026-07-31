@@ -102,6 +102,47 @@ number could not be measured at all. It can now.
 | **use it** | set `island_params` / `co2_limits` in the scenario YAML from this, not from the placeholder |
 | sanity | on `timor_belu` (81 villages) the measured figure is 54,067 tCO₂/yr |
 
+### A5 — import-price sweep *(may move the headline; run it before publishing one)*
+
+`import_price` is the $/MWh a site pays for an imported MWh. **The shipped Timor
+scenario files now set it to 0, deliberately**, and this run measures what that
+choice is worth.
+
+The objective already contains `eVariableCostsGrid` — the fuel and O&M the grid
+burns to generate whatever a site imports, because the zonal balance forces it to.
+`import_price` adds `eGridImportCosts` **on top**, so a non-zero value charges the
+same MWh twice: at Timor's diesel margin that is ~$197/MWh of real resource cost
+plus the tariff, ~$256/MWh in total. A tariff is a **transfer**, not a resource
+cost; it belongs in a merchant framing, and the agreed deliverable is
+system-optimal.
+
+The old default of 59.0 is also an *industrial* tariff. PLN household rates are
+roughly **$26/MWh** on the subsidised lifeline and **~$90/MWh** non-subsidised —
+59 is neither.
+
+**Why this may change the answer.** With a non-zero import price and no offsetting
+export credit, every inter-village transfer carried a one-sided deadweight charge.
+That is one of the two candidate explanations for the measured "coordination value
+is ~0" — the other being solar synchrony plus cheap storage — and no run has
+separated them. If coordination value rises materially at `import_price = 0`, the
+published null was partly an artifact of the tariff rather than a fact about
+Timor.
+
+```bash
+# 0, $29.5, $59, $88.5 — the axis is a multiplier, so pass a non-zero base
+python tools/sensitivity.py run --island timor --year 2030 --scenario gridvillage \
+    --solver gurobi --exact-uc \
+    --import-price 59 --param import_price=0,0.5,1,1.5
+```
+
+| | |
+|---|---|
+| runs | 5 (base + 4), serial in one job |
+| **record** | coordination value at each point, and `Total_Import_MWh` summed over sites |
+| **the comparison that matters** | the value at multiplier 0 against multiplier 1. A large gap means the tariff, not the physics, was suppressing coordination |
+| pair with | A3 (free connection) — both at once is the true ceiling |
+| note | the model's default is still 59.0; only the Timor scenario files set 0. Nothing outside this case changes |
+
 ---
 
 ## Group B — coordination on current data
