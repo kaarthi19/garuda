@@ -15,31 +15,49 @@ function result_extraction(
     mkpath(results_dir)
 
     # 1) Compute generation totals.
+    #
     # Materialise each JuMP value container ONCE — indexing value.(...) inside a
     # loop re-evaluates the whole container every iteration (pathological at
     # hundreds of villages).
+    #
+    # ENERGY QUANTITIES ARE ANNUALISED WITH sample_weight.
+    #
+    # The model solves representative periods, not a full year: each modelled hour
+    # stands for `sample_weight[t]` hours of the year (Sub_Weights[p] divided by
+    # Timesteps_per_Rep_Period). A bare sum over the 1344 modelled hours therefore
+    # reports only the sample, not the year — 6.518x low on Timor (uniform weights
+    # of 1095/168), and wrong per-period on datasets whose weights are NOT uniform
+    # (maluku's sample_weight ranges 1.0 to 15.04, so no single factor exists and
+    # even the generation *mix* is distorted). The objective already weights its
+    # cost terms this way; only the reported energy did not.
+    #
+    # Weight energy (MWh / MWh-summed-over-time); do NOT weight power (MW), which
+    # is instantaneous — peaks and capacities stay as solved.
+    w = inputs.sample_weight
+    annualise(series) = sum(w[t] * series[t] for t in eachindex(series))
+
     GENv = value.(solution.GEN)
     NG = size(inputs.G, 1)
     generation = zeros(NG)
     for i in 1:NG
-        generation[i] = sum(GENv[:, inputs.G[i]].data)
+        generation[i] = annualise(GENv[:, inputs.G[i]].data)
     end
 
     VILGENv = value.(solution.VIL_GEN)
     NVILG = size(inputs.VIL_G, 1)
     village_generation = zeros(NVILG)
     for i in 1:NVILG
-        village_generation[i] = sum(VILGENv[:, inputs.VIL_G[i]].data)
+        village_generation[i] = annualise(VILGENv[:, inputs.VIL_G[i]].data)
     end
 
     VILGENHEATv = value.(solution.VIL_GEN_HEAT)
     NVILUC = size(inputs.VIL_UC, 1)
     village_heat_generation = zeros(NVILUC)
     for i in 1:NVILUC
-        village_heat_generation[i] = sum(VILGENHEATv[:, inputs.VIL_UC[i]].data)
+        village_heat_generation[i] = annualise(VILGENHEATv[:, inputs.VIL_UC[i]].data)
     end
 
-    total_demand = sum(sum.(eachcol(demand)))
+    total_demand = sum(w[t] * sum(demand[t, :]) for t in eachindex(w))
     peak_demand  = maximum(sum(eachcol(demand)))
     MWh_share    = generation ./ total_demand .* 100
     cap_share    = value.(solution.CAP).data ./ peak_demand .* 100
@@ -100,7 +118,7 @@ function result_extraction(
         village_import = DataFrame(
             ID               = inputs.VIL,
             Zone             = [inputs.village_zone[v] for v in inputs.VIL],
-            Total_Import_MWh = vec(sum(VILIMPORTv[:, inputs.VIL].data, dims=1)),
+            Total_Import_MWh = [annualise(VILIMPORTv[:, v].data) for v in inputs.VIL],
             Peak_Import_MW   = vec(maximum(VILIMPORTv[:, inputs.VIL].data, dims=1)),
         )
     end
@@ -120,8 +138,8 @@ function result_extraction(
             ID               = inputs.VIL,
             Zone             = [inputs.village_zone[v] for v in inputs.VIL],
             Connected        = [round(Int, CONNECTv[v]) for v in inputs.VIL],
-            Total_Import_MWh = [sum(VILIMPORTv[:, v].data) for v in inputs.VIL],
-            Total_Export_MWh = [sum(VILEXPORTv[:, v].data) for v in inputs.VIL],
+            Total_Import_MWh = [annualise(VILIMPORTv[:, v].data) for v in inputs.VIL],
+            Total_Export_MWh = [annualise(VILEXPORTv[:, v].data) for v in inputs.VIL],
         )
     end
 
@@ -183,7 +201,7 @@ function result_extraction(
     transmission_flow = DataFrame(
         ID           = inputs.L,
         Path         = inputs.lines.path_name[inputs.L],
-        Net_Flow_MWh = [sum(FLOWv[:, l].data) for l in inputs.L],
+        Net_Flow_MWh = [annualise(FLOWv[:, l].data) for l in inputs.L],
         Peak_Flow_MW = [maximum(FLOWv[:, l].data) for l in inputs.L],
     )
 
@@ -204,8 +222,8 @@ function result_extraction(
             z,
             inputs.nse.NSE_Cost[s],
             maximum(NSEv[:, s, z].data),
-            sum(NSEv[:, s, z].data),
-            sum(NSEv[:, s, z].data) / total_demand * 100
+            annualise(NSEv[:, s, z].data),
+            annualise(NSEv[:, s, z].data) / total_demand * 100
         ))
     end
 
@@ -224,8 +242,8 @@ function result_extraction(
             vil,
             inputs.nse.NSE_Cost[s],
             maximum(VILNSEv[:, s, vil].data),
-            sum(VILNSEv[:, s, vil].data),
-            sum(VILNSEv[:, s, vil].data) / total_demand * 100
+            annualise(VILNSEv[:, s, vil].data),
+            annualise(VILNSEv[:, s, vil].data) / total_demand * 100
         ))
     end
 
@@ -244,8 +262,8 @@ function result_extraction(
             vil,
             inputs.nse.NSE_Cost[s],
             maximum(VILNSEHEATv[:, s, vil].data),
-            sum(VILNSEHEATv[:, s, vil].data),
-            sum(VILNSEHEATv[:, s, vil].data) / total_demand * 100
+            annualise(VILNSEHEATv[:, s, vil].data),
+            annualise(VILNSEHEATv[:, s, vil].data) / total_demand * 100
         ))
     end
 
@@ -268,11 +286,19 @@ function result_extraction(
 
     )
 
+    # Grid_REShare is renewable grid generation over grid demand. With no grid
+    # demand (a site-only dataset such as timor) that ratio is undefined, not 0 —
+    # reporting 0 % would read as "the grid runs on fossil", which is not a fact
+    # about anything. NaN says "not applicable here"; System_REShare, whose
+    # denominator includes site demand, is the meaningful figure on those runs.
+    grid_re_share = get(solution, :GridDemandPositive, true) ?
+        value.(solution.REShare) : NaN
+
     clean_energy = DataFrame(
         CO2_Emissions      = value.(solution.CO2Emissions),
         CO2_Emissions_Grid = value.(solution.CO2EmissionsGrid),
         CO2_Emissions_Village   = value.(solution.CO2EmissionsVIL),
-        Grid_REShare       = value.(solution.REShare),
+        Grid_REShare       = grid_re_share,
         System_REShare     = value.(solution.REShareSystem)
     )
 

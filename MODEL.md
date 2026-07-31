@@ -186,7 +186,8 @@ Flagged for follow-up:
   linkage, retirement-by-age, or learning curves across years.
 - **No reserve constraints** — adequacy is represented only by priced non-served
   energy, not an explicit reserve margin.
-- **Representative-period sums in result extraction** — energy columns in the
-  generator / NSE / import result CSVs are sums over representative hours, not
-  annualised; costs, emissions, and the dispatch reliability tables are annual.
-  See `docs/outputs_guide.md`.
+- **Result energy columns are annualised** — `result_extraction_function.jl`
+  weights every rep-period energy sum by `sample_weight`, so generation, imports,
+  exports, flows and unserved energy are annual, consistent with costs and
+  emissions. Power columns (peaks, capacities) stay instantaneous. See
+  `docs/outputs_guide.md`; this changed, and older result CSVs are not comparable.

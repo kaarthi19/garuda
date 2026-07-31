@@ -122,8 +122,33 @@ def test_site_prefix_fallback(tmp_path):
 
 
 def test_annualisation_factor(tmp_path):
+    """The 8760/T helper still reports the rep-period structure correctly."""
     data = str(tmp_path / "data")
     _demand(data, "2030", "demo")
     factor, note = cv.annualisation({"year": "2030", "island": "demo"}, data, quiet=True)
     assert abs(factor - 1095.0) < 1e-9   # 8760 / (2*4)
     assert "uniform" in note
+
+
+def test_energy_metrics_are_not_annualised_twice(tmp_path):
+    """Result CSVs are annual at source, so load_metrics must NOT re-scale them.
+
+    result_extraction_function.jl weights every rep-period energy sum by
+    sample_weight. Multiplying by 8760/T here as well would inflate every energy
+    metric by that factor again — 6.518x on Timor — and it would look plausible.
+    """
+    root = str(tmp_path / "results")
+    data = str(tmp_path / "data")
+    _demand(data, "2030", "demo")
+    # 8760/T for this fixture is 1095, so a double-count would be unmistakable
+    run = _make_run(root, "gridvillage_demo_2030_reference", "dispatch",
+                    total_cost=90.0, co2=800.0, site_gen_prefix="village",
+                    connected=1, diesel_gwh=7.0)
+    _meta, m, notes = cv.load_metrics(run, data)
+
+    assert abs(m["grid_diesel_gwh"] - 7.0) < 1e-9, (
+        f"grid diesel GWh is {m['grid_diesel_gwh']}, not the 7.0 written to the CSV — "
+        "a post-hoc 8760/T factor would double-count the sample weighting that "
+        "result extraction already applies")
+    assert abs(m["grid_nse_mwh"] - 10.0) < 1e-9
+    assert any("annual" in n for n in notes)
