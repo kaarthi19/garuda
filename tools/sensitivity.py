@@ -241,6 +241,7 @@ def base_config(args):
         "mipgap": 0.01, "import_price": float(args.import_price),
         "export_price": float(args.export_price), "policy_scope": args.policy_scope,
         "battery_duration_h": float(args.battery_duration_h),
+        "lp_method": int(args.lp_method),
     }
 
 
@@ -331,7 +332,12 @@ def parse_params(pairs):
     return params
 
 
-def main(argv):
+def build_parser():
+    """Construct the CLI parser.
+
+    Split out of main() so the flag surface and the defaults it feeds into
+    base_config() can be asserted without invoking a sweep.
+    """
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -353,13 +359,24 @@ def main(argv):
     r.add_argument("--battery-duration-h", type=float, default=0.0,
                    help="base fixed site-storage duration in hours (0 = power/energy "
                         "co-optimised); pass a non-zero base to sweep it")
+    r.add_argument("--lp-method", type=int, default=-1, choices=(-1, 0, 1, 2, 3, 4, 5),
+                   help="Gurobi LP algorithm (Method) for every run in the sweep: "
+                        "-1 automatic (default, unchanged behaviour), 2 barrier. "
+                        "Pass the same value the sweep's reference run used — a "
+                        "sweep differenced against a run solved by a different "
+                        "algorithm is not a like-for-like comparison on a "
+                        "degenerate optimum. Ignored under HiGHS.")
     r.add_argument("--policy-scope", default="grid", choices=("grid", "system"))
     r.add_argument("--co2-limit", type=float, default=1.0e12)
     r.add_argument("--re-limit", type=float, default=0.34)
     r.add_argument("--data-root", default=os.path.join(REPO_ROOT, "data_indonesia"))
     r.add_argument("--keep-going", action="store_true",
                    help="continue the sweep if one run fails (it is dropped from the summary)")
-    args = ap.parse_args(argv[1:])
+    return ap
+
+
+def main(argv):
+    args = build_parser().parse_args(argv[1:])
 
     params = parse_params(args.param)
     if not params:
