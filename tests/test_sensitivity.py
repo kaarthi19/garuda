@@ -131,6 +131,34 @@ def test_build_plan_oat_and_grid():
     assert sx.build_plan({"fuel": [1.0]}, False) == [("base", {})]
 
 
+def test_base_config_carries_lp_method():
+    """Guards the sweep-vs-reference solver mismatch.
+
+    base_config() previously omitted lp_method entirely, so every sweep ran at
+    Gurobi Method=-1 (automatic) even when the reference run it is differenced
+    against used Method=2 (barrier). On a model whose optimum is degenerate --
+    e.g. the Timor scenarios at import_price=export_price=0, where the trade
+    variables carry no objective coefficient -- two algorithms can return
+    different vertices of the same optimal face, so the delta is not
+    like-for-like. The default stays -1, preserving prior behaviour.
+    """
+    p = sx.build_parser()
+
+    default = sx.base_config(p.parse_args(["run", "--island", "timor"]))
+    assert default["lp_method"] == -1, "default must not change existing behaviour"
+
+    barrier = sx.base_config(
+        p.parse_args(["run", "--island", "timor", "--lp-method", "2"]))
+    assert barrier["lp_method"] == 2
+
+    # lp_method must survive the job generators too, or it is silently dropped.
+    import re
+    src = open(os.path.join(os.path.dirname(os.path.dirname(
+        os.path.abspath(__file__))), "generate_jobs_local.py")).read()
+    keys = re.search(r"PASSTHROUGH_KEYS\s*=\s*\((.*?)\)", src, re.S).group(1)
+    assert "'lp_method'" in keys or '"lp_method"' in keys
+
+
 def test_parse_params_validates_axis():
     assert sx.parse_params(["fuel=0.8,1.2"]) == {"fuel": [0.8, 1.2]}
     try:
