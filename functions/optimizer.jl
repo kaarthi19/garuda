@@ -914,6 +914,19 @@ function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constr
 
     relax_uc && _relax_binaries!(CE, UC_BINARIES)
 
+    # Warm-start the interconnection decision at all-islanded. vVIL_CONNECT = 0 is
+    # always feasible (connection cost is only incurred when connected), so the
+    # solver starts from a real plan instead of the trivial all-NSE incumbent.
+    # Measured without this on the 780-site market MILP: 8 h at the root, zero
+    # usable incumbents, gap 97.5% — the incumbent Gurobi seeds is "serve
+    # nothing at Voll". A start only helps or is discarded; it never binds.
+    od = object_dictionary(CE)
+    if haskey(od, :vVIL_CONNECT)
+        for v in CE[:vVIL_CONNECT]
+            is_binary(v) && set_start_value(v, 0.0)
+        end
+    end
+
     optimize!(CE)
     mode = relax_uc ? "LP, UC relaxed" : "MILP, exact UC"
     if termination_status(CE) == MOI.OPTIMAL
