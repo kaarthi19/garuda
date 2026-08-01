@@ -170,6 +170,7 @@ Per-run options (scenario YAML top level or a job's `config.json`):
 | `village_storage_max_mwh` | `208.0` | per-unit cap on new site storage energy |
 | `battery_duration_h` | `0.0` h | fix new site storage to a duration (energy MWh = `battery_duration_h` × power MW). `0` = power and energy co-optimised independently, so the built duration floats; a positive value makes storage a fixed-duration product and lets the battery *power* capex bind the energy build. |
 | `run_tag` | `""` | suffix for the results folder (`results/<scenario>_<island>_<year>_<clean>__<tag>/`). Empty = the plain name. Use it when two runs differ **only** by config keys — e.g. an `export_price` sweep on one dataset — which would otherwise share, and overwrite, one folder. |
+| `time_limit` | `259200` s (3 days) | solver wall-clock limit. On expiry the solver stops at its best incumbent, the engine prints `reached the time limit`, and **the result CSVs are written as normal** — so a MILP that cannot close its gap still yields a usable feasible plan plus a reported gap. Prefer this to killing the process from outside (`timeout`), which destroys the results. Always report the **achieved** gap from the solver log alongside any time-limited result. |
 
 Every key in this table is read by the model *and* copied through by both job
 generators (`PASSTHROUGH_KEYS` in `generate_jobs.py` / `generate_jobs_local.py`).
