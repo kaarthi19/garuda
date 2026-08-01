@@ -142,7 +142,7 @@ expansion runs.
 | `tools/` | Python: `screening.py`, `re_resource.py` (no-solver engines), `validate_schema.py`; `export_pypsa.py` + `validate_pypsa_parity.py` (PyPSA interop); `launcher.py` + `report.py` (experience layer); and the GIS resource-siting pipeline (`dem_slope.py`, `candidate_land.py`, `resource_siting.py`, `ntt/`). |
 | `run_model.jl` | Entry point — reads a `config.json`, runs the chosen engine, writes results. |
 | `scenario_*.yml` | Scenario definitions (islands, years, scenarios, clean cases, CO₂ limits). |
-| `tests/` | `verify_data_core.jl` (no-solver Layer-A regression) and `test_fishing_calculator.py`. |
+| `tests/` | `verify_data_core.jl` (no-solver Layer-A regression), `verify_capacity_accounting.jl` (no-solver: every generator is capacity-constrained), and the `pytest` suite. |
 
 ---
 

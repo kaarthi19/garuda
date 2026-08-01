@@ -124,6 +124,25 @@ def validate_dataset(folder: str):
     # NB: Commit / New_Build carry sentinel values beyond {0,1} in real data
     # (e.g. Commit=2, New_Build=-1), interpreted by the loader's ==1 / !=1 tests,
     # so they are intentionally NOT constrained to 0/1 here.
+    #
+    # The loader partitions generators into UC (Commit==1) and ED (everything
+    # else), so an unrecognised sentinel is dispatched as an ED unit rather than
+    # committed. That is safe — it always carries capacity and max-power
+    # constraints — but it is silent, and Commit=2 (battery candidate) is the
+    # only sentinel any shipped dataset actually means. Warn on the rest so a
+    # typo'd or newly-invented code is visible rather than quietly reinterpreted.
+    if "Commit" in gens.columns:
+        commit_vals = pd.to_numeric(gens["Commit"], errors="coerce")
+        unknown = sorted(set(int(v) for v in commit_vals.dropna()) - {0, 1, 2})
+        if unknown:
+            warn(f"generators.csv: unrecognised Commit value(s) {unknown}; the loader "
+                 "treats anything other than 1 as economic dispatch (not unit-committed)")
+        if "STOR" in gens.columns:
+            stor = pd.to_numeric(gens["STOR"], errors="coerce").fillna(0)
+            odd = gens["R_ID"][(commit_vals == 2) & ~(stor >= 1)].tolist()
+            if odd:
+                warn("generators.csv: Commit=2 is the battery-candidate sentinel but these "
+                     f"rows are not STOR>=1: {odd}")
     if {"Commit", "Existing_Cap_MW"} <= set(gens.columns):
         commit = pd.to_numeric(gens["Commit"], errors="coerce")
         cap = pd.to_numeric(gens["Existing_Cap_MW"], errors="coerce")
@@ -133,6 +152,23 @@ def validate_dataset(folder: str):
                 f"(the model divides by it). Offending R_ID: {offenders}")
     if "Max_Cap_MW" not in gens.columns:
         warn("generators.csv: no Max_Cap_MW column (new-build capacity will be unbounded)")
+
+    # A one-way ratchet — output may fall but never rise — is not a physical unit;
+    # under cRampUp it pins generation to a constant across each representative
+    # period. Symmetric zeros (Ramp_Up == Ramp_Dn == 0) are a legitimate must-run
+    # baseload, so only the asymmetric case is an error. Storage is exempt from
+    # the ramp constraints entirely (see input_data.jl::ED_RAMP), so its ramp
+    # columns are unused and not checked here.
+    if {"Ramp_Up_Percentage", "Ramp_Dn_Percentage"} <= set(gens.columns):
+        up = pd.to_numeric(gens["Ramp_Up_Percentage"], errors="coerce")
+        dn = pd.to_numeric(gens["Ramp_Dn_Percentage"], errors="coerce")
+        stor = (pd.to_numeric(gens["STOR"], errors="coerce").fillna(0) >= 1
+                if "STOR" in gens.columns else pd.Series(False, index=gens.index))
+        ratchet = gens["R_ID"][(up == 0) & (dn > 0) & ~stor].tolist()
+        if ratchet:
+            err("generators.csv: Ramp_Up_Percentage=0 with Ramp_Dn_Percentage>0 is a one-way "
+                "ratchet — the unit could never increase output. Offending R_ID: "
+                f"{ratchet}")
 
     # ---- RE-flag consistency (warnings) ---------------------------------
     # The RE flag feeds the RE-share floor and the reported Grid_REShare. Two

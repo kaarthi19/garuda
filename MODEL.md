@@ -12,8 +12,9 @@ the code.
 |-----|---------|
 | `T` | Hours across all representative periods (e.g. 8×168 = 1,344); `START`/`INTERIOR` split period-first hours from the rest |
 | `Z` | Grid zones; `L` transmission corridors |
-| `G` | Grid generators; partitioned into `UC` (`Commit=1`, binary commitment) and `ED` (economic dispatch), and `OLD`/`NEW` (existing vs candidate) |
+| `G` | Grid generators; **partitioned** into `UC` (`Commit=1`, binary commitment) and `ED` (everything else — economic dispatch), and `OLD`/`NEW` (existing vs candidate) |
 | `STOR`, `VRE` | Grid storage / variable-renewable subsets |
+| `ED_RAMP` | `ED` minus `STOR` — the units the thermal ramp limits apply to |
 | `S` | Demand-curtailment (NSE) segments |
 | `VIL` | Villages; `VIL_G`, `VIL_UC`, `VIL_ED`, `VIL_STOR`, `VIL_NEW`, `VIL_OLD` mirror the grid subsets |
 
@@ -89,9 +90,24 @@ build (NEW), for power, storage energy, and transmission
 (`vT_CAP = Line_Max_Flow + vNEW_T_CAP − vRET_T_CAP`, expansion bounded by
 `Line_Max_Reinforcement_MW`).
 
-**Ramping** (231–281): up/down limits as fractions of capacity; for UC units
-the start/shut terms allow jumps to/from `Min_Power`. Each constraint has a
-wrap-around twin linking the first and last hour of each representative period.
+`UC` and `ED` must partition `G`: a generator in neither gets no capacity
+constraint and no max-power constraint, so its `vCAP` floats free — `Max_Cap_MW`
+unapplied, `Inv_Cost_per_MWyr` uncharged (that term sums over `ED_NEW`/`UC_NEW`),
+and `vGEN` uncapped. `ED` is therefore the *complement* of `UC`, not
+`Commit == 0`: `Commit` carries sentinels beyond `{0,1}` (battery candidates are
+all `Commit = 2`) and testing for 0 orphaned every one of them. Pinned by
+`tests/verify_capacity_accounting.jl`; the regression gate cannot see it, because
+its cases are dispatch-only and `dispatch_only()` pins `CAP` for every `g ∈ G`.
+
+**Ramping** (231–281): up/down limits as fractions of capacity, applied to
+`ED_RAMP` (= `ED` − `STOR`) and `UC`; for UC units the start/shut terms allow
+jumps to/from `Min_Power`. Each constraint has a wrap-around twin linking the
+first and last hour of each representative period. **Storage is exempt**: these
+constraints bound `vGEN` alone and say nothing about `vCHARGE`, so they never
+limited the charge↔discharge swing that actually matters for a battery. Storage
+power is bounded by `cMaxPowerED` and `cMaxCharge` (both `≤ vCAP`) and its energy
+by `cMaxSOC`; a genuine storage ramp limit would bound `d(vGEN − vCHARGE)/dt` and
+is not modelled.
 
 **Commitment** (282–292, 307–332): min up/down times via rolling sums of
 `vSTART`/`vSHUT`; commitment-state recursion

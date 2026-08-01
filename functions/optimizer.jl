@@ -273,12 +273,12 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     # ramp, min up, min down, and storage constraints
     @constraints(CE, begin
 
-            #ramp up for ED units, normal
-            cRampUp[t in inputs.INTERIOR, g in inputs.ED],
+            #ramp up for ED units, normal (storage exempt — see inputs.ED_RAMP)
+            cRampUp[t in inputs.INTERIOR, g in inputs.ED_RAMP],
                 vGEN[t,g] - vGEN[t-1,g] <= inputs.generators.Ramp_Up_Percentage[g]*vCAP[g]
 
             #ramp up for ED units, sub-period wrapping
-            cRampUpWrap[t in inputs.START, g in inputs.ED],
+            cRampUpWrap[t in inputs.START, g in inputs.ED_RAMP],
                 vGEN[t,g] - vGEN[t+inputs.hours_per_period-1,g] <= inputs.generators.Ramp_Up_Percentage[g]*vCAP[g]
 
             #ramp up constraints for UC units, normal
@@ -297,12 +297,12 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
                 inputs.generators.Ramp_Up_Percentage[g])*inputs.generators.Existing_Cap_MW[g]*vSTART[t,g] - 
                 inputs.generators.Min_Power_MW[g]*inputs.generators.Existing_Cap_MW[g]*vSHUT[t,g]
         
-            #ramp down for ED units, normal
-            cRampDown[t in inputs.INTERIOR, g in inputs.ED],
+            #ramp down for ED units, normal (storage exempt — see inputs.ED_RAMP)
+            cRampDown[t in inputs.INTERIOR, g in inputs.ED_RAMP],
                 vGEN[t-1,g] - vGEN[t,g] <= inputs.generators.Ramp_Dn_Percentage[g]*vCAP[g]
 
             #ramp down for ED units, sub-period warping
-            cRampDownWrap[t in inputs.START, g in inputs.ED],
+            cRampDownWrap[t in inputs.START, g in inputs.ED_RAMP],
                 vGEN[t+inputs.hours_per_period-1,g] - vGEN[t,g] <= inputs.generators.Ramp_Dn_Percentage[g]*vCAP[g]
  
             #ramp down constraints for UC units, normal
@@ -515,13 +515,13 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
     #village ramp, min up, min down, and storage constraints
     @constraints(CE, begin
 
-            #ramp up for ED units, normal
-            cVILRampUp[t in inputs.INTERIOR, g in inputs.VIL_ED],
-                vVIL_GEN[t,g] - vVIL_GEN[t-1,g] <= 
+            #ramp up for ED units, normal (storage exempt — see inputs.ED_RAMP)
+            cVILRampUp[t in inputs.INTERIOR, g in inputs.VIL_ED_RAMP],
+                vVIL_GEN[t,g] - vVIL_GEN[t-1,g] <=
                 inputs.village_generators.Ramp_Up_Percentage[g]*vVIL_CAP[g]
 
             #ramp up for ED units, sub-period wrapping
-            cVILRampUpWrap[t in inputs.START, g in inputs.VIL_ED],
+            cVILRampUpWrap[t in inputs.START, g in inputs.VIL_ED_RAMP],
                 vVIL_GEN[t,g] - vVIL_GEN[t+inputs.hours_per_period-1,g]  <= 
                 inputs.village_generators.Ramp_Up_Percentage[g]*vVIL_CAP[g]
 
@@ -541,12 +541,12 @@ function build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_l
                 inputs.village_generators.Ramp_Up_Percentage[g])*inputs.village_generators.Existing_Cap_MW[g]*vVIL_START[t,g] - 
                 inputs.village_generators.Min_Power_MW[g]*inputs.village_generators.Existing_Cap_MW[g]*vVIL_SHUT[t,g]
 
-            #ramp down for ED units, normal
-            cVILRampDown[t in inputs.INTERIOR, g in inputs.VIL_ED],
+            #ramp down for ED units, normal (storage exempt — see inputs.ED_RAMP)
+            cVILRampDown[t in inputs.INTERIOR, g in inputs.VIL_ED_RAMP],
                 vVIL_GEN[t-1,g] - vVIL_GEN[t,g] <= inputs.village_generators.Ramp_Dn_Percentage[g]*vVIL_CAP[g]
 
             #ramp down for ED units, sub-period warping
-            cVILRampDownWrap[t in inputs.START, g in inputs.VIL_ED],
+            cVILRampDownWrap[t in inputs.START, g in inputs.VIL_ED_RAMP],
                 vVIL_GEN[t+inputs.hours_per_period-1,g] - vVIL_GEN[t,g] <= inputs.village_generators.Ramp_Dn_Percentage[g]*vVIL_CAP[g]
 
             #ramp down constraints for UC units, normal
