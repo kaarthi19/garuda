@@ -38,6 +38,31 @@ cleans:
 mipgap: 0.01
 
 # ---------------------------------------------------------------------------
+# Solver. WITHOUT `solver: gurobi` run_model.jl:23 falls back to HiGHS, which was
+# measured at >6.5 h on the 780-village model WITHOUT CONVERGING. The run does not
+# fail — it just never finishes, or hits the 3-day TimeLimit and still exits 0.
+#
+# lp_method 2 = barrier. Gurobi's automatic choice spends the root solve in
+# concurrent mode and itself reports ~535 s per solve as avoidable. Gurobi-only;
+# ignored under HiGHS.
+#
+# relax_uc false is already the expansion default; stated explicitly because the
+# opposite (a silent LP relaxation) makes `Connected` read 0 for villages that
+# actually traded — result_extraction_function.jl:140 rounds a fractional binary.
+solver: gurobi
+lp_method: 2
+relax_uc: false
+
+# Feed-in price ($/MWh) for village exports. 0 = exports are an unremunerated
+# spill. Stated explicitly to match import_price below: with BOTH prices at 0 the
+# import/export variables carry zero objective coefficient, so the optimum is a
+# face rather than a point. Costs, capacities and connection counts are
+# well-determined; PER-VILLAGE TRADE VOLUMES ARE NOT — Gurobi and HiGHS agree on
+# Total_Costs to 11 s.f. while disagreeing 47% on one village's imports. Do not
+# publish per-village trade volumes from this scenario file.
+export_price: 0.0
+
+# ---------------------------------------------------------------------------
 # Grid import price ($/MWh a site pays for an imported MWh).
 #
 # SET TO 0 DELIBERATELY. This model is a single central-planner cost
