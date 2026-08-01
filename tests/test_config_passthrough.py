@@ -210,3 +210,43 @@ def test_generate_jobs_writes_optional_keys(tmp_path, monkeypatch):
     assert cfg["solver"] == "gurobi"
     assert cfg["run_tag"] == "xp40"
     assert cfg["mipgap"] == 0.005
+
+def test_time_limit_is_threaded_from_config_to_make_solver():
+    """Guards the config key that turns an unclosable MILP into a usable result.
+
+    `time_limit` was a make_solver kwarg (solver.jl) that nothing on the CLI path
+    ever passed, so every run sat at the 3-day default. That matters because a
+    solver TIME_LIMIT terminates gracefully -- optimizer.jl prints "reached the
+    time limit" and result extraction still runs, writing the incumbent -- whereas
+    killing the process externally destroys the result CSVs entirely.
+
+    The key is only useful if it survives the whole chain, so check every link.
+    Solver-free; runs in CI.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def src(rel):
+        return open(os.path.join(root, rel)).read()
+
+    # read + validated in the entry point, and forwarded to function_compiler
+    rm = src("run_model.jl")
+    assert 'get(cfg, "time_limit"' in rm
+    assert "time_limit > 0 ||" in rm, "must reject a non-positive limit"
+    assert "time_limit = time_limit" in rm
+
+    # accepted by function_compiler and forwarded to BOTH engines
+    fc = src("functions/function_compiler.jl")
+    assert "time_limit::Float64" in fc
+    assert fc.count("time_limit = time_limit") >= 2, "must forward to both engines"
+
+    # each engine accepts it and hands it to make_solver
+    for rel in ("functions/optimizer.jl", "functions/dispatch_engine.jl"):
+        eng = src(rel)
+        assert "time_limit::Float64" in eng, f"{rel} signature"
+        assert "make_solver(solver; mipgap = mipgap, lp_method = lp_method, time_limit = time_limit)" in eng, \
+            f"{rel} must pass time_limit to make_solver"
+
+    # and survives both job generators, or it is silently dropped from config.json
+    for rel in ("generate_jobs.py", "generate_jobs_local.py"):
+        keys = re.search(r"PASSTHROUGH_KEYS\s*=\s*\((.*?)\)", src(rel), re.S).group(1)
+        assert "'time_limit'" in keys, f"{rel} PASSTHROUGH_KEYS"

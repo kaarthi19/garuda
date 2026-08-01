@@ -21,8 +21,8 @@ _existing_cap(df, col, g) = df.New_Build[g] == 1 ? 0.0 : Float64(df[g, col])
 
 # _relax_binaries! and UC_BINARIES are defined in solver.jl (shared by both engines).
 
-function dispatch_only(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = true, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, battery_duration_h::Float64 = 0.0, export_backed_by_generation::Bool = false)
-    CE = make_solver(solver; mipgap = mipgap, lp_method = lp_method)
+function dispatch_only(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = true, export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, time_limit::Float64 = 3*24*60*60.0, battery_duration_h::Float64 = 0.0, export_backed_by_generation::Bool = false)
+    CE = make_solver(solver; mipgap = mipgap, lp_method = lp_method, time_limit = time_limit)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
                         village_storage_max_mwh = village_storage_max_mwh,

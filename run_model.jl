@@ -58,6 +58,15 @@ relax_uc = Bool(get(cfg, "relax_uc", engine == "dispatch"))
 lp_method = Int(get(cfg, "lp_method", -1))
 -1 <= lp_method <= 5 ||
     error("config key lp_method must be in -1..5 (Gurobi Method), got $(lp_method)")
+# Solver wall-clock limit in seconds. Default 3 days = the make_solver default, so
+# omitting this key is a strict no-op. Set it when a MILP may not close its gap:
+# on TIME_LIMIT the engines print "reached the time limit" and then extract
+# results from the incumbent as normal (optimizer.jl:921, dispatch_engine.jl), so
+# a bounded run yields a usable feasible plan plus a reported gap. Killing the
+# process from outside instead (`timeout`) destroys the result CSVs entirely.
+time_limit = Float64(get(cfg, "time_limit", 3 * 24 * 60 * 60))
+time_limit > 0 ||
+    error("config key time_limit must be > 0 seconds, got $(time_limit)")
 if lp_method >= 0 && solver != "gurobi"
     println("WARNING: lp_method=$(lp_method) is a Gurobi attribute and is ignored by solver \"$(solver)\".")
 end
@@ -124,6 +133,7 @@ function_compiler(
     export_price = export_price,
     policy_scope = policy_scope,
     lp_method = lp_method,
+    time_limit = time_limit,
     battery_duration_h = battery_duration_h,
     export_backed_by_generation = export_backed_by_generation
 )
