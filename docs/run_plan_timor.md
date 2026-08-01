@@ -20,6 +20,18 @@ differences below **~$100** on a $64 M system as numerical noise.
 
 Nothing in B–D is interpretable until these pass.
 
+**Build the market dataset before you start group A.** It takes seconds, it is
+gitignored, and A1b depends on it:
+
+```bash
+python -m tools.ntt.build_grid_demand --share 0.42 \
+    --out-dataset timor__market --fleet rescale
+```
+
+Expect 682 GWh/yr of grid demand, 124 MW peak, schema valid. This used to be a
+group-C prerequisite; it was promoted because the headline is now measured on
+both datasets — see A1.
+
 ### A0 — port acceptance *(optional, historical)*
 
 Reproduces the pre-port reference number, confirming the model is the same one
@@ -37,13 +49,23 @@ that is correct behaviour, not a failure.
 | **pass** | `Total_Costs` = **64.63141317** |
 | fail | anything else — stop and find out why before trusting later runs |
 
-### A1 — the new reference pair *(the headline re-measurement)*
+### A1 — the new reference pairs *(the headline re-measurement)*
 
 The one published claim that current data could overturn. "0 of 780 connect at
 full interconnection cost" was measured on the old connection costs **and** on
 free battery power. Both changed, and **both push toward connecting**:
 interconnection is now roughly half as expensive, and islanding is more expensive
 because battery power costs money.
+
+**Run both pairs. Four solves, not two.** A1a is the like-for-like
+re-measurement of the published number; A1b is the same question on a grid that
+has load. Reporting A1a alone understates the value of connecting *by
+construction*, because on plain `timor` the grid has zero demand and a village
+therefore has nothing to sell — the single largest economic reason to connect is
+not representable on that dataset (N1). The two together are the result; A1b is
+not a sensitivity on A1a.
+
+#### A1a — plain `timor` (zero-load grid)
 
 | | |
 |---|---|
@@ -52,10 +74,34 @@ because battery power costs money.
 | config | `solver: gurobi`, `relax_uc: false`, `lp_method: 2`, `mipgap: 0.01` |
 | runs | 2 |
 | **record** | `Total_Costs` for both; `Connected` count in `site_connection_results.csv`; the achieved gap from the solver log |
-| coordination value | `Total_Costs(village) − Total_Costs(gridvillage)` — or run `tools/coordination_value.py compare` on the two folders |
+| coordination value | `Total_Costs(village) − Total_Costs(gridvillage)` — or `tools/coordination_value.py compare` on the two folders |
 
-These two numbers become the numbers of record. Everything downstream is quoted
-against them.
+#### A1b — `timor__market` (grid with real load)
+
+Formerly C1. Under a central-planner objective an exported MWh is already valued
+at zonal marginal cost once the bus has load, so this is the honest system-value
+question and it needs no tariff.
+
+| | |
+|---|---|
+| scenarios | `village` **and** `gridvillage` / `timor__market`, 2030, `reference` |
+| file | `scenario_timor_market.yml` (already carries the pair) |
+| config | `solver: gurobi`, `relax_uc: false`, `lp_method: 2`, `export_price: 0` |
+| runs | 2 |
+| **sanity gate** | grid `Total_NSE_MWh` ≈ 0. If not, the fleet is wrong and every later number is scarcity-priced at ~$2,000/MWh. (A grid-only dispatch of this dataset has been verified at NSE = 0.000000.) |
+| **record** | as A1a, plus `Total_Export_MWh` |
+
+> **Known limitation, flagged before you read any A1b result.** The transplanted
+> candidate set carries NTT-*wide* renewable potential scaled by the share:
+> ~4,290 MW of wind and ~3,132 MW of solar against a 124 MW peak. Most is never
+> built, but it *sets the marginal price*, which is exactly what an export study
+> reads. Consider `--drop-tech wind`, and report which variant you used.
+> A1a and A1b bracket the truth rather than either one being "the realistic
+> case": A1a understates connection value, A1b overstates cheap supply.
+
+**A1a − A1b is the number that answers "what does giving the grid a load do to
+the connection decision".** These four numbers become the numbers of record.
+Everything downstream is quoted against them.
 
 ### A2 — negative control *(run this every time, not once)*
 
@@ -65,12 +111,14 @@ error or a fabricated trade before it reaches a headline.
 | | |
 |---|---|
 | scenario / island | `gridvillage` / `timor`, 2030, `reference` |
-| config | as A1, plus `export_price: 0` (the default) |
+| config | as A1a, plus `export_price: 0` (the default) |
 | **pass** | `Village_Export_Revenue` = **exactly 0** in `cost_results.csv` |
 | also | export = import to 4 d.p. across `site_connection_results.csv` — the signature of a zero-grid-demand dataset |
 
-A1's `gridvillage` run satisfies A2; you do not need a separate submission unless
-you change the export machinery.
+A1a's `gridvillage` run satisfies A2; you do not need a separate submission unless
+you change the export machinery. Note A2 is a statement about the **zero-grid-demand**
+dataset only — on `timor__market` (A1b) exports are real and `Village_Export_Revenue`
+is expected to be non-zero once `export_price > 0`.
 
 ### A3 — the ceiling *(cheapest possible bound on the whole question)*
 
@@ -98,7 +146,7 @@ number could not be measured at all. It can now.
 
 | | |
 |---|---|
-| source | `clean_energy_results.csv::CO2_Emissions_Village` from A1's `village` run |
+| source | `clean_energy_results.csv::CO2_Emissions_Village` from A1a's `village` run |
 | **use it** | set `island_params` / `co2_limits` in the scenario YAML from this, not from the placeholder |
 | sanity | on `timor_belu` (81 villages) the measured figure is 54,067 tCO₂/yr |
 
@@ -158,20 +206,20 @@ python -m tools.ntt.make_diverse_demand --dataset data_indonesia/2030/timor
 # -> data_indonesia/2030/timor__diverse
 ```
 
-Then A1's pair again with `islands: [timor__diverse]`.
+Then A1a's pair again with `islands: [timor__diverse]`.
 
 | | |
 |---|---|
 | runs | 2 (+ the dataset build, seconds) |
-| **compare against** | A1. The previous measurement found trade *fell* with diversity (2.5 MWh vs 7.75 MWh), which is hard to explain by solar synchrony alone |
+| **compare against** | A1a. The previous measurement found trade *fell* with diversity (2.5 MWh vs 7.75 MWh), which is hard to explain by solar synchrony alone |
 | note | `timor__diverse` is a derived dataset and gitignored; regenerate rather than copy |
 
 ---
 
 ## Group C — the export / market question
 
-**Prerequisite for every run in this group.** Build the market dataset first; it
-takes seconds and is gitignored, so build it on the cluster:
+**Prerequisite for every run in this group** — the `timor__market` dataset, now
+built in group A. If you skipped ahead, build it first:
 
 ```bash
 python -m tools.ntt.build_grid_demand --share 0.42 \
@@ -188,20 +236,11 @@ the balance forces `Σ export ≤ Σ import` in every hour (N1).
 > built, but it *sets the marginal price*, which is exactly what an export study
 > reads. Consider `--drop-tech wind`, and report which variant you used.
 
-### C1 — buyer, no price
+### C1 — buyer, no price → **promoted to [A1b](#a1b--timor__market-grid-with-real-load)**
 
-Does a grid load *alone* change the village plan, with no tariff at all? Under a
-central-planner objective an exported MWh is already valued at zonal marginal cost
-once the bus has load, so this is the honest system-value question.
-
-| | |
-|---|---|
-| scenarios | `village` and `gridvillage` / `timor__market` |
-| file | `scenario_timor_market.yml` (already carries the pair) |
-| config | `solver: gurobi`, `relax_uc: false`, `lp_method: 2`, `export_price: 0` |
-| runs | 2 |
-| **sanity gate** | grid `Total_NSE_MWh` ≈ 0. If not, the fleet is wrong and every later number is scarcity-priced at ~$2,000/MWh. (A grid-only dispatch of this dataset has already been verified at NSE = 0.000000.) |
-| **compare against** | A1 — the delta is the effect of giving the grid a load |
+This was group C's entry point. It is now run in group A, because a headline
+measured only on the zero-load dataset understates connection value by
+construction. The remaining group-C runs quote against A1b.
 
 ### C2 — export-price ladder on the market dataset
 
