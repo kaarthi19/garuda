@@ -49,6 +49,15 @@ engine   = lowercase(get(cfg, "engine", "expansion"))        # "expansion" | "di
 # LP) and OFF for expansion (exact MILP — the decision-grade default); set
 # "relax_uc" in the config to override either, e.g. fast license-free expansion.
 relax_uc = Bool(get(cfg, "relax_uc", engine == "dispatch"))
+
+# Keep the village grid-connection decision binary even when relax_uc LP-relaxes
+# the unit-commitment binaries. UC_BINARIES includes vVIL_CONNECT, so plain
+# relax_uc also relaxes the wire decision: a fractional connect pays a fraction
+# of the connection cost for full trade benefit, and `Connected` becomes a
+# rounded artifact. exact_connect leaves the 780 wire binaries exact while the
+# ~121k UC binaries relax — the tractability sweet spot for coordination runs.
+# Default false = existing behaviour, a strict no-op.
+exact_connect = Bool(get(cfg, "exact_connect", false))
 # Gurobi LP algorithm (its "Method" attribute) for the root relaxation and node
 # LPs: -1 automatic (the default — a strict no-op), 0 primal simplex, 1 dual
 # simplex, 2 barrier, 3 concurrent, 4/5 deterministic concurrent. On the
@@ -130,6 +139,7 @@ function_compiler(
     solver = solver,
     engine = engine,
     relax_uc = relax_uc,
+    exact_connect = exact_connect,
     export_price = export_price,
     policy_scope = policy_scope,
     lp_method = lp_method,
