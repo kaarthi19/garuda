@@ -52,6 +52,8 @@ jobs:
         run: julia --project=. -e 'using Pkg; Pkg.instantiate()'
       - name: Layer-A data-core regression (no solver)
         run: julia --project=. tests/verify_data_core.jl
+      - name: Capacity accounting — every generator is UC or ED (no solver)
+        run: julia --project=. tests/verify_capacity_accounting.jl
       - name: Real solve — maluku 2030 base dispatch LP on HiGHS
         run: julia --project=. run_model.jl --config .github/ci/maluku_dispatch.config.json
       - name: Headline-number check (±1 %)

@@ -268,11 +268,14 @@ def build_network(folder, mode="dispatch"):
 
         # --- conventional / VRE generator ---
         # garuda applies the per-hour variability profile (cMaxPowerED) to every
-        # economic-dispatch unit (Commit==0) — VRE *and* derated thermal — while
-        # unit-commitment units (Commit==1) are capped by Existing_Cap·COMMIT, with
-        # no variability term. Key the availability on Commit, not the VRE flag, so
-        # a thermal ED unit with a <1.0 availability column is not over-stated.
-        if commit == 0:
+        # economic-dispatch unit — VRE *and* derated thermal — while unit-commitment
+        # units (Commit==1) are capped by Existing_Cap·COMMIT, with no variability
+        # term. Key the availability on Commit, not the VRE flag, so a thermal ED
+        # unit with a <1.0 availability column is not over-stated. ED is the
+        # COMPLEMENT of Commit==1, matching input_data.jl: `Commit` carries
+        # sentinels beyond {0,1}, so testing `== 0` would silently export an
+        # unrecognised row as if it were unit-committed.
+        if commit != 1:
             col = rid - 1
             prof = var.iloc[:T, col].to_numpy() if 0 <= col < nser else np.ones(T)
             p_max_pu = pd.Series(np.clip(prof.astype(float), 0.0, 1.0), index=n.snapshots)

@@ -77,8 +77,8 @@ Columns the model reads:
 | `Fixed_OM_Cost_per_MWhyr` | $/MWh-yr | Fixed O&M on storage energy capacity. |
 | `Var_OM_Cost_per_MWh` | $/MWh | Variable O&M (fuel cost is added automatically from `fuels_data.csv` × heat rate). |
 | `Min_Power_MW` | **fraction 0–1** | Minimum stable output as a *fraction of capacity* — despite the `_MW` suffix it is not in MW. |
-| `Ramp_Up_Percentage` / `Ramp_Dn_Percentage` | fraction/h | Ramp limits as a fraction of capacity per hour. |
-| `Commit` | 0/1 | `1` = thermal unit with binary commitment (start/stop/min-up/min-down); `0` = economic dispatch (VRE, hydro, storage). |
+| `Ramp_Up_Percentage` / `Ramp_Dn_Percentage` | fraction/h | Ramp limits as a fraction of capacity per hour. `1` is equivalent to no limit (output is already bounded by capacity). Equal zeros mean a must-run baseload pinned to a constant. **Ignored on `STOR` rows** — storage is exempt from the ramp constraints (see MODEL.md), which is why every shipped battery row can carry a meaningless `0`/`1` pair. `Ramp_Up = 0` with `Ramp_Dn > 0` on a non-storage row is rejected by `validate_schema.py`: the unit could never increase output. |
+| `Commit` | 0/1/2 | `1` = thermal unit with binary commitment (start/stop/min-up/min-down); anything else = economic dispatch (VRE, hydro, storage). `2` is a shipped sentinel meaning "battery candidate" and dispatches exactly like `0`. The loader partitions on `Commit == 1` vs the complement, so an unrecognised value is dispatched rather than dropped — `validate_schema.py` warns on any value outside `{0,1,2}`. |
 | `Start_Cost_per_MW` | $/MW-start | Start-up O&M cost. |
 | `Start_Fuel_MMBTU_per_MW` | MMBtu/MW-start | Start-up fuel use. |
 | `Heat_Rate_MMBTU_per_MWh` | MMBtu/MWh | Heat rate; multiplied by fuel cost and CO₂ content. |

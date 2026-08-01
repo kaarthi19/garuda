@@ -221,14 +221,14 @@ function benders_subproblem(inputs, capacity_values, Grid, VillageBuild, ImportP
     
     # Ramp, min up/down, and storage state constraints
     @constraints(SUB, begin
-        # Ramp constraints for ED units
-        cRampUp[t in inputs.INTERIOR, g in inputs.ED],
+        # Ramp constraints for ED units (storage exempt — see inputs.ED_RAMP)
+        cRampUp[t in inputs.INTERIOR, g in inputs.ED_RAMP],
             vGEN[t,g] - vGEN[t-1,g] <= inputs.generators.Ramp_Up_Percentage[g] * capacity_values.vCAP[g]
-        cRampUpWrap[t in inputs.START, g in inputs.ED],
+        cRampUpWrap[t in inputs.START, g in inputs.ED_RAMP],
             vGEN[t,g] - vGEN[t+inputs.hours_per_period-1,g] <= inputs.generators.Ramp_Up_Percentage[g] * capacity_values.vCAP[g]
-        cRampDown[t in inputs.INTERIOR, g in inputs.ED],
+        cRampDown[t in inputs.INTERIOR, g in inputs.ED_RAMP],
             vGEN[t-1,g] - vGEN[t,g] <= inputs.generators.Ramp_Dn_Percentage[g] * capacity_values.vCAP[g]
-        cRampDownWrap[t in inputs.START, g in inputs.ED],
+        cRampDownWrap[t in inputs.START, g in inputs.ED_RAMP],
             vGEN[t+inputs.hours_per_period-1,g] - vGEN[t,g] <= inputs.generators.Ramp_Dn_Percentage[g] * capacity_values.vCAP[g]
         
         # CORRECTED: Ramp constraints for UC units (using vCAP instead of Existing_Cap_MW)
@@ -366,14 +366,14 @@ function benders_subproblem(inputs, capacity_values, Grid, VillageBuild, ImportP
         cVILCommitState[t in inputs.T_red, g in inputs.VIL_UC],
             vVIL_COMMIT[t+1,g] == vVIL_COMMIT[t,g] + vVIL_START[t+1,g] - vVIL_SHUT[t+1,g]
         
-        # VIL ramp constraints - CORRECTED
-        cVILRampUp[t in inputs.INTERIOR, g in inputs.VIL_ED],
+        # VIL ramp constraints - CORRECTED (storage exempt — see inputs.ED_RAMP)
+        cVILRampUp[t in inputs.INTERIOR, g in inputs.VIL_ED_RAMP],
             vVIL_GEN[t,g] - vVIL_GEN[t-1,g] <= inputs.village_generators.Ramp_Up_Percentage[g] * capacity_values.vVIL_CAP[g]
-        cVILRampUpWrap[t in inputs.START, g in inputs.VIL_ED],
+        cVILRampUpWrap[t in inputs.START, g in inputs.VIL_ED_RAMP],
             vVIL_GEN[t,g] - vVIL_GEN[t+inputs.hours_per_period-1,g] <= inputs.village_generators.Ramp_Up_Percentage[g] * capacity_values.vVIL_CAP[g]
-        cVILRampDown[t in inputs.INTERIOR, g in inputs.VIL_ED],
+        cVILRampDown[t in inputs.INTERIOR, g in inputs.VIL_ED_RAMP],
             vVIL_GEN[t-1,g] - vVIL_GEN[t,g] <= inputs.village_generators.Ramp_Dn_Percentage[g] * capacity_values.vVIL_CAP[g]
-        cVILRampDownWrap[t in inputs.START, g in inputs.VIL_ED],
+        cVILRampDownWrap[t in inputs.START, g in inputs.VIL_ED_RAMP],
             vVIL_GEN[t+inputs.hours_per_period-1,g] - vVIL_GEN[t,g] <= inputs.village_generators.Ramp_Dn_Percentage[g] * capacity_values.vVIL_CAP[g]
         
         # VIL UC ramp constraints

@@ -267,10 +267,22 @@ function input_data(filepath)
 
     #subset of thermal generators that are subject to unit commitment constraints
     UC = intersect(generators.R_ID[generators.Commit.==1], G)
-    
-    #subset of generators that are not subject to unit commitment constraints
-    ED = intersect(generators.R_ID[generators.Commit.==0], G)
-    
+
+    #subset of generators that are not subject to unit commitment constraints.
+    #
+    # UC and ED must PARTITION G: every generator needs a capacity-accounting
+    # constraint (cCapOld/cCapNew/cCapOldUC/cCapNewUC) and a max-power constraint
+    # (cMaxPowerED/cMaxPowerUC). Testing `Commit .== 0` here instead of "not UC"
+    # left a hole: `Commit` carries sentinels beyond {0,1} in shipped data (the
+    # battery candidates are all `Commit = 2`), and those rows fell out of BOTH
+    # subsets. An orphaned row keeps its `vCAP` variable but acquires no capacity
+    # constraint at all — so `Max_Cap_MW` was never applied, `Inv_Cost_per_MWyr`
+    # was never charged (it is summed over ED_NEW/UC_NEW), and `vGEN` was never
+    # capped by capacity. Free unbounded power in both directions; on
+    # timor__marketfix that reported a 517 MW battery against a 42 MW cap at a
+    # cost of exactly $0. Take the complement so a new sentinel cannot reopen it.
+    ED = setdiff(G, UC)
+
     #subset of storage resources
     STOR = intersect(generators.R_ID[generators.STOR.>=1], G)
     
@@ -294,33 +306,43 @@ function input_data(filepath)
     
     # Subset of all unit commitment generators
     UC_OLD = intersect(UC, OLD)
-    
+
     # Subset of all new unit commitment generators
     UC_NEW = intersect(UC, NEW)
-    
-    # Subset of all oth2er old generators
-    ED_OLD = intersect(ED, OLD)
-    
-    # Subset of all other new generators
-    ED_NEW = intersect(ED, NEW);
-    
-    # Subset of all unit commitment generators
-    UC_OLD = intersect(UC, OLD)
-    
-    # Subset of all new unit commitment generators
-    UC_NEW = intersect(UC, NEW)
-    
+
     # Subset of all other old generators
     ED_OLD = intersect(ED, OLD)
-    
+
     # Subset of all other new generators
     ED_NEW = intersect(ED, NEW);
+
+    # ED units the thermal ramp constraints apply to: economic dispatch MINUS storage.
+    #
+    # cRampUp/cRampDown bound vGEN only. A storage unit's power also flows through
+    # vCHARGE, which they do not bound at all — so they never limited the swing that
+    # actually matters for a battery (full charge to full discharge), only the rate
+    # at which it may increase discharge. That is not a ramp model, and the shipped
+    # data confirms it was never meant as one: every grid battery row carries
+    # Ramp_Up_Percentage = 0 with Ramp_Dn_Percentage = 1, a one-way ratchet that
+    # would pin discharge to a constant over each representative period. Those rows
+    # only escaped it by falling out of ED entirely (see the ED comment above), so
+    # widening ED without this exemption would swap an unbounded battery for a
+    # frozen one. NOTE: this also drops the 50 %/h discharge-only limit that
+    # sumatera's two pumped-storage rows carried — the one place the constraint
+    # previously bound. Storage power is bounded by cMaxPowerED and cMaxCharge
+    # (both <= vCAP) and its energy by cMaxSOC; a real ramp model would have to
+    # bound d(vGEN - vCHARGE)/dt and does not exist here.
+    ED_RAMP = setdiff(ED, STOR)
 
     # subset of VIL generators that are subject to unit commitment constraints
     VIL_UC = intersect(village_generators.R_ID[village_generators.Commit.==1], VIL_G)
 
-    # subset of VIL generators that are not subject to unit commitment constraints
-    VIL_ED = intersect(village_generators.R_ID[village_generators.Commit.==0], VIL_G)
+    # subset of VIL generators that are not subject to unit commitment constraints.
+    # Complement of VIL_UC, for the reason given for ED above: the site battery
+    # rows in the industrial-park datasets are `Commit = 2`, and testing
+    # `Commit .== 0` orphaned them out of cVILEdNew, cVILEdMaxPower and the
+    # Inv_Cost_per_MWyr term (which is summed over VIL_ED).
+    VIL_ED = setdiff(VIL_G, VIL_UC)
 
     # subset of VIL generators that are RE + storage
     VIL_RE = intersect(village_generators.R_ID[.!(village_generators.Commit.==1)], VIL_G)
@@ -345,6 +367,9 @@ function input_data(filepath)
 
     #subset of all VIL storage resources
     VIL_STOR = intersect(village_generators.R_ID[village_generators.STOR.==1], VIL_G)
+
+    # site ED units the ramp constraints apply to — storage exempt, as for ED_RAMP
+    VIL_ED_RAMP = setdiff(VIL_ED, VIL_STOR)
 
 
     return (
@@ -381,6 +406,7 @@ function input_data(filepath)
         UC_NEW = UC_NEW,
         ED_OLD = ED_OLD,
         ED_NEW = ED_NEW,
+        ED_RAMP = ED_RAMP,
         VIL_UC = VIL_UC,
         VIL_ED = VIL_ED,
         VIL_NEW = VIL_NEW,
@@ -396,7 +422,8 @@ function input_data(filepath)
         VIL_UC_NEW = VIL_UC_NEW,
         VIL_ED_OLD = VIL_ED_OLD,
         VIL_ED_NEW = VIL_ED_NEW,
-        VIL_STOR = VIL_STOR
+        VIL_STOR = VIL_STOR,
+        VIL_ED_RAMP = VIL_ED_RAMP
         )
     
 end
