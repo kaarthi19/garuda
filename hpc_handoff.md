@@ -126,13 +126,23 @@ required before a recent fix and now double-counts.
 
 ## Highest-priority run
 
-**Group A1** in the run plan: `village` and `gridvillage` on `timor` at full
-interconnection cost, Gurobi, exact UC. Two jobs, ~30 min each.
+**Group A1** in the run plan — now **four** jobs, ~30 min each, not two:
 
-It re-measures the one published claim that current data could overturn — "0 of
-780 villages connect". That was measured on older connection costs and on *free*
-battery power; both changed, and both changes push toward connecting. Whatever
-those two runs say becomes the number of record.
+- **A1a** — `village` and `gridvillage` on `timor` at full interconnection cost.
+- **A1b** — the same pair on `timor__market`, which has real grid load. Build it
+  first: `python -m tools.ntt.build_grid_demand --share 0.42 --out-dataset
+  timor__market --fleet rescale` (seconds, gitignored).
+
+Both, by default. A1a re-measures the one published claim that current data could
+overturn — "0 of 780 villages connect", measured on older connection costs and on
+*free* battery power; both changed, and both push toward connecting.
+
+A1a alone is not enough to publish. On plain `timor`, `demand_z1 = 0` for all
+1344 hours and the grid zone is a single 122 MW diesel serving nobody, so a
+village has nothing to sell — the largest economic reason to connect is not
+representable, and the connection decision is biased against connecting by
+construction. A1b restores a buyer. Report the pair; A1a understates connection
+value and A1b overstates cheap supply, so together they bracket it.
 
 ## Known blocked
 
