@@ -1,0 +1,50 @@
+# scenario_timor_marketfix.yml
+#
+# A1b re-run on cost-corrected market data. See docs/findings_grid_cost_units.md.
+#
+# The shipped island datasets hold OVERNIGHT CAPEX in `Inv_Cost_per_MWyr`, a
+# column the model reads as an annualised cost, so renewables were charged ~9x
+# their true annual cost and none were ever built. `timor__marketfix` annualises
+# that capex (solar 25y, wind 30y, battery 15y at 10% real) and prices battery
+# POWER, which was $0 — the same defect fixed for the village layer in f3d054b.
+#
+# THIS IS A SENSITIVITY DATASET, NOT A CORRECTED ONE. The capex reading is an
+# inference; no source document states the upstream intent. Do not publish a
+# headline off it until the units are confirmed against the 42c222f snapshot.
+#
+# Rebuild: see docs/findings_grid_cost_units.md. Gitignored (data_indonesia/*/*__*/).
+
+islands:
+  - timor__marketfix
+
+years:
+  - "2030"
+
+scenarios:
+  - village       # coordination OFF
+  - gridvillage   # coordination ON
+
+cleans:
+  - reference
+
+mipgap: 0.01
+solver: gurobi
+lp_method: 2
+relax_uc: false
+
+# Both 0 = system-optimal framing (a tariff is a transfer, not a resource cost).
+# CAVEAT: with both at 0 the import/export variables carry NO objective
+# coefficient, so the optimum is a face and PER-VILLAGE TRADE ALLOCATION IS NOT
+# UNIQUE. Village solar/battery BUILDS are well-determined; trade splits are one
+# valid allocation among many. Add a small import_price as a tie-breaker if a
+# determinate per-village split is needed.
+import_price: 0.0
+export_price: 0.0
+policy_scope: grid
+
+island_params:
+  timor__marketfix: 3000000
+
+co2_limits:
+  "2030":
+    timor__marketfix: 3000000

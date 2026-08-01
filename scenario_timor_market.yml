@@ -46,6 +46,11 @@ cleans:
 # ---------------------------------------------------------------------------
 mipgap: 0.01
 
+# Solver. WITHOUT `solver: gurobi` run_model.jl:23 falls back to HiGHS, measured
+# at >6.5 h on the 780-village model without converging. See scenario_timor.yml.
+solver: gurobi
+relax_uc: false
+
 # ---------------------------------------------------------------------------
 # Grid import price ($/MWh a site pays for an imported MWh).
 #
@@ -90,7 +95,7 @@ policy_scope: grid
 
 # Gurobi LP algorithm; -1 = automatic. 2 (barrier) avoids the concurrent-spin
 # overhead Gurobi reports at 780-village scale. Ignored under HiGHS.
-lp_method: -1
+lp_method: 2
 
 # Suffix for the results folder. Essential when two runs differ ONLY by config
 # keys — without it an export-price ladder writes every point to one directory

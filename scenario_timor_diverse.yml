@@ -1,0 +1,71 @@
+# scenario_timor_diverse.yml
+#
+# Group B1 — the load-shape diversity counterfactual (docs/run_plan_timor.md).
+#
+# Tests whether "coordination is worth ~0" follows from the villages being
+# load-shape clones. `timor__diverse` moves half the villages to a midday peak,
+# energy-preserving per representative period, so only *when* the load falls
+# changes. If the null survives that, solar synchrony is not the explanation.
+#
+# Build the dataset first (seconds; it is gitignored under data_indonesia/*/*__*/):
+#
+#   python3 -m tools.ntt.make_diverse_demand --dataset data_indonesia/2030/timor
+#
+# Compare against A1a, NOT against A1b — A1a is the same dataset family with the
+# original load shapes. The previous measurement found trade *fell* with
+# diversity (2.5 MWh vs 7.75 MWh), which is hard to explain by solar synchrony
+# alone and is the reason this run exists.
+
+islands:
+  - timor__diverse
+
+years:
+  - "2030"
+
+# Both halves. The coordination value is the DIFFERENCE; a lone gridvillage run
+# answers nothing.
+scenarios:
+  - village       # coordination OFF — islanded solar+battery+diesel microgrids
+  - gridvillage   # coordination ON  — villages may connect and trade surplus
+
+cleans:
+  - reference
+
+# ---------------------------------------------------------------------------
+# Optional model parameters. EVERY key below must also appear in
+# PASSTHROUGH_KEYS (generate_jobs.py / generate_jobs_local.py) or it is silently
+# dropped: the job's config.json never carries it, the model solves at its
+# default, and the result CSVs look entirely normal.
+# ---------------------------------------------------------------------------
+mipgap: 0.01
+
+# Solver. WITHOUT `solver: gurobi` run_model.jl:23 falls back to HiGHS, measured
+# at >6.5 h on the 780-village model without converging — the run does not fail,
+# it just never finishes. lp_method 2 = barrier; must match A1a's setting or the
+# B1-vs-A1a delta is not like-for-like on a degenerate optimum.
+solver: gurobi
+lp_method: 2
+relax_uc: false
+
+# Both prices 0, matching scenario_timor.yml so B1 is comparable to A1a.
+# NOTE: with both at 0 the import/export variables carry zero objective
+# coefficient, so the optimum is a face rather than a point. Costs, capacities
+# and connection counts are well-determined; PER-VILLAGE TRADE VOLUMES ARE NOT.
+# Read the trade *totals* against A1a with that caveat explicit.
+import_price: 0.0
+export_price: 0.0
+
+# Baseline BAU CO2 emissions (tonnes CO2). Both keys are REQUIRED per island —
+# generate_jobs_local.py raises "No island_params for ..." / "No co2_limits for
+# ..." and aborts if the derived island name is missing from either map.
+#
+# WARNING — PLACEHOLDER, inherited from scenario_timor.yml. Timor's village fleet
+# emits roughly 75,000 tCO2/yr, so 3,000,000 t is ~40x slack and cannot bind. It
+# is harmless here because every run is `reference`, not `clean`. Do not run
+# anything `clean` off this file without setting a measured cap first.
+island_params:
+  timor__diverse: 3000000
+
+co2_limits:
+  "2030":
+    timor__diverse: 3000000
