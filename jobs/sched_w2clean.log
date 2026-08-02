@@ -1,3 +1,12 @@
 [2026-08-02T03:26:15] LAUNCH w2c_village (113GB free)
 [2026-08-02T03:28:15] LAUNCH w2c_gridvillage (147GB free)
 [2026-08-02T03:29:53] END w2c_village rc=0
+[2026-08-02T07:31:47] END w2c_gridvillage rc=0
+[2026-08-02T07:31:47] clean pair complete
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+  village      cost=101.72300  CO2=653,278  RE=0.4872
+  gridvillage  cost=100.14306  CO2=656,500  RE=0.4800
+  carbon-neutral coordination value: 1,579,940 $/yr

@@ -718,6 +718,46 @@ caveat from the figure plan is printed on the figures themselves.
 
 Remaining in flight: `w2c_gridvillage` (carbon-neutral ON), cap ~07:30.
 
+### 2026-08-02 07:32 — STUDY COMPLETE: the carbon-neutral result
+
+`w2c_gridvillage` terminated at its 4 h cap: **Best objective 1.001430574106e+08,
+bound 8.613710037971e+07, achieved gap 13.9859 %**. Both policy constraints bind
+**exactly** — CO₂ 656,500 of 656,500 t, RE share 0.4800 of 0.48 — the coordinated
+system presses hard against carbon-neutrality; the constraints are load-bearing.
+
+**Headline (one-number convention): carbon-neutral coordination value =
+$1.58 M/yr** (101.72300 − 100.14306; achieved gap 13.99 % — conservative, can
+only understate).
+
+**The structural result — the solar programme survives:**
+
+| | islanded | coordinated, unconstrained | coordinated, carbon-neutral |
+|---|---|---|---|
+| village solar | 360.70 MW | 39.34 MW | **365.68 MW** |
+| villages building solar | 780 | 364 | **754** |
+| connected | 0 | 746 | **450** |
+| net grid→village | 0 | 485 GWh/yr | **17.5 GWh/yr** |
+| grid new build | — | none | none |
+| coordination value | — | $17.56 M/yr (gap 28.8 %) | $1.58 M/yr (gap 14.0 %) |
+
+Under the carbon cap, connection stops being a coal pipeline and becomes what
+the programme hoped it was: **sharing infrastructure on top of a distributed
+solar fleet**. 450 villages connect for backup and modest exchange (one village
+builds 13.6 MW — an export hub), battery drops 825 → 661 MWh, and village solar
+lands *above* the islanded build. No utility solar was built — the cap+floor
+preserved the distributed fleet instead.
+
+The three-regime story, complete: wires without a carbon constraint dismantle
+the solar programme ($17.6 M/yr of coal-substitution value, +46 % CO₂); wires
+with a carbon constraint keep it intact and add $1.6 M/yr of genuine
+coordination value. **The carbon constraint is worth 361 MW of solar; the wires
+are worth $1.6 M/yr on top of it.**
+
+Caveats attached to the headline: 2-week model (fix-and-verify on the full
+dataset is the outstanding follow-up), UC relaxed in both legs (~0.8 %,
+cancels in the delta), incumbent at 14 % gap (floor, not ceiling), sensitivity
+dataset (derived grid demand; capex-annualisation inference; DMO coal).
+
 ### Probe runs (verification, 2026-07-31)
 
 | # | Date | Purpose | Island | Scenario | UC | Solver | `run_tag` | Result | Wall |
