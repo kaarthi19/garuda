@@ -279,3 +279,21 @@ Root relaxation: objective 8.613710e+07, 254604 iterations, 1167.40 seconds (103
 
      0     0 8.6137e+07    0  424 1.0172e+08 8.6137e+07  15.3%     - 1380s
 H    0     0                    1.001431e+08 8.6137e+07  14.0%     - 1383s
+     0     0          -    0      1.0014e+08 8.6137e+07  14.0%     - 14400s
+
+Cutting planes:
+  Gomory: 122
+  MIR: 2645
+  Flow cover: 40710
+
+Explored 1 nodes (879172 simplex iterations) in 14401.46 seconds (6135.07 work units)
+Thread count was 32 (of 72 available processors)
+
+Solution count 2: 1.00143e+08 1.01723e+08 
+
+Time limit reached
+Best objective 1.001430574106e+08, best bound 8.613710037971e+07, gap 13.9859%
+
+User-callback calls 248697, time in user-callback 0.19 sec
+  Activating project at `~/garuda/.claude/worktrees/repo-orientation-sync-bd6b46`
+Capacity expansion reached the time limit (LP, UC relaxed).
