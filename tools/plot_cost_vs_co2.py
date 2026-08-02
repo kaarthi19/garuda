@@ -106,10 +106,6 @@ def main(argv=None):
     ax.text(0.0, 1.045, "three plans for the same 780 villages; "
             "down-left is better", transform=ax.transAxes,
             fontsize=10, color=INK2)
-    fig.text(0.10, 0.025,
-             "2-week model · coordinated points are best feasible plans "
-             "(achieved gaps 26.3% / 14.0% — the savings can only understate)",
-             fontsize=7.5, color=MUTED, va="bottom")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

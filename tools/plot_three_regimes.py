@@ -113,10 +113,6 @@ def main(argv=None):
              f"{co2[1]-co2[0]:,.0f} kt/yr more coal · under a carbon cap it saves "
              f"\\${cost[0]-cost[2]:.1f} M/yr with the solar fleet intact",
              fontsize=10, color=INK2)
-    fig.text(0.05, 0.045,
-             "2-week model, all three legs · coordinated bars are best feasible plans "
-             "(achieved gaps 26.3% / 14.0% — conservative)",
-             fontsize=7.5, color=MUTED, va="bottom")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

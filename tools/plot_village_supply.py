@@ -82,10 +82,6 @@ def main(argv=None):
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.005), ncol=3,
               frameon=False, fontsize=9)
     ax.set_title("Who powers the villages", fontsize=13, color=INK, loc="left", pad=30)
-    fig.text(0.09, 0.02,
-             "net grid flow quoted (gross trade is allocation-degenerate at 0/0 prices) · "
-             "battery discharge excluded — it is recycled solar, not primary supply",
-             fontsize=7.5, color=MUTED, va="bottom")
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)
     print(f"written: {args.out}")

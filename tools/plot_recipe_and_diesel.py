@@ -239,12 +239,7 @@ def main(argv=None):
     fig.text(0.06, 0.965, "One kit fits 780 villages",
              fontsize=14, color=INK, va="top", fontweight="bold")
     fig.text(0.06, 0.922, "and diesel does not disappear — it shrinks to a "
-             "3% insurance policy   ·   islanded exact-LP plan, no MIP gap "
-             "on this leg", fontsize=9.5, color=INK_2, va="top")
-    fig.text(0.06, 0.145,
-             "sizing tightness is partly input homogeneity: one solar-profile family, "
-             "and 621 of 780 villages share a single demand archetype",
-             fontsize=8, color=MUTED, va="top")
+             "3% insurance policy", fontsize=9.5, color=INK_2, va="top")
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

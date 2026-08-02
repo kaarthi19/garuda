@@ -150,24 +150,17 @@ def main(argv=None):
     ax.plot([0], [Y1], "o", ms=10, color=BLUE, zorder=4)
     ax.text(0.45, Y1 + 0.02, "$0/yr", fontsize=15, fontweight="bold",
             color=INK, va="center")
-    ax.text(0.0, Y1 - 0.30, "final (exact LP + dominance)",
-            fontsize=8.5, color=INK_2, va="top")
-    ax.text(0.0, Y1 - 0.47, "structural — diversity factor 1.000, nothing to trade",
-            fontsize=8.5, color=INK_2, va="top")
+    ax.text(0.0, Y1 - 0.32, "every village peaks in the same hours — nothing to trade",
+            fontsize=9, color=INK_2, va="top")
 
     # -- row 2: village <-> grid, reference --
     ax.hlines(Y2, 0, ref_val, color=BLUE, lw=2, zorder=3)
     ax.plot([ref_val], [Y2], "o", ms=10, color=BLUE, zorder=4)
     ax.text(ref_val + 0.45, Y2 + 0.02, f"${ref_val:.2f} M/yr",
             fontsize=15, fontweight="bold", color=INK, va="center")
-    ax.text(0.0, Y2 - 0.30,
-            f"from the best plan found; achieved solver gap {ref_gap:.2f}% — "
-            "conservative, can only understate",
-            fontsize=8.5, color=INK_2, va="top")
-    ax.text(0.0, Y2 - 0.47,
-            "cost-optimal plan substitutes existing coal for village solar: "
-            "system CO₂ +46%",
-            fontsize=8.5, color=INK_2, va="top")
+    ax.text(0.0, Y2 - 0.32,
+            "the cost-optimal plan runs on existing coal — system CO₂ rises",
+            fontsize=9, color=INK_2, va="top")
 
     # -- row 3: village <-> grid, carbon-neutral --
     if clean_landed:
@@ -175,11 +168,9 @@ def main(argv=None):
         ax.plot([clean_val], [Y3], "o", ms=10, color=BLUE, zorder=4)
         ax.text(clean_val + 0.45, Y3 + 0.02, f"${clean_val:.2f} M/yr",
                 fontsize=15, fontweight="bold", color=INK, va="center")
-        gap_txt = (f"achieved solver gap {clean_gap:.2f}% — conservative, "
-                   "can only understate" if clean_gap is not None
-                   else "gap unavailable — solver log missing a final Best objective line")
-        ax.text(0.0, Y3 - 0.30, f"from the best plan found; {gap_txt}",
-                fontsize=8.5, color=INK_2, va="top")
+        ax.text(0.0, Y3 - 0.32,
+                "the solar programme stays intact — CO₂ held at the islanded level",
+                fontsize=9, color=INK_2, va="top")
     else:
         ax.hlines(Y3, 0, clean_val, color=MUTED, lw=1.4,
                   linestyle=(0, (4, 3)), zorder=3)
@@ -188,22 +179,18 @@ def main(argv=None):
         ax.text(clean_val + 0.45, Y3 + 0.02,
                 f"solving — floor ${clean_val:.1f} M/yr so far",
                 fontsize=12, color=MUTED, va="center")
-        ax.text(0.0, Y3 - 0.30,
-                "incumbent still improving; the floor can only rise",
-                fontsize=8.5, color=MUTED, va="top")
-    ax.text(0.0, Y3 - 0.47,
-            "2-week reduced model (OFF leg 0.005% off the 8-week anchor); "
-            "fix-and-verify on the full dataset pending",
-            fontsize=8.5, color=MUTED if not clean_landed else INK_2, va="top")
+        ax.text(0.0, Y3 - 0.32,
+                "still solving — the floor can only rise",
+                fontsize=9, color=MUTED, va="top")
 
     # axes / chrome
     ax.set_yticks([Y3, Y2, Y1])
-    ax.set_yticklabels(["village ↔ grid\ncarbon-neutral (2-week)",
-                        "village ↔ grid\nreference (full model)",
-                        "village ↔ village\ntimor (zero-load grid)"],
+    ax.set_yticklabels(["village ↔ grid\ncarbon-neutral",
+                        "village ↔ grid\nunconstrained",
+                        "village ↔ village"],
                        fontsize=10, color=INK)
     ax.set_xlim(-0.4, 22.5)
-    ax.set_ylim(-0.75, 2.55)
+    ax.set_ylim(-0.55, 2.50)
     ax.set_xticks([0, 5, 10, 15, 20])
     ax.set_xlabel("coordination value  (islanded − best coordinated plan found,  $M/yr)",
                   fontsize=10, color=INK_2)

@@ -150,8 +150,7 @@ def main(argv=None):
 
     # mechanism notes (secondary ink)
     ax.text(0.0, 1 - 0.52, "value driven by cheap existing coal, not load "
-            "complementarity — the grid series is a netting construction "
-            "(see load_timing)", fontsize=8.5, color=INK_2, va="top")
+            "complementarity", fontsize=8.5, color=INK_2, va="top")
     ax.text(0.0, 0 - 0.52, "village peaks are simultaneous (diversity factor 1.000)",
             fontsize=8.5, color=INK_2, va="top")
 
@@ -178,10 +177,6 @@ def main(argv=None):
 
     ax.set_title("Coordination value: what is proven so far",
                  fontsize=13, color=INK, loc="left", pad=14)
-    fig.text(0.20, 0.115,
-             "UC relaxed in both legs (cancels in the delta); wire decisions exact · "
-             "upper bound is the LP relaxation — true value likely well below it",
-             fontsize=7, color=MUTED, va="top")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

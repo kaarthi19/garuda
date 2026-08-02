@@ -63,10 +63,6 @@ def main(argv=None):
     ax.text(0.98, 0.98, f"median substation distance\nconnected {med_c:.1f} km  ·  "
             f"islanded {med_i:.1f} km", transform=ax.transAxes, fontsize=9.5,
             color=INK, ha="right", va="top")
-    fig.text(0.07, 0.02,
-             f"dot area = households · {miss} of 780 villages lack coordinates and are "
-             "not drawn · pattern from the best plan (gap 28.8%); the distance gradient is robust",
-             fontsize=7.5, color=MUTED, va="bottom")
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)
     print(f"written: {args.out}  (drawn {len(have)}, missing {miss}; medians {med_c:.1f}/{med_i:.1f} km)")

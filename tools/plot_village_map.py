@@ -130,11 +130,6 @@ def main():
                       f"\N{EN DASH} dot area \N{PROPORTIONAL TO} households",
             transform=ax.transAxes, color=INK_2, fontsize=10.5)
 
-    caption = (f"not on the map: {len(hidden)} of 780 villages "
-               f"({100 * hh_hidden / hh_total:.1f}% of households) lack coordinates "
-               "— modelled and fully costed in every run")
-    fig.text(0.055, 0.012, caption, color=INK_2, fontsize=8.5, va="bottom",
-             linespacing=1.45)
 
     fig.subplots_adjust(left=0.075, right=0.97, top=0.90, bottom=0.16)
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
