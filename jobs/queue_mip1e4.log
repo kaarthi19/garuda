@@ -1,0 +1,3 @@
+[2026-08-01T03:25:27] queue start; waiting for in-flight solves
+[2026-08-01T03:25:27] in-flight solves clear
+[2026-08-01T03:25:27] START mip1e4_timor (mipgap 1e-4, timeout 8h, 182GB free)

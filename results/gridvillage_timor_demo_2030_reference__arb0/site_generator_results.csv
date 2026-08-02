@@ -1,0 +1,13 @@
+ID,Resource,Zone,Village,technology,Total_MW,Start_MW,Change_in_MW,Electricity_GWh
+1,pltd_amfoang,2,1,diesel,0.4,0.4,0.0,0.07770986874999995
+2,plts_amfoang,2,1,solar,0.0,0.0,0.0,-0.0
+3,batt_amfoang,2,1,battery,0.0,0.0,0.0,-0.0
+4,pltd_boking,2,2,diesel,0.25,0.25,0.0,0.05179578124999993
+5,plts_boking,2,2,solar,0.0,0.0,0.0,-0.0
+6,batt_boking,2,2,battery,0.0,0.0,0.0,-0.0
+7,pltd_raijua,2,3,diesel,0.15,0.15,0.0,0.22155956249999986
+8,plts_raijua,2,3,solar,0.0,0.0,0.0,-0.0
+9,batt_raijua,2,3,battery,0.0,0.0,0.0,-0.0
+10,pltd_wini,2,4,diesel,0.5,0.5,0.0,0.018505499999999998
+11,plts_wini,2,4,solar,0.0,0.0,0.0,-0.0
+12,batt_wini,2,4,battery,0.0,0.0,0.0,-0.0

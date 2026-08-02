@@ -1,0 +1,5 @@
+ID,Zone,Village,Resource,Total_Storage_MWh,Start_Storage_MWh,Change_in_Storage_MWh
+3,2,1,batt_amfoang,-0.0,0.0,-0.0
+6,2,2,batt_boking,-0.0,0.0,-0.0
+9,2,3,batt_raijua,-0.0,0.0,-0.0
+12,2,4,batt_wini,-0.0,0.0,-0.0

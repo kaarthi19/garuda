@@ -1,0 +1,15 @@
+{
+  "island": "timor",
+  "year": "2030",
+  "scenario": "village",
+  "clean": "reference",
+  "CO235reduction": false,
+  "BAUCO2emissions": 0.0,
+  "CO2_limit": 3000000,
+  "mipgap": 0.01,
+  "import_price": 0.0,
+  "export_price": 0.0,
+  "relax_uc": false,
+  "solver": "gurobi",
+  "lp_method": 2
+}
