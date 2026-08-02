@@ -139,8 +139,8 @@ def main(argv=None):
         clean_val = (off_clean - inc) if inc is not None else 0.0
         clean_gap = None
 
-    fig, ax = plt.subplots(figsize=(10.4, 6.0), dpi=200)
-    fig.subplots_adjust(left=0.215, right=0.975, top=0.87, bottom=0.30)
+    fig, ax = plt.subplots(figsize=(10.4, 5.2), dpi=200)
+    fig.subplots_adjust(left=0.215, right=0.975, top=0.87, bottom=0.14)
     fig.patch.set_facecolor(SURFACE)
     ax.set_facecolor(SURFACE)
 
@@ -216,18 +216,6 @@ def main(argv=None):
 
     ax.set_title("What coordination is worth on Timor — one number per pairing",
                  fontsize=13, color=INK, loc="left", pad=14)
-
-    stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-    fig.text(0.215, 0.135,
-             f"as of {stamp} · headline = islanded cost − best feasible coordinated plan; "
-             "the achieved gap is quoted, never the permitted mipgap\n"
-             "timor__marketfix is a sensitivity dataset, not a corrected one "
-             "(derived grid demand, corrected RE costs, DMO coal)\n"
-             "UC relaxed in both legs (~0.8% ops optimism, cancels in the delta); "
-             "wire decisions exact\n"
-             "per-village trade degenerate at 0/0 prices (totals unaffected) · "
-             "carbon-neutral: CO₂ capped at islanded +0.5%, RE share ≥ islanded",
-             fontsize=7, color=MUTED, va="top", linespacing=1.6)
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

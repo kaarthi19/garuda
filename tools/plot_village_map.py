@@ -130,17 +130,9 @@ def main():
                       f"\N{EN DASH} dot area \N{PROPORTIONAL TO} households",
             transform=ax.transAxes, color=INK_2, fontsize=10.5)
 
-    caption = (
-        f"Not on the map: {n_hidden} of {n} villages "
-        f"({n_hidden / n:.1%}) lack coordinates \N{EN DASH} roughly a third "
-        f"of households ({hh_hidden / hh_total:.1%}).\n"
-        f"They are modelled and fully costed in every run; they are only "
-        f"unlocatable ("
-        + ", ".join(f"{k.title()} {(hidden['kabupaten'] == k).sum()}"
-                    for k in kabs) + ").\n"
-        f"Source: data_indonesia/2030/timor/village_solar_potential.csv. "
-        f"No basemap; axes in degrees, x scaled by 1/cos({abs(REF_LAT)}\N{DEGREE SIGN})."
-    )
+    caption = (f"not on the map: {len(hidden)} of 780 villages "
+               f"({100 * hh_hidden / hh_total:.1f}% of households) lack coordinates "
+               "— modelled and fully costed in every run")
     fig.text(0.055, 0.012, caption, color=INK_2, fontsize=8.5, va="bottom",
              linespacing=1.45)
 

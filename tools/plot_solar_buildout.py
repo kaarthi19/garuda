@@ -87,7 +87,7 @@ def main(argv=None):
         dict(label="coordinated, unconstrained\n(DMO coal available)",
              run=os.path.join(R, "gridvillage_timor__marketfix_2030_reference__ucrelax"),
              note=None, gap=achieved_gap(os.path.join(REPO, "jobs", "ucr_marketfix_gridvillage", "solve.log"))),
-        dict(label="coordinated, carbon-neutral\n(CO2 capped at islanded level)",
+        dict(label="coordinated, carbon-neutral\n(CO2 capped at islanded level · 2-week model)",
              run=os.path.join(R, "gridvillage_timor__marketfix2w_2030_clean"),
              note="2-week model; fix-and-verify pending",
              gap=achieved_gap(os.path.join(REPO, "jobs", "w2c_gridvillage", "solve.log"))),
@@ -135,18 +135,13 @@ def main(argv=None):
     ax.spines["left"].set_color(BASE)
     ax.spines["bottom"].set_color(BASE)
     ax.tick_params(colors=MUTED, labelsize=9)
-    ax.legend(loc="upper right", frameon=False, fontsize=9)
 
     ax.set_title("Solar buildout on Timor under three planning regimes",
                  fontsize=13, color=INK, loc="left", pad=12)
-    stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
     fig.text(0.08, 0.025,
-             f"as of {stamp} · 780 villages, {HOUSEHOLDS:,} households · middle/right bars are feasible incumbents\n"
-             "(conservative; achieved gap shown) · right bar: 2-week model, sensitivity dataset (derived grid demand,\n"
-             "corrected RE costs, DMO coal), UC relaxed both legs · land never binds (max utilisation 9.4%)\n"
-             "the middle bar is the warning: with cheap coal and no carbon constraint, least-cost coordination\n"
-             "dismantles ~90% of the village solar programme — the constraint, not the technology, decides the buildout",
-             fontsize=7, color=MUTED, va="bottom", linespacing=1.55)
+             "the middle bar is the warning: with cheap coal and no carbon constraint, "
+             "least-cost coordination dismantles ~90% of the village solar programme",
+             fontsize=7.5, color=MUTED, va="bottom")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

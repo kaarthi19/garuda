@@ -196,13 +196,9 @@ def main(argv=None):
 
     # ---- caption: the two must-carry caveats
     fig.text(0.055, 0.175,
-             f"Reallocation: cost_results.csv books battery POWER capex inside Fixed_Costs_Village (${fcv:.2f} M/yr) alongside solar — read naively that file says\n"
-             f"solar ${fcv:.2f} M, storage ${val['battery_energy']:.2f} M; attributed by component the split is solar ${val['solar']:.2f} M and storage ${cap:.2f} M capital "
-             f"(${cap + val['battery_vom']:.2f} M = {(cap + val['battery_vom']) / tot * 100:.1f}% all-in with battery VOM).\n"
-             "Why delivered energy costs ~3× the solar LCOE: solar generates at ~$46/MWh but delivered energy costs $127.47/MWh (measured mean; median $127.69) —\n"
-             "about half of delivered energy is time-shifted through the battery. Battery power capex is not one number: it ranges $9,173–$30,001/MW-yr across rows.\n"
-             "Source: tools/village_cost_attribution.py — reconstruction closes on reported Total_Costs to 12 s.f.",
-             fontsize=7.2, color=MUTED, va="top", linespacing=1.55)
+             "battery POWER capex is booked inside Fixed_Costs_Village; attributed by "
+             "component here — reconstruction closes on Total_Costs to 12 s.f.",
+             fontsize=8, color=MUTED, va="top")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

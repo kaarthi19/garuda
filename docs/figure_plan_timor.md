@@ -260,3 +260,41 @@ The study has a null headline and a time-limited incumbent. Five rules and four 
 - **"Figures we did not draw, and why."** Four decisions — no per-village trade map, no unserved-energy map, no heat figure, no kabupaten choropleth — each with its one-line reason and the measured evidence (3.79e-8 MWh of NSE; zero heat rows; no admin-2 layer; zero objective coefficient on trade). Collectively stronger evidence of rigour than most of the positive figures, and currently these decisions live only in prose that will never reach the partner meeting.
 
 **Two smaller ones worth the effort if time allows.** (a) A band on F6 reflecting the battery-capex range, to show the equity result survives input uncertainty — it should, because the flatness is driven by demand-model homogeneity, not cost precision, and showing that is much stronger than asserting it. (b) A worst-representative-day panel beside any mean-day chart: storage is 58% of system cost and 5.56 h is the most quotable spec number in the deck, so the day that actually sizes storage is load-bearing — and showing it also exposes whether 8 representative weeks can express a multi-day low-resource event at all, which is the honest limit on the whole storage result.
+---
+
+## 2026-08-02 (local pass) — suite rebuilt; three figures added; one claim corrected
+
+**Footer policy (user decision):** figures carry at most one short muted caption
+line — the thing that changes interpretation (achieved gap, 2-week tag, a
+counting rule). Timestamps and multi-line methodology footers are gone; the
+methodology lives here and in RUN_LOG.md.
+
+**Claim corrected — the r = −0.81 "genuine counterparty" line.** Decomposed, the
+anti-correlation is inherited from the netting construction, not measured:
+village vs the GROSS provincial transplant is **+0.32** (both evening-peaking;
+village peak h18, provincial h21); the −0.81 appears only after
+`demand_z1 = share×provincial − village` subtracts the village series hour by
+hour (pure-netting benchmark −1.00; the village is ~80 % of the gross at
+village-peak hours, and the residual "peaks" at midnight, which no real system
+does). The donor's hour grid also runs ~1 h 20 m ahead of its labels
+(`hour=1` ↔ `23:40+08`), entangled with the genuine h18-vs-h21 behavioural gap.
+**The headline survives the correction**: under either construction, combined
+load never exceeds the firm existing fleet in any of the 1,344 h — the value is
+cheap coal energy, not hourly complementarity. Corrected on
+`coordination_bounds`, `diversity_panels` (title, annotation, docstring) and
+carried as the new `load_timing` figure.
+
+New figures (all read live from the committed 2-week-trio CSVs; no hardcoded
+results):
+
+| Figure | Script | What it is |
+|---|---|---|
+| `three_regimes.png` | `tools/plot_three_regimes.py` | The partner summary: cost / CO₂ / village solar / connected, three bars each, consistent 2-week trio |
+| `cost_vs_co2.png` | `tools/plot_cost_vs_co2.py` | The trade-off scatter: save \$18.7 M at +448 kt CO₂, or \$1.6 M at parity |
+| `load_timing.png` | `tools/plot_load_timing.py` | Hour-of-day village vs grid under BOTH constructions of the derived series — the honest version of the diversity story |
+
+Layout defects fixed while rebuilding: `solar_buildout` legend/label collision
+(legend dropped — grid solar is zero in every bar); `village_supply` legend vs
+title and the demand-line label (legend moved above the axes, label moved
+outside the right edge); `connection_map` median-distance line moved off the
+data area; `diversity_panels` right-edge clipping.
