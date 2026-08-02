@@ -146,10 +146,6 @@ def main(argv=None):
     ax.set_title("When villages and the grid need power — two constructions "
                  "of the same grid series",
                  fontsize=13, color=INK, loc="left", pad=34)
-    fig.text(0.08, 0.025,
-             "the two constructions bracket the truth · the coordination headline "
-             "survives both: combined load never exceeds the firm fleet",
-             fontsize=7.5, color=MUTED, va="bottom")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

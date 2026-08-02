@@ -222,13 +222,6 @@ def main(argv=None):
                  "village\u2194grid one is a modelling construction",
                  fontsize=13.5, color=INK, x=0.065, y=0.965, ha="left")
 
-    fig.text(0.065, 0.155,
-             "panel (a) reflects archetype synthesis (621 of 780 villages share one demand "
-             "archetype), not measured behaviour\n"
-             "panel (b): the grid series is provincial load MINUS village load, so its "
-             "anti-correlation is inherited from that subtraction — the two are +0.32 "
-             "correlated before it",
-             fontsize=7.5, color=MUTED, va="top", linespacing=1.6)
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

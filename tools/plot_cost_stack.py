@@ -190,15 +190,10 @@ def main(argv=None):
              "with solar attached", fontsize=13.5, color=INK, va="top",
              fontweight="semibold")
     fig.text(0.055, 0.878,
-             f"{src} · 780 villages, islanded (coordination OFF) · "
-             f"total ${tot:.2f} M/yr — exact LP optimum, no MIP gap{status}",
+             f"780 villages, islanded · total ${tot:.2f} M/yr",
              fontsize=9.5, color=INK_2, va="top")
 
     # ---- caption: the two must-carry caveats
-    fig.text(0.055, 0.175,
-             "battery POWER capex is booked inside Fixed_Costs_Village; attributed by "
-             "component here — reconstruction closes on Total_Costs to 12 s.f.",
-             fontsize=8, color=MUTED, va="top")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

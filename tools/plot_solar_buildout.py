@@ -87,7 +87,7 @@ def main(argv=None):
         dict(label="coordinated, unconstrained\n(DMO coal available)",
              run=os.path.join(R, "gridvillage_timor__marketfix_2030_reference__ucrelax"),
              note=None, gap=achieved_gap(os.path.join(REPO, "jobs", "ucr_marketfix_gridvillage", "solve.log"))),
-        dict(label="coordinated, carbon-neutral\n(CO2 capped at islanded level · 2-week model)",
+        dict(label="coordinated, carbon-neutral\n(CO2 capped at islanded level)",
              run=os.path.join(R, "gridvillage_timor__marketfix2w_2030_clean"),
              note="2-week model; fix-and-verify pending",
              gap=achieved_gap(os.path.join(REPO, "jobs", "w2c_gridvillage", "solve.log"))),
@@ -115,8 +115,6 @@ def main(argv=None):
         pct100 = total / 100_000 * 100
         kwhh = total * 1000 / HOUSEHOLDS
         sub = f"{pct100:.2f}% of 100 GW · {kwhh:.2f} kW/household"
-        if r["gap"] is not None:
-            sub += f"\nachieved gap {r['gap']:.1f}% — conservative"
         ax.text(i, total + 34, f"{total:,.0f} MW", ha="center", va="bottom",
                 fontsize=13, color=INK, fontweight="bold")
         ax.text(i, total + 28, sub, ha="center", va="top", fontsize=8, color=INK2)
@@ -138,10 +136,6 @@ def main(argv=None):
 
     ax.set_title("Solar buildout on Timor under three planning regimes",
                  fontsize=13, color=INK, loc="left", pad=12)
-    fig.text(0.08, 0.025,
-             "the middle bar is the warning: with cheap coal and no carbon constraint, "
-             "least-cost coordination dismantles ~90% of the village solar programme",
-             fontsize=7.5, color=MUTED, va="bottom")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)
