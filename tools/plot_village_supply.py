@@ -48,7 +48,7 @@ def main(argv=None):
             ("coordinated,\ncarbon-neutral", os.path.join(R, "gridvillage_timor__marketfix2w_2030_clean"))]
 
     fig, ax = plt.subplots(figsize=(9.2, 5.4), dpi=200)
-    fig.subplots_adjust(left=0.09, right=0.96, top=0.86, bottom=0.27)
+    fig.subplots_adjust(left=0.09, right=0.86, top=0.80, bottom=0.24)
     fig.patch.set_facecolor(SURFACE); ax.set_facecolor(SURFACE)
     first = True
     for i, (lab, run) in enumerate(rows):
@@ -70,7 +70,8 @@ def main(argv=None):
                 ax.text(i, base_ + val / 2, f"{name} {val:,.0f}", ha="center", fontsize=8.5,
                         color="#ffffff" if val > 60 else INK)
     ax.axhline(544.1, color=BASE, lw=1, ls=":")
-    ax.text(2.42, 548, "village demand 544 GWh/yr", fontsize=8, color=INK2, ha="right")
+    ax.text(2.52, 544, "village demand\n544 GWh/yr", fontsize=8, color=INK2,
+            ha="left", va="center", clip_on=False)
     ax.set_xticks(range(len(rows))); ax.set_xticklabels([r[0] for r in rows], fontsize=9.5, color=INK)
     ax.set_ylabel("energy serving village load (GWh/yr)", fontsize=10, color=INK2)
     ax.set_ylim(0, 700)
@@ -78,16 +79,13 @@ def main(argv=None):
     for s_ in ("top", "right"): ax.spines[s_].set_visible(False)
     ax.spines["left"].set_color(BASE); ax.spines["bottom"].set_color(BASE)
     ax.tick_params(colors=MUTED, labelsize=9)
-    ax.legend(loc="upper right", frameon=False, fontsize=9)
-    ax.set_title("Who powers the villages", fontsize=13, color=INK, loc="left", pad=12)
-    stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.005), ncol=3,
+              frameon=False, fontsize=9)
+    ax.set_title("Who powers the villages", fontsize=13, color=INK, loc="left", pad=30)
     fig.text(0.09, 0.02,
-             f"as of {stamp} · generation and NET flow are pinned by costed dispatch; per-village and gross trade "
-             "splits are NOT unique at 0/0 prices\n(gross churn 891 GWh in / 407 GWh out is allocation-degenerate — "
-             "only the 485 GWh net is quotable) · battery shifts energy and is excluded from\nthe stack; losses "
-             "explain the overhang vs demand · middle bar from the best feasible plan, achieved gap 28.8% · "
-             "net grid supply is coal-dominated there",
-             fontsize=7, color=MUTED, va="bottom", linespacing=1.55)
+             "net grid flow quoted (gross trade is allocation-degenerate at 0/0 prices) · "
+             "battery discharge excluded — it is recycled solar, not primary supply",
+             fontsize=7.5, color=MUTED, va="bottom")
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)
     print(f"written: {args.out}")

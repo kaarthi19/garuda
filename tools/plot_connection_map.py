@@ -60,14 +60,13 @@ def main(argv=None):
     ax.set_xlabel("longitude", fontsize=9, color=INK2); ax.set_ylabel("latitude", fontsize=9, color=INK2)
     ax.legend(loc="upper left", frameon=False, fontsize=9.5)
     ax.set_title("Who connects: distance decides", fontsize=13, color=INK, loc="left", pad=12)
-    ax.text(0.02, 0.03, f"median substation distance:  connected {med_c:.1f} km  ·  "
-            f"islanded {med_i:.1f} km", transform=ax.transAxes, fontsize=10, color=INK)
-    stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+    ax.text(0.98, 0.98, f"median substation distance\nconnected {med_c:.1f} km  ·  "
+            f"islanded {med_i:.1f} km", transform=ax.transAxes, fontsize=9.5,
+            color=INK, ha="right", va="top")
     fig.text(0.07, 0.02,
-             f"as of {stamp} · dot area = households · {miss} of 780 villages lack coordinates and are not drawn "
-             "(modelled and costed throughout)\nconnection pattern from the best feasible plan (achieved solver gap "
-             "28.8%) — set membership may shift in a tighter solve; the distance gradient is robust",
-             fontsize=7, color=MUTED, va="bottom", linespacing=1.5)
+             f"dot area = households · {miss} of 780 villages lack coordinates and are "
+             "not drawn · pattern from the best plan (gap 28.8%); the distance gradient is robust",
+             fontsize=7.5, color=MUTED, va="bottom")
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)
     print(f"written: {args.out}  (drawn {len(have)}, missing {miss}; medians {med_c:.1f}/{med_i:.1f} km)")

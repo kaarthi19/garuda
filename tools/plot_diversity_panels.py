@@ -20,7 +20,11 @@ an 81.29 MW saving, diversity factor 1.475.
 
 Together the panels convert the coordination null into a structural statement:
 village-to-village coordination could not have paid on this data (arithmetic,
-not economics), while the grid is a genuine counterparty.
+not economics). The village-grid anti-correlation, by contrast, is INHERITED
+from the netting construction (the grid series is provincial load minus village
+load; the two are +0.32 correlated before the subtraction), so panel (b) shows a
+modelling construction, not measured complementarity — see plot_load_timing.py
+for the two-construction bracket.
 
     python3 tools/plot_diversity_panels.py            # -> results/figures/
     python3 tools/plot_diversity_panels.py --out fig.png
@@ -77,9 +81,12 @@ def _load(repo):
     vd = _read(os.path.join(repo, "data_indonesia/2030/timor/village_demand.csv"))
     cols = [c for c in vd.columns if c.startswith("demand_village")]
     load = vd[cols].to_numpy(float)                      # 1344 h x 780 villages
-    grid = _read(os.path.join(
-        repo, "data_indonesia/2030/timor__marketfix/demand.csv"
-    ))["demand_z1"].to_numpy(float)                      # 1344 h, derived series
+    grid_csv = os.path.join(repo, "data_indonesia/2030/timor__marketfix/demand.csv")
+    if not os.path.exists(grid_csv):
+        # marketfix only re-costs generators; its demand series is identical to
+        # timor__market, which rebuilds locally in seconds (build_grid_demand)
+        grid_csv = os.path.join(repo, "data_indonesia/2030/timor__market/demand.csv")
+    grid = _read(grid_csv)["demand_z1"].to_numpy(float)  # 1344 h, derived series
 
     # Solar CF profiles: variability columns are POSITIONAL — column 1 dropped
     # unconditionally, profile column g belongs to R_ID g (input_data.jl:72).
@@ -187,11 +194,9 @@ def main(argv=None):
                  arrowprops=dict(arrowstyle="-", lw=0.8, color=MUTED,
                                  shrinkA=2, shrinkB=3))
     axb.text(2, 197,
-             f"r = −{abs(r):.4f} over all 1,344 h · global peaks "
-             f"{abs(v_pk_h - g_pk_h)} h apart (grid: hour {g_pk_h}, "
-             "another week)\n"
-             f"coincident peak {sum_pk:.2f} → {comb_pk:.2f} MW: "
-             f"{saving:.2f} MW saved · diversity factor {df_grid:.3f}",
+             f"r = −{abs(r):.2f} as constructed — but +0.32 before the netting\n"
+             f"coincident peak {sum_pk:.2f} → {comb_pk:.2f} MW "
+             f"({saving:.2f} MW saved) under this construction",
              fontsize=9, color=INK, va="top", linespacing=1.6)
     axb.set_xlim(0, 167)
     axb.set_ylim(0, 200)
@@ -203,7 +208,7 @@ def main(argv=None):
     axb.set_ylabel("MW", fontsize=9.5, color=INK_2)
     axb.legend(loc="upper right", bbox_to_anchor=(1.0, 0.845), frameon=False,
                fontsize=8.5, handlelength=1.6)
-    axb.set_title("(b)  Villages vs grid — strong diversity",
+    axb.set_title("(b)  Villages vs grid — a constructed complementarity",
                   fontsize=11.5, color=INK, loc="left", pad=10)
 
     for ax in (axa, axb):
@@ -213,22 +218,17 @@ def main(argv=None):
             ax.spines[sp].set_visible(False)
         ax.spines["bottom"].set_color(BASE)
 
-    fig.suptitle("Two diversity factors: villages cannot trade with each "
-                 "other, but can with the grid",
+    fig.suptitle("Two diversity factors: none among the villages; the "
+                 "village\u2194grid one is a modelling construction",
                  fontsize=13.5, color=INK, x=0.065, y=0.965, ha="left")
 
     fig.text(0.065, 0.155,
-             "Panel (a) is a property of how the archetype profiles were synthesised, not an "
-             "empirical finding about Timorese villages: 621 of 780 sit on a single demand "
-             "archetype and GHI spans only 4.908–5.952 kWh/m²/day.\n"
-             "1,344 hours from 8 representative weeks cannot express weather-driven decorrelation "
-             "even in principle, so the +1 spike is partly a temporal-aggregation artifact — "
-             "real spatial decorrelation needs the ERA5 build.\n"
-             "Panel (b)’s grid series is derived, not measured — "
-             "build_grid_demand --share 0.42 from the NTT zone-2 series, net of village load — "
-             "so the anti-correlation is inherited from that construction, not an independent "
-             "observation about Timor.",
-             fontsize=7, color=MUTED, va="top", linespacing=1.6)
+             "panel (a) reflects archetype synthesis (621 of 780 villages share one demand "
+             "archetype), not measured behaviour\n"
+             "panel (b): the grid series is provincial load MINUS village load, so its "
+             "anti-correlation is inherited from that subtraction — the two are +0.32 "
+             "correlated before it",
+             fontsize=7.5, color=MUTED, va="top", linespacing=1.6)
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

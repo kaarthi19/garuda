@@ -149,10 +149,11 @@ def main(argv=None):
                                 shrinkA=2, shrinkB=1))
 
     # mechanism notes (secondary ink)
-    ax.text(0.0, 1 - 0.52, "village and grid load anti-correlated (r = −0.81): "
-            "a genuine counterparty", fontsize=8.5, color=INK_2, va="top")
-    ax.text(0.0, 0 - 0.52, "village peaks are simultaneous (diversity factor 1.000): "
-            "nothing to trade with each other", fontsize=8.5, color=INK_2, va="top")
+    ax.text(0.0, 1 - 0.52, "value driven by cheap existing coal, not load "
+            "complementarity — the grid series is a netting construction "
+            "(see load_timing)", fontsize=8.5, color=INK_2, va="top")
+    ax.text(0.0, 0 - 0.52, "village peaks are simultaneous (diversity factor 1.000)",
+            fontsize=8.5, color=INK_2, va="top")
 
     # axes / chrome
     ax.set_yticks([0, 1])
@@ -177,12 +178,10 @@ def main(argv=None):
 
     ax.set_title("Coordination value: what is proven so far",
                  fontsize=13, color=INK, loc="left", pad=14)
-    stamp = _dt.datetime.now().strftime("%Y-%m-%d %H:%M")
     fig.text(0.20, 0.115,
-             f"as of {stamp} · ucrelax: UC relaxed in BOTH legs (~0.8% ops optimism, cancels in the delta); wire decisions exact\n"
-             "sensitivity dataset (derived grid demand, corrected RE costs, DMO coal) · upper bound is the LP relaxation —\n"
-             "true value likely well below it · per-village trade allocation degenerate at 0/0 prices (totals unaffected)",
-             fontsize=7, color=MUTED, va="top", linespacing=1.5)
+             "UC relaxed in both legs (cancels in the delta); wire decisions exact · "
+             "upper bound is the LP relaxation — true value likely well below it",
+             fontsize=7, color=MUTED, va="top")
 
     os.makedirs(os.path.dirname(args.out), exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)

@@ -39,6 +39,34 @@ MILP n=5000 binaries   -> OPTIMAL
 
 ## Sessions
 
+### 2026-08-02 (local) — figure suite rebuilt; netting artifact quantified; no new solves
+
+On the local machine, from the committed results (every headline number first
+re-derived from the CSVs — all match the 2026-08-02 07:32 entry exactly).
+
+**The r = −0.81 anti-correlation is a construction artifact, quantified.**
+corr(village, gross provincial transplant) = **+0.32**; the −0.81 exists only
+against the hourly-netted residual (pure-netting benchmark −1.00; village ≈80 %
+of gross at village-peak hours; residual peaks at midnight). The donor hour grid
+also runs ~1 h 20 m ahead of its labels (`hour=1` ↔ `2023-06-10T23:40+08`), so
+the positional transplant carries a small alignment offset entangled with the
+real village-h18 vs provincial-h21 behavioural gap. **Robustness check:** under
+both the netted and a shape-preserved construction, combined village+grid load
+never exceeds the firm existing fleet (279.1 MW) in any of the 1,344 h — the
+coordination value is carried by cheap DMO coal energy, not by hourly
+complementarity. The "genuine counterparty" phrasing is retired from the figure
+suite; `plot_load_timing.py` now shows the two-construction bracket explicitly.
+
+**Figure suite rebuilt** under the one-caption-line policy (timestamps and
+multi-line footers removed), three figures added (`three_regimes`,
+`cost_vs_co2`, `load_timing` — all data-driven from the 2w-trio CSVs), and four
+layout defects fixed. Details in `docs/figure_plan_timor.md` (2026-08-02 local
+pass). `plot_diversity_panels.py` gained a `timor__market` fallback so the
+figure rebuilds on a machine without the server's `timor__marketfix` folder.
+
+**No model runs this session.** The run ledger is unchanged.
+
+
 ### 2026-07-31 — orientation, sync, plan revision
 
 **Repo synced.** `claude/repo-orientation-sync-bd6b46` fast-forwarded to

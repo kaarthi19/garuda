@@ -242,16 +242,9 @@ def main(argv=None):
              "3% insurance policy   ·   islanded exact-LP plan, no MIP gap "
              "on this leg", fontsize=9.5, color=INK_2, va="top")
     fig.text(0.06, 0.145,
-             "Tightness is partly manufactured by input homogeneity: one solar-profile family, GHI spanning only "
-             f"4.91–5.95 kWh/m²/day, and {d['n_arch']} of {d['n']} villages on a single demand archetype — "
-             "the honest claim is\n“given these archetypes and this resource data, one design is optimal "
-             f"everywhere”. {mean:.2f} h is a continuous optimum, not a product: commercial BESS ship in 2 h and "
-             "4 h blocks.\n"
-             f"The {d['die_tot']:.2f} MW diesel residual is a continuous variable spread across {d['n']} sites "
-             f"(median ≈ {d['die_kw_med']:.0f} kW per village), not a procurable genset size — fuel spend "
-             "shrinks ~95%, the maintenance\nfootprint does not. Source: results/village_timor_2030_reference · "
-             "peak from timor_villages_manifest.csv (not village_solar_potential.csv — the columns differ).",
-             fontsize=7.5, color=MUTED, va="top", linespacing=1.6)
+             "sizing tightness is partly input homogeneity: one solar-profile family, "
+             "and 621 of 780 villages share a single demand archetype",
+             fontsize=8, color=MUTED, va="top")
 
     os.makedirs(os.path.dirname(args.out) or ".", exist_ok=True)
     fig.savefig(args.out, facecolor=SURFACE)
