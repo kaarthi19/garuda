@@ -1,0 +1,2 @@
+[2026-08-01T18:45:04] scheduler start: 3 jobs, MIN_FREE=75GB, ramp=600s, timeout=9h
+[2026-08-01T18:45:04] LAUNCH mf_marketfixnf_village (182GB free)

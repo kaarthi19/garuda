@@ -1,0 +1,90 @@
+[2026-08-01T06:26:35] scheduler start: 4 jobs, MIN_FREE=75GB, ramp=600s, timeout=9h
+[2026-08-01T06:26:35] LAUNCH mf_marketfix_village (180GB free)
+[2026-08-01T06:36:35] LAUNCH mf_marketfix_gridvillage (145GB free)
+[2026-08-01T06:45:04] END mf_marketfix_village ok after 18m
+[2026-08-01T06:46:35] LAUNCH mf_marketfixnf_village (159GB free)
+[2026-08-01T06:56:35] LAUNCH mf_marketfixnf_gridvillage (103GB free)
+[2026-08-01T07:06:35] all launched; waiting for completion
+[2026-08-01T08:05:25] END mf_marketfixnf_village ok after 78m
+[2026-08-01T14:49:40] END mf_marketfix_gridvillage ok after 493m
+[2026-08-01T15:11:08] END mf_marketfixnf_gridvillage ok after 494m
+[2026-08-01T15:11:08] all solves finished
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+
+=== timor__marketfix ===
+  village(OFF)     102.748610 $M/yr
+  gridvillage(ON)  2431.601846 $M/yr
+  coordination     -2,328,853,235 $/yr   *** INVALID: ON > OFF => suboptimal incumbent ***
+  
+  === village_timor__marketfix_2030_reference — 780 villages ===
+    solar built (MW)                     360.70
+    solar total (MW)                     360.70
+    battery power built (MW)             148.51
+    battery energy built (MWh)           825.08
+    import (MWh/yr)                        0.00
+    export (MWh/yr)                        0.00
+    connected                                 0 of 780
+  
+    solar built per village (MW): min 0.0732 median 0.3319 mean 0.4624 max 8.2858; 780 of 780 built any
+  
+    (no config sidecar found — could not check the trade-degeneracy regime)
+  
+    written: results/village_timor__marketfix_2030_reference/village_build_summary.csv
+  
+  === gridvillage_timor__marketfix_2030_reference — 780 villages ===
+    solar built (MW)                       0.00
+    solar total (MW)                       0.00
+    battery power built (MW)               0.00
+    battery energy built (MWh)             0.00
+    import (MWh/yr)                       20.06
+    export (MWh/yr)                       21.72
+    connected                                 2 of 780
+  
+    solar built per village (MW): min 0.0000 median 0.0000 mean 0.0000 max 0.0000; 0 of 780 built any
+  
+    (no config sidecar found — could not check the trade-degeneracy regime)
+  
+    written: results/gridvillage_timor__marketfix_2030_reference/village_build_summary.csv
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+
+=== timor__marketfixnf ===
+  village(OFF)     99.898698 $M/yr
+  gridvillage(ON)  2431.601846 $M/yr
+  coordination     -2,331,703,148 $/yr   *** INVALID: ON > OFF => suboptimal incumbent ***
+  
+  === village_timor__marketfixnf_2030_reference — 780 villages ===
+    solar built (MW)                     360.70
+    solar total (MW)                     360.70
+    battery power built (MW)             148.51
+    battery energy built (MWh)           825.08
+    import (MWh/yr)                        0.00
+    export (MWh/yr)                        0.00
+    connected                                 0 of 780
+  
+    solar built per village (MW): min 0.0732 median 0.3319 mean 0.4624 max 8.2858; 780 of 780 built any
+  
+    (no config sidecar found — could not check the trade-degeneracy regime)
+  
+    written: results/village_timor__marketfixnf_2030_reference/village_build_summary.csv
+  
+  === gridvillage_timor__marketfixnf_2030_reference — 780 villages ===
+    solar built (MW)                       0.00
+    solar total (MW)                       0.00
+    battery power built (MW)               0.00
+    battery energy built (MWh)             0.00
+    import (MWh/yr)                       20.06
+    export (MWh/yr)                       21.72
+    connected                                 2 of 780
+  
+    solar built per village (MW): min 0.0000 median 0.0000 mean 0.0000 max 0.0000; 0 of 780 built any
+  
+    (no config sidecar found — could not check the trade-degeneracy regime)
+  
+    written: results/gridvillage_timor__marketfixnf_2030_reference/village_build_summary.csv
+[2026-08-01T15:11:10] scheduler complete

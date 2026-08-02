@@ -1,0 +1,2 @@
+Total_Costs,Fixed_Costs_Generation,Fixed_Costs_Transmission,Fixed_Costs_Storage,Fixed_Costs_Village,Fixed_Costs_Village_Storage,Variable_Costs_Grid,Variable_Costs_Village,NSE_Costs,VILNSECosts,VILNSEHeatCosts,Grid_Import_Costs,Village_Export_Revenue,StartCostsGrid,StartCostsVIL
+26.377413257150167,3.175,0.3,0.0,0.0234,0.0,22.721509234013944,0.08336575827427449,7.342070707082001e-13,1.6693984733071965e-12,0.0,0.0,0.0,0.0020674330010274885,0.0026089652451400493

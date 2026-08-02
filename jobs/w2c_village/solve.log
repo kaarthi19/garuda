@@ -1,0 +1,102 @@
+Set parameter Username
+Academic license - for non-commercial use only - expires 2027-02-26
+Set parameter Username
+Academic license - for non-commercial use only - expires 2027-02-26
+Set parameter MIPGap to value 0.01
+Set parameter TimeLimit to value 14400
+Set parameter Crossover to value 0
+Set parameter Method to value 2
+Set parameter Method to value 2
+Set parameter MIPGap to value 0.01
+Set parameter Crossover to value 0
+Set parameter TimeLimit to value 14400
+Gurobi Optimizer version 13.0.0 build v13.0.0rc1 (linux64 - "Ubuntu 24.04.4 LTS")
+
+CPU model: Intel(R) Xeon(R) Gold 6240 CPU @ 2.60GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 36 physical cores, 72 logical processors, using up to 32 threads
+
+Non-default parameters:
+TimeLimit  14400
+MIPGap  0.01
+Method  2
+Crossover  0
+
+Optimize a model with 5402728 rows, 4263629 columns and 13261805 nonzeros (Min)
+Model fingerprint: 0xe4f6824a
+Model has 2653979 linear objective coefficients
+Coefficient statistics:
+  Matrix range     [8e-06, 1e+02]
+  Objective range  [1e+00, 3e+06]
+  Bounds range     [3e-01, 4e+03]
+  RHS range        [1e-05, 7e+05]
+Presolve removed 2820418 rows and 1987893 columns (presolve time = 5s)...
+Presolve removed 2820418 rows and 1987893 columns
+Presolve time: 9.58s
+Presolved: 2582310 rows, 2275736 columns, 8515789 nonzeros
+Ordering time: 0.80s
+
+Barrier statistics:
+ Dense cols : 47
+ AA' NZ     : 1.561e+07
+ Factor NZ  : 3.946e+07 (roughly 600 MB of memory)
+ Factor Ops : 5.587e+09 (less than 1 second per iteration)
+ Threads    : 32
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   7.19088240e+12 -5.18605387e+12  1.21e+07 1.36e+05  2.52e+09    16s
+   1   5.90460929e+12 -5.90824669e+12  9.73e+06 2.56e+06  1.85e+09    16s
+   2   5.16864765e+12 -6.22026884e+12  8.47e+06 2.49e+06  1.66e+09    16s
+   3   3.90674365e+12 -1.54007613e+13  6.32e+06 3.14e+05  9.81e+08    17s
+   4   7.49274160e+11 -1.37132372e+13  9.75e+05 8.55e+04  1.68e+08    17s
+   5   6.42502544e+10 -3.24070086e+12  4.12e+04 5.11e+03  1.02e+07    17s
+   6   4.67663836e+10 -6.12006969e+11  4.25e+03 3.71e+02  1.40e+06    17s
+   7   3.57184688e+10 -4.05202437e+11  9.50e+02 2.02e+02  6.71e+05    18s
+   8   2.91433796e+10 -1.30467437e+11  3.03e+02 5.58e+01  2.27e+05    18s
+   9   2.09614349e+10 -5.94644852e+10  8.63e+01 2.10e+01  1.05e+05    18s
+  10   1.73404624e+10 -5.05750462e+10  5.81e+01 1.69e+01  8.66e+04    18s
+  11   1.34067587e+10 -2.55610139e+10  2.92e+01 4.90e+00  4.87e+04    19s
+  12   1.13898504e+10 -1.60644694e+10  2.10e+01 2.14e-01  3.40e+04    19s
+  13   6.27867830e+09 -6.28024432e+09  9.38e+00 5.74e-07  1.53e+04    19s
+  14   3.57414096e+09 -2.93108756e+09  4.92e+00 2.57e-07  7.83e+03    19s
+  15   1.67784710e+09 -1.17804303e+09  1.95e+00 1.01e-07  3.40e+03    20s
+  16   1.18175686e+09 -8.01887271e+08  1.27e+00 7.17e-08  2.35e+03    20s
+  17   8.57879822e+08 -4.00258683e+08  8.65e-01 4.19e-08  1.49e+03    20s
+  18   6.64859340e+08 -2.55296974e+08  6.37e-01 3.35e-08  1.09e+03    20s
+  19   4.99794221e+08 -1.37653485e+08  4.50e-01 2.24e-08  7.51e+02    20s
+  20   3.89371720e+08 -5.37122260e+07  3.30e-01 1.49e-08  5.22e+02    21s
+  21   2.31954469e+08 -6.66235812e+06  1.58e-01 5.59e-09  2.81e+02    21s
+  22   1.66604303e+08  2.58203430e+07  8.46e-02 1.02e-08  1.65e+02    21s
+  23   1.43269126e+08  5.55396872e+07  5.56e-02 1.30e-08  1.03e+02    22s
+  24   1.30522732e+08  6.84702941e+07  3.91e-02 1.02e-08  7.29e+01    22s
+  25   1.22448656e+08  7.81932819e+07  2.82e-02 6.98e-09  5.20e+01    22s
+  26   1.18641913e+08  8.11551143e+07  2.29e-02 9.31e-10  4.40e+01    22s
+  27   1.13742709e+08  8.69461869e+07  1.61e-02 1.21e-08  3.15e+01    22s
+  28   1.09339626e+08  9.21319012e+07  9.91e-03 4.66e-09  2.02e+01    23s
+  29   1.08124215e+08  9.36151471e+07  8.28e-03 1.49e-08  1.70e+01    23s
+  30   1.06601804e+08  9.59793367e+07  6.24e-03 2.79e-09  1.25e+01    23s
+  31   1.05783570e+08  9.77702552e+07  5.19e-03 5.59e-09  9.41e+00    24s
+  32   1.04806878e+08  9.86025715e+07  3.99e-03 7.45e-09  7.28e+00    24s
+  33   1.03632400e+08  9.94402370e+07  2.46e-03 4.66e-09  4.92e+00    24s
+  34   1.03195449e+08  1.00147678e+08  1.89e-03 7.45e-09  3.58e+00    25s
+  35   1.02728194e+08  1.00414700e+08  1.31e-03 3.73e-09  2.72e+00    25s
+  36   1.02493692e+08  1.00751217e+08  1.00e-03 4.66e-09  2.05e+00    25s
+  37   1.02395210e+08  1.00965571e+08  8.84e-04 6.52e-09  1.68e+00    26s
+  38   1.02183599e+08  1.00995358e+08  6.19e-04 5.59e-09  1.39e+00    26s
+  39   1.02127724e+08  1.01014071e+08  5.48e-04 4.66e-09  1.31e+00    26s
+  40   1.02043087e+08  1.01095362e+08  4.37e-04 6.52e-09  1.11e+00    27s
+  41   1.01925412e+08  1.01177562e+08  2.79e-04 4.66e-09  8.78e-01    27s
+  42   1.01848717e+08  1.01372223e+08  1.75e-04 5.59e-09  5.59e-01    27s
+  43   1.01770089e+08  1.01615176e+08  5.16e-05 5.59e-09  1.82e-01    28s
+  44   1.01731872e+08  1.01711404e+08  1.58e-05 6.98e-09  2.40e-02    28s
+  45   1.01723179e+08  1.01722092e+08  8.56e-05 8.38e-09  1.27e-03    28s
+  46   1.01723001e+08  1.01722993e+08  1.29e-05 1.19e-07  7.21e-06    28s
+  47   1.01722997e+08  1.01722997e+08  1.65e-07 5.96e-08  1.46e-09    29s
+
+Barrier solved model in 47 iterations and 28.58 seconds (26.90 work units)
+Optimal objective 1.01722997e+08
+
+
+User-callback calls 2747, time in user-callback 0.00 sec
+  Activating project at `~/garuda/.claude/worktrees/repo-orientation-sync-bd6b46`
+Capacity expansion solved successfully (LP, UC relaxed).

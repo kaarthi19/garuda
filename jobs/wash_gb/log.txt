@@ -1,0 +1,76 @@
+Set parameter Username
+Academic license - for non-commercial use only - expires 2027-02-26
+Set parameter Username
+Academic license - for non-commercial use only - expires 2027-02-26
+Set parameter MIPGap to value 0.01
+Set parameter TimeLimit to value 259200
+Set parameter Crossover to value 0
+Set parameter Method to value 2
+Set parameter Method to value 2
+Set parameter MIPGap to value 0.01
+Set parameter Crossover to value 0
+Set parameter TimeLimit to value 259200
+Gurobi Optimizer version 13.0.0 build v13.0.0rc1 (linux64 - "Ubuntu 24.04.4 LTS")
+
+CPU model: Intel(R) Xeon(R) Gold 6240 CPU @ 2.60GHz, instruction set [SSE2|AVX|AVX2|AVX512]
+Thread count: 36 physical cores, 72 logical processors, using up to 32 threads
+
+Non-default parameters:
+TimeLimit  259200
+MIPGap  0.01
+Method  2
+Crossover  0
+
+Optimize a model with 305119 rows, 174803 columns and 907377 nonzeros (Min)
+Model fingerprint: 0x0c64fe5b
+Model has 96822 linear objective coefficients
+Coefficient statistics:
+  Matrix range     [3e-02, 5e+01]
+  Objective range  [7e+00, 2e+05]
+  Bounds range     [1e-01, 2e+02]
+  RHS range        [3e-05, 6e+01]
+Presolve removed 197610 rows and 70695 columns
+Presolve time: 0.44s
+Presolved: 107509 rows, 104108 columns, 476215 nonzeros
+Ordering time: 0.12s
+
+Barrier statistics:
+ Dense cols : 4
+ AA' NZ     : 8.366e+05
+ Factor NZ  : 3.440e+06 (roughly 110 MB of memory)
+ Factor Ops : 3.105e+08 (less than 1 second per iteration)
+ Threads    : 32
+
+                  Objective                Residual
+Iter       Primal          Dual         Primal    Dual     Compl     Time
+   0   2.29655236e+09 -2.88208275e+10  5.32e+01 4.58e+03  1.30e+06     1s
+   1   1.78390113e+09 -2.17446618e+10  4.06e+01 9.66e+03  7.85e+05     1s
+   2   8.71158790e+08 -1.53085849e+10  1.71e+01 9.49e-06  3.21e+05     1s
+   3   2.16424869e+08 -6.67829101e+09  4.48e-01 3.04e-06  3.07e+04     1s
+   4   1.17207900e+08 -7.44276398e+08  9.99e-04 7.45e-09  3.23e+03     1s
+   5   6.34227588e+07 -9.18221628e+07  7.35e-06 7.45e-08  5.81e+02     1s
+   6   4.31150027e+07 -2.59832249e+06  1.02e-06 2.56e-08  1.71e+02     1s
+   7   3.18575132e+07  1.53043712e+07  9.71e-08 9.31e-09  6.19e+01     1s
+   8   2.84986508e+07  2.14719101e+07  2.28e-08 5.09e-09  2.63e+01     1s
+   9   2.72801234e+07  2.49015176e+07  5.78e-09 1.80e-09  8.90e+00     1s
+  10   2.67917265e+07  2.58151157e+07  2.81e-09 1.58e-09  3.65e+00     1s
+  11   2.66617169e+07  2.60723835e+07  1.86e-09 4.75e-10  2.20e+00     2s
+  12   2.65066826e+07  2.62579396e+07  7.56e-10 4.94e-10  9.30e-01     2s
+  13   2.64368393e+07  2.63566037e+07  3.35e-10 2.02e-10  3.00e-01     2s
+  14   2.63957272e+07  2.63706627e+07  1.26e-10 1.02e-09  9.38e-02     2s
+  15   2.63870052e+07  2.63747782e+07  8.64e-11 1.56e-10  4.57e-02     2s
+  16   2.63817623e+07  2.63763491e+07  6.77e-11 2.94e-10  2.02e-02     2s
+  17   2.63792805e+07  2.63768653e+07  4.10e-11 3.70e-10  9.03e-03     2s
+  18   2.63784903e+07  2.63771231e+07  3.09e-11 7.28e-12  5.11e-03     2s
+  19   2.63777266e+07  2.63773560e+07  4.52e-11 3.68e-10  1.39e-03     2s
+  20   2.63774551e+07  2.63774052e+07  2.54e-11 1.99e-09  1.87e-04     2s
+  21   2.63774137e+07  2.63774128e+07  4.66e-08 2.27e-09  3.34e-06     2s
+  22   2.63774133e+07  2.63774133e+07  6.24e-11 1.23e-09  3.16e-10     2s
+
+Barrier solved model in 22 iterations and 2.33 seconds (1.81 work units)
+Optimal objective 2.63774133e+07
+
+
+User-callback calls 350, time in user-callback 0.00 sec
+  Activating project at `~/garuda/.claude/worktrees/repo-orientation-sync-bd6b46`
+Dispatch solved successfully (LP, UC relaxed).

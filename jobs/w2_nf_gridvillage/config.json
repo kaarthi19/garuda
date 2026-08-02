@@ -1,0 +1,18 @@
+{
+  "year": "2030",
+  "clean": "reference",
+  "CO235reduction": false,
+  "BAUCO2emissions": 0.0,
+  "CO2_limit": 3000000,
+  "import_price": 0.0,
+  "export_price": 0.0,
+  "policy_scope": "grid",
+  "relax_uc": true,
+  "exact_connect": true,
+  "solver": "gurobi",
+  "lp_method": 2,
+  "mipgap": 0.01,
+  "time_limit": 14400.0,
+  "island": "timor__marketfixnf2w",
+  "scenario": "gridvillage"
+}

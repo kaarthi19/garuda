@@ -1,0 +1,31 @@
+Running HiGHS 1.14.0 (git hash: 7df0786de3): Copyright (c) 2026 under Apache 2.0 license terms
+Using BLAS: blastrampoline 
+LP has 305119 rows; 174803 cols; 907377 nonzeros
+Coefficient ranges:
+  Matrix  [3e-02, 5e+01]
+  Cost    [7e+00, 2e+05]
+  Bound   [1e-01, 2e+02]
+  RHS     [3e-05, 6e+01]
+WARNING: Problem has some excessively small row bounds
+Presolving model
+124254 rows, 104108 cols, 463391 nonzeros 0s
+Dependent equations search running on 22848 equations with time limit of 1000.00s
+Dependent equations search removed 0 rows and 0 nonzeros in 0.00s (limit = 1000.00s)
+122293 rows, 104108 cols, 461431 nonzeros 1s
+Presolve reductions: rows 122293(-182826); columns 104108(-70695); nonzeros 461431(-445946) 
+Solving the presolved LP
+Using dual simplex solver
+  Iteration        Objective     Infeasibilities num(sum)
+          0    -1.4015532736e+06 Ph1: 12096(17472); Du: 5376(1.40155e+06) 1.6s
+      34788     2.6440956413e+07 Pr: 0(0); Du: 0(5.69382e-12) 2.8s
+
+Performed postsolve
+Solving the original LP from the solution after postsolve
+
+Model status        : Optimal
+Simplex   iterations: 34788
+Objective value     :  2.6440956413e+07
+P-D objective error :  2.8178180621e-16
+HiGHS run time      :          3.26
+  Activating project at `~/garuda/.claude/worktrees/repo-orientation-sync-bd6b46`
+Dispatch solved successfully (LP, UC relaxed).

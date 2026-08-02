@@ -1,0 +1,2 @@
+ID,Resource,Zone,technology,owner,Total_MW,Start_MW,Change_in_MW,Percent_MW,GWh,Percent_GWh,STOR,VRE,THERM,New_Build
+1,pln_timor_diesel,1,diesel,pln,0.1682903454508267,122.131,-121.96270965454917,Inf,0.16350397250037016,Inf,0,0,1,0

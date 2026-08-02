@@ -455,6 +455,269 @@ village↔village row all stand.
 Fix exists on `claude/upbeat-elion-1b2bd2` (`ED` = complement of `UC`, pinned by
 `tests/verify_capacity_accounting.jl`); market runs must be re-solved on it.
 
+### 2026-08-01 06:26 — kill, commit, cherry-pick, relaunch on the fixed model
+
+Both free-battery gridvillage solves killed (logs preserved as
+`jobs/mf_*/solve_freebatt_KILLED.log`). Pending work landed as five commits
+(`1204def` time_limit, `47deb16` sensitivity --lp-method, `036d8d5` village
+tools, `e985809` scenario files, `d459592` docs/run log), then the
+capacity-accounting fix cherry-picked cleanly from the sibling branch
+(`d3f1b0c` → `ED = setdiff(G, UC)`, `VIL_ED = setdiff(VIL_G, VIL_UC)`, plus an
+`ED_RAMP = ED minus STOR` set so storage entering ED does not inherit thermal
+ramps).
+
+Verified after the pick: `tests/verify_capacity_accounting.jl` — all checks
+passed; pytest **116 passed**; all four datasets (`timor`, `timor__diverse`,
+`timor__marketfix`, `timor__marketfixnf`) pass the stricter validator, which
+now accepts `Commit = 2` as a handled sentinel rather than a hole.
+
+Contaminated village results preserved as `…__freebatt`; all four market legs
+relaunched at 06:26:35 on the fixed model (Gurobi, `lp_method 2`,
+`time_limit 28800`, memory-gated). **On this model the battery row is finally
+real:** in `ED`, capped at its 42 MW `Max_Cap_MW`, power priced at
+$49,829/MW-yr. Every previous market number measured a free unlimited battery;
+these are the first that do not.
+
+### 2026-08-01 18:45 — first fixed-model batch: one good leg, two failure modes, two retractions
+
+**Ledger (fixed model, DMO coal):**
+
+| # | Island / scenario | `Total_Costs` | Gap | Status |
+|---|---|---|---|---|
+| 9 | marketfix / `village` | **102.74861** | 0.8237 % | **valid — the OFF anchor** |
+| 10 | marketfixnf / `village` | 99.89870 | 0.9674 % | ⚠ invalid — see nf error below (`__freefossil`) |
+| 11 | marketfix / `gridvillage` | 2431.60185 | **97.54 %** | ⚠ trivial all-NSE incumbent (`__trivialinc`) |
+| 12 | marketfixnf / `gridvillage` | 2431.60185 | 97.54 % | ⚠ both defects (`__freefossil`) |
+
+**Free battery quantified (OFF side):** run 5 (free battery) 97.04169 → run 9
+(real battery) **102.74861** = **+$5.71 M/yr**, far outside the combined ~$1.7 M
+gap tolerance. The free unlimited grid battery was worth ~$5.7 M/yr to the
+islanded-villages case alone.
+
+**Retraction — my `nf` construction error.** The 24 "zeroed" fossil candidates
+all carry nonzero *potential* `Existing_Cap_MW` (1,037.4 MW, all `Commit = 1`).
+Setting `New_Build = 0` made them **free existing plant**, not banned plant —
+2 of them operate in run 10. `nf` was therefore never a restriction of `fix`,
+and two earlier claims fall with it: "marketfix village suboptimal ≥ $155,582"
+(the freebatt-era cross-check) and "barring new fossil is free". Also noted:
+`Max_Cap_MW = 0` cannot ban a candidate either — optimizer.jl:45–50 bounds only
+rows with `Max_Cap_MW > 0`, so zero means **unbounded**. Rebuilt correctly:
+`New_Build = 1`, `Max_Cap_MW = 0.001` (a 1 kW cap; rows cannot be deleted —
+R_ID must stay 1..N positional). Now provably a restriction: only `Max_Cap_MW`
+differs from fix, never larger. Schema valid.
+
+**Gridvillage failure mode and its fix.** Both 8 h runs ended at node 1 —
+root LP 79 min, then ~6.7 h of cuts/heuristics that never found a usable
+incumbent; the only feasible point at termination was the all-NSE plan Gurobi
+seeds (2431.6 = 1226 GWh × Voll $2,000, split grid 1352.7 / village 1078.8).
+`time_limit` behaved exactly as designed; the incumbent was just worthless.
+Fixed in `7d79305`: `capacity_expansion` now warm-starts `vVIL_CONNECT = 0`
+(all-islanded is always feasible), so the incumbent is at worst the OFF cost
+instead of all-unserved. Smoke-verified on timor_demo: "User MIP start produced
+solution with objective 2.44161e+07 (14.61s)".
+
+**Relaunched 18:45:04** (`jobs/sched_rerun.sh`): nf village (rebuilt dataset),
+then both gridvillage legs with the warm start, 8 h caps. Run 9 stands and is
+not re-run.
+
+### 2026-08-01 18:53 — `exact_connect`: relax the UC, keep the wire decisions binary
+
+Answering "can we relax the commit variables on the village side": the village
+layer has **no** commit binaries on these datasets (`Commit = 0` throughout) —
+all ~121k UC binaries belong to the 30 grid thermal units. The tractability play
+is therefore: relax the grid UC, keep the 780 `vVIL_CONNECT` binaries exact.
+Plain `relax_uc` cannot do that — `UC_BINARIES` includes `:vVIL_CONNECT`, so it
+also relaxes the wire decision (fractional connect = fractional wire cost for
+full trade benefit, and `Connected` becomes `round(Int, x)` of a fraction).
+
+New config key **`exact_connect`** (`7d81cee`, default false = strict no-op):
+with `relax_uc`, relaxes `setdiff(UC_BINARIES, (:vVIL_CONNECT,))`. Smoke-verified
+on timor_demo: "Variable types: 174799 continuous, **4 integer (4 binary)**",
+warm start loaded, `Connected` integral. Threaded through all eight sites,
+README row added, passthrough guard green, suite 116.
+
+**Relaunched 18:53:18** (`jobs/sched_ucrelax.sh`, tag `ucrelax`): all four legs
+at `relax_uc + exact_connect`. The `village` legs become pure LPs (exact, fast);
+the `gridvillage` legs become 780-binary MILPs with the warm start — the A1a
+shape that is known to branch. The exact-UC gridvillage attempts stand down;
+their root bounds (59.906 / 59.832 $M) remain valid exact-problem lower bounds.
+The exact nf `village` anchor (launched 18:45) continues alongside.
+
+**Caveat to carry on every `ucrelax` number:** UC relaxed ⇒ operations
+optimistic by the measured ~0.8 % (tools/uc_relaxation_gap.jl); the optimism
+appears in *both* legs of a coordination pair, so it largely cancels in the
+delta; the who-connects decision is exact.
+
+### 2026-08-01 21:07 — the coordination value gets a proven floor
+
+Both `ucrelax` gridvillage legs solved their root LP (**59.90591 $M**, identical
+across fix and nf) and then found the **same improving incumbent**:
+`H 0 0 8.415450e+07` — a feasible coordinated plan at **$84.1545 M/yr**, down
+from the $101.718 M warm start. With OFF an exact LP at 101.71759, the
+coordination value on the market case is now rigorously bracketed:
+
+| | $M/yr |
+|---|---|
+| OFF (islanded, exact LP) | 101.71759 |
+| ON incumbent (feasible) | ≤ 84.15450 |
+| ON root bound | ≥ 59.90591 |
+| **coordination value** | **∈ [17.563, 41.812]** |
+
+**≥ $17.6 M/yr proven — ~17 % of the islanded system** — on the fully corrected
+model: capacity-accounting fix in, real battery (42 MW cap, priced power), DMO
+coal, corrected RE costs, exact wire decisions. The bound can only improve as
+B&B continues. fix and nf finding bit-identical incumbents also extends the
+"banning new fossil is free" result to the ON side.
+
+Earlier `village` legs (ucrelax): both **101.71759, `Optimal objective`** —
+identical to 9 s.f., confirming the fossil ban costs exactly $0 in the OFF case
+and that the exact-UC fix/nf delta ($104,540) was gap noise. Relaxed OFF sits
+1.0–1.1 % below the exact incumbents, consistent with the measured ~0.8 % UC
+optimism plus their gaps, and respects the exact runs' lower bounds.
+
+Bounds figure regenerated with the new anchors
+([tools/plot_coordination_bounds.py](tools/plot_coordination_bounds.py) —
+freebatt-era anchors removed, treatment labelled `ucrelax` on the footer);
+`MKT_ON_INC` is the log incumbent and is auto-replaced by `cost_results.csv`
+when the runs land.
+
+### 2026-08-02 02:00 — NodeMethod experiment armed; 2-week aggregation planned
+
+**"More CPU" is not available — nothing is capped.** Verified: no `gurobi.env`,
+no `Threads` parameter, Gurobi already permits 32 threads; the ucrelax legs use
+**~2 cores** because dual-simplex node LPs are inherently serial (barrier phases
+used ~9). Amdahl, not starvation.
+
+**Armed** (`jobs/queue_ucrelax2.sh`, pid 2263349): after the ucrelax caps fire
+(~03:17/03:24), rerun both gridvillage legs with `gurobi.env` = `NodeMethod 2`
+(barrier node LPs — the parallel algorithm) + `MIPFocus 3` (push the bound),
+warm-started, tag `ucrelax2`, 8 h caps. Tonight's ucrelax results stay intact.
+The env file is created by the queue and removed on exit; no unrelated solves
+should launch while it is active.
+
+**Tomorrow, if the gap remains wide:** build a 2-week temporally-aggregated
+variant (energy-preserving `Sub_Weights` rescale) — node LPs ~4× smaller, tree
+actually explores — then **fix-and-verify**: fix the winning 780-binary connect
+pattern on the full 8-week model and solve the resulting LP once (~80 min).
+The final number then carries no aggregation caveat: it is the exact
+full-resolution cost of a concrete plan, i.e. a true incumbent.
+
+### 2026-08-02 02:30 — 2-week datasets prepped ahead of schedule, validated end to end
+
+Built with the new [`tools/make_reduced_weeks.py`](tools/make_reduced_weeks.py)
+(uncommitted; tests + commit packaging tomorrow): `timor__marketfix2w` and
+`timor__marketfixnf2w`, both schema-valid.
+
+**Selection** (deterministic, printed by the tool): the synthetic solar repeats
+weekly — all 8 weeks share mean CF 0.1847 to 4 d.p. — so the stress criterion
+fell back from min-solar to **peak-demand week** (week 7, 145.33 MW mean).
+Representative week 0 chosen from the *opposite side* of the all-weeks mean, a
+constraint added after the first build produced a +2.29 % energy residual (two
+above-mean weeks cannot convexly reproduce annual energy). Weights 7,109/1,651
+from the 2×2 hours+energy solve.
+
+**Verification chain:** annual electric energy preserved to **+0.0002 %**
+(integer `Sub_Weights` rounding); schema valid; and a full end-to-end solve —
+the 2w `village` LP returns **$101.72300 M/yr** against the 8-week anchor's
+$101.71759 M, a **0.005 %** difference. The reduced model reproduces the full
+OFF economics almost exactly.
+
+Standing caveat (in the tool docstring): the 2w variant is for **finding** the
+connection pattern; quote only fix-and-verify numbers (fix the 780 binaries on
+the full dataset, solve the LP once, ~80 min).
+
+### 2026-08-02 02:33 — 2w batch launched; NodeMethod experiment stood down
+
+User call: go straight to the 2-week path. The armed `ucrelax2` (NodeMethod 2)
+queue was disarmed *before* it could write `gurobi.env` — its env file would
+have applied to any solve launched from the repo root, contaminating the 2w
+runs with experiment parameters. No env file was ever created; the ucr2 configs
+remain in `jobs/` if the experiment is wanted later.
+
+Launched (`jobs/sched_w2.sh`): `w2_nf_village` (completes the 2w OFF pair),
+then `w2_fix_gridvillage` and `w2_nf_gridvillage` — all at **`mipgap 0.001`**
+(±~$100k on a ~$100 M objective, affordable at 1/4 model size and the right
+tolerance for a coordination delta in the tens of $M), warm-started, 4 h solver
+caps, 5 h OS backstops. Running alongside the finishing ucrelax legs (caps
+~03:17/03:24), which still deliver the full-model incumbent CSVs.
+
+**Next after these land:** fix-and-verify — fix the 2w winner's 780
+`vVIL_CONNECT` values on the full 8-week dataset, solve once as an LP, and
+quote that number. The fixing mechanism does not exist yet (a small
+`connect_pattern` config key or start-file hook); build it tomorrow.
+
+### 2026-08-02 03:21 — the coordinated plan is coal substitution; carbon-neutral pair launched
+
+**`ucr_marketfix_gridvillage` terminated at its 8 h cap** and wrote full CSVs:
+final `Best objective 8.415449851127e+07, bound 5.990591381732e+07, gap
+28.8144 %`. The $84.154 M incumbent's structure (village_build_summary):
+
+| | islanded (OFF) | coordinated incumbent (ON) |
+|---|---|---|
+| Connected | 0 (by construction) | **746 of 780** |
+| village solar | 360.70 MW | **39.34 MW** (−89 %) |
+| village battery power | 148.51 MW | 31.21 MW |
+| net grid→village supply | 0 | ~484 GWh/yr |
+| new grid build | — | **none** |
+| system CO₂ | ~753 kt/yr | **~1,102 kt/yr (+46 %)** |
+
+**The ≥$17.6 M/yr coordination value at DMO prices is coal-substitution value**:
+connect nearly everyone to the existing coal fleet's headroom, dismantle ~90 %
+of the village solar build. "0 of 780 connect" (published) reverses to 746/780
+once the grid has load, corrected costs, and a real battery — but the
+cost-optimal plan is the *opposite* of a solar programme. Caveats: incumbent at
+28.8 % gap (floor stands, pattern may shift); UC relaxed both legs; gross trade
+churn partly degenerate at 0/0 prices (quote net flows only).
+
+**Carbon-neutral coordination pair launched 03:26** (`jobs/sched_w2clean.sh`):
+`timor__marketfix2w`, `clean`, `policy_scope: "system"`, **CO2_limit = 656,500 t**
+(measured 2w islanded 653,278 + 0.5 % headroom), **RE_limit = 0.48** (measured
+0.4872 − margin), relax_uc + exact_connect, warm start, mipgap 0.01, 4 h caps.
+The question: what is coordination worth when it may neither out-emit nor be
+less renewable than islanding? 2w OFF anchors used for the cap are themselves
+measured (this section's table), closing the A4→D1 dependency the run plan
+required.
+
+### Reporting convention — one number, gap acknowledged (user decision, 2026-08-02)
+
+Headline coordination values are quoted as a **single number computed from the
+best feasible plan** (OFF − ON incumbent), annotated with the **achieved** gap:
+
+> Coordination value: **$X M/yr** (from the best plan found; solver gap Y % —
+> the true optimum may be higher, so this figure can only understate).
+
+Rationale: the incumbent end of the bracket is a real, implementable plan; the
+bound end is a hypothetical. Because the ON incumbent only improves, the quoted
+number is conservative by construction. Bounds/interval presentation moves to
+the appendix as the audit trail. Consistent with the house rule: achieved gap,
+never the permitted `mipgap`.
+
+### 2026-08-02 06:44 — 2w reference finals; figure pipeline shipped
+
+**2w reference pair complete** (time-limited at their 4 h caps):
+
+| leg | `Total_Costs` | achieved gap |
+|---|---|---|
+| w2_fix gridvillage | **83.03142** | 26.3251 % |
+| w2_nf gridvillage | **83.03142** (identical to 8 s.f.) | 27.8142 % |
+
+**One-number headline (per convention): 2w coordination = 101.72300 − 83.03142 =
+$18.69 M/yr (gap 26.3 %, conservative)** — within 6 % of the full model's
+$17.56 M/yr (gap 28.8 %). Cross-scale pattern agreement is strong: 2w connects
+**733/780** with 40.4 MW village solar vs the full model's 746/780 with 39.3 MW.
+The aggregation reproduces both the economics and the plan structure.
+
+**Figure pipeline shipped** — five scripts, all reviewer-verified SHIP:
+`plot_headline_coordination.py` (one-number convention; row 3 auto-upgrades when
+the clean leg lands, floor parsed live from its log), `plot_cost_stack.py` (F1),
+`plot_recipe_and_diesel.py` (F2+F3), `plot_diversity_panels.py` (F11; the
+reviewer pass also identified the 1.8 % histogram tail as exactly the 5,411
+fishing-archetype pairs), `plot_village_map.py` (F14; 627 of 780 locatable —
+153 villages, 31.1 % of households, modelled but unmappable). Every must-carry
+caveat from the figure plan is printed on the figures themselves.
+
+Remaining in flight: `w2c_gridvillage` (carbon-neutral ON), cap ~07:30.
+
 ### Probe runs (verification, 2026-07-31)
 
 | # | Date | Purpose | Island | Scenario | UC | Solver | `run_tag` | Result | Wall |
