@@ -18,7 +18,7 @@ figure accordingly. Verified split ($M/yr): battery energy 35.6002, solar
 25.2364, battery power 4.6042, diesel fuel+VOM 3.2974, battery VOM 0.2763,
 diesel fixed O&M 0.1198.
 
-Two caveats the caption must carry (figure_plan_timor.md, F1 "must carry"):
+Two caveats to carry when presenting this figure:
 
 1. THE REALLOCATION. `cost_results.csv` books battery POWER capex inside
    `Fixed_Costs_Village` ($29.96 M/yr) alongside solar, and only battery

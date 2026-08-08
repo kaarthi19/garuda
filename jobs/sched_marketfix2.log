@@ -1,7 +1,0 @@
-[2026-08-01T04:12:20] scheduler start: 3 jobs, MIN_FREE=75GB, ramp=600s, timeout=9h
-[2026-08-01T04:12:20] LAUNCH mf_marketfix_gridvillage (117GB free)
-[2026-08-01T04:22:20] LAUNCH mf_marketfixnf_gridvillage (83GB free)
-Terminated
-[2026-08-01T04:30:04] END mf_marketfixnf_gridvillage FAILED rc=143 after 7m (rc=-9/137 => OOM-killed)
-Terminated
-[2026-08-01T04:30:06] END mf_marketfix_gridvillage FAILED rc=143 after 17m (rc=-9/137 => OOM-killed)

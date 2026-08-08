@@ -1,6 +1,7 @@
 # scenario_timor_marketfix.yml
 #
-# A1b re-run on cost-corrected market data. See docs/findings_grid_cost_units.md.
+# Market pair on cost-corrected data (grid candidate capex annualised — see
+# the known-quirks entry in data_indonesia/DATA_PROVENANCE.md).
 #
 # The shipped island datasets hold OVERNIGHT CAPEX in `Inv_Cost_per_MWyr`, a
 # column the model reads as an annualised cost, so renewables were charged ~9x
@@ -12,7 +13,7 @@
 # inference; no source document states the upstream intent. Do not publish a
 # headline off it until the units are confirmed against the 42c222f snapshot.
 #
-# Rebuild: see docs/findings_grid_cost_units.md. Gitignored (data_indonesia/*/*__*/).
+# Derived dataset, gitignored (data_indonesia/*/*__*/).
 
 islands:
   - timor__marketfix

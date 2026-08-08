@@ -93,7 +93,7 @@ worth about one village's cheapest connection.
 > coordination value *under that tariff*, not in general. The monotonicity
 > argument in `Cost_per_yr` still holds — the tariff is a separate axis it says
 > nothing about. The Timor scenario files now set `import_price: 0`, and
-> [`run_plan_timor.md` group A5](run_plan_timor.md) sweeps it.
+> an `import_price` sweep (`tools/sensitivity.py`) measures it.
 >
 > **Do not quote the "one village's cheapest connection" line without this caveat**
 > until A5 has run. If coordination value rises materially at `import_price = 0`,
@@ -156,7 +156,7 @@ never separated:
 Experiment #3 is suggestive — adding load diversity made trade *fall*, which is
 hard to explain by synchrony alone — but it is not decisive. Mechanism 2 is now
 directly testable rather than merely suspected: set `import_price` to 0 and
-re-measure ([group A5](run_plan_timor.md)). **Do not publish
+re-measure with an `import_price` sweep. **Do not publish
 solar synchrony as the cause** until a sweep of `export_price` on plain `timor`
 separates the two (raising `export_price` removes the tax without creating a
 buyer, so the difference against the same sweep on a dataset *with* grid load

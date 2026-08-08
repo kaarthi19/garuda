@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """F2 + F3 — one kit fits 780 villages, and diesel shrinks to a 3% backstop.
 
-Implements figures F2 and F3 of docs/figure_plan_timor.md as one two-row
+One two-row figure: the standard village kit and the diesel residual, as one
 figure from the islanded exact-LP baseline (A1a OFF — a pure LP, so there is
 no MIP gap and no incumbent caveat on this leg):
 

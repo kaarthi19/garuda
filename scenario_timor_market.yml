@@ -73,7 +73,7 @@ relax_uc: false
 # export credit (export_price = 0), every inter-village transfer carries a
 # one-sided deadweight charge — one of the two candidate explanations for the
 # measured "coordination value is ~0" that no run has yet separated. Sweep it:
-#   docs/run_plan_timor.md, group A5.
+#   sweep it with tools/sensitivity.py (--param import_price=...).
 import_price: 0.0
 
 # Feed-in price ($/MWh) paid for village exports. 0 = exports are an

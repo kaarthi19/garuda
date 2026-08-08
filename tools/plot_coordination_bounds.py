@@ -9,7 +9,7 @@ regenerated, not redrawn, when they land:
     python3 tools/plot_coordination_bounds.py            # -> results/figures/
     python3 tools/plot_coordination_bounds.py --out fig.png
 
-Anchor provenance (all $M/yr; RUN_LOG.md carries the full derivations):
+Anchors (all $M/yr):
 
   timor (village <-> village, zero-load grid) — FINAL, no further compute needed
     OFF  = 69.134350   exact: pure LP (no Commit=1 units, no binaries in `village`)
@@ -72,7 +72,7 @@ GRID = "#e1e0d9"
 BASE = "#c3c2b7"
 SURFACE = "#fcfcfb"
 
-# ---- anchors ($M/yr) — provenance in the module docstring / RUN_LOG.md ----
+# ---- anchors ($M/yr) ----
 TIMOR = dict(off=69.134350, on_lb=68.967491)  # final (exact LP + dominance)
 # Market case, ucrelax treatment (relax_uc + exact_connect, DMO coal, capacity-
 # accounting fix in): OFF is an exact LP; ON bracketed by its root relaxation and

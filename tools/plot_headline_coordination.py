@@ -2,7 +2,7 @@
 """Headline coordination values — the lead figure, one number per pairing.
 
 Replaces the bounds chart (tools/plot_coordination_bounds.py) as the lead
-figure under the reporting convention recorded in RUN_LOG.md (2026-08-02):
+figure under the study's reporting convention:
 headline coordination values are a SINGLE number computed from the best
 feasible plan (OFF islanded cost minus ON incumbent), annotated with the
 ACHIEVED solver gap — never the permitted `mipgap`. Because the ON incumbent
@@ -12,7 +12,7 @@ understate the true value. Interval presentation moves to the appendix.
     python3 tools/plot_headline_coordination.py          # -> results/figures/
     python3 tools/plot_headline_coordination.py --out fig.png
 
-Three rows, all $M/yr (provenance in RUN_LOG.md):
+Three rows, all $M/yr (anchors below; live CSVs/logs override when present):
 
   1. village <-> village, `timor` (zero-load grid) — FINAL
      $0/yr. Fixing all 780 `vVIL_CONNECT` to 0 reproduces the islanded exact
@@ -68,7 +68,7 @@ GRID = "#e1e0d9"
 BASE = "#c3c2b7"
 SURFACE = "#fcfcfb"
 
-# ---- anchors ($M/yr) — provenance in the module docstring / RUN_LOG.md ----
+# ---- anchors ($M/yr) — used when the result CSVs are absent ----
 OFF_REF = 101.717594   # marketfix `village` ucrelax, `Optimal objective` (exact LP)
 ON_REF_INC = 84.154499  # marketfix gridvillage ucrelax incumbent at the 8 h cap
 REF_GAP_PCT = 28.8144  # achieved, from the final Best objective line

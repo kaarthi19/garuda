@@ -1,8 +1,0 @@
-[2026-08-01T04:30:26] scheduler start: 4 jobs, MIN_FREE=75GB, ramp=600s, timeout=9h
-[2026-08-01T04:30:26] LAUNCH mf_marketfix_village (135GB free)
-[2026-08-01T04:40:26] LAUNCH mf_marketfix_gridvillage (111GB free)
-[2026-08-01T04:48:14] END mf_marketfix_village ok after 17m
-[2026-08-01T04:50:26] LAUNCH mf_marketfixnf_village (159GB free)
-[2026-08-01T05:00:26] LAUNCH mf_marketfixnf_gridvillage (96GB free)
-[2026-08-01T05:09:40] END mf_marketfixnf_village ok after 19m
-[2026-08-01T05:10:26] all launched; waiting for completion

@@ -1,7 +1,0 @@
-[2026-08-02T02:36:58] LAUNCH w2_fix_gridvillage (90GB free)
-[2026-08-02T02:38:58] LAUNCH w2_nf_gridvillage (84GB free)
-[2026-08-02T06:40:29] END w2_fix_gridvillage rc=0
-[2026-08-02T06:42:30] END w2_nf_gridvillage rc=0
-[2026-08-02T06:42:30] w2 batch complete
-  w2_fix_gridvillage: Capacity expansion reached the time limit (LP, UC relaxed).
-  w2_nf_gridvillage: Capacity expansion reached the time limit (LP, UC relaxed).

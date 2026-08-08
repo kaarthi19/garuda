@@ -1,3 +1,0 @@
-[2026-08-01T04:04:27] scheduler start: 4 jobs, MIN_FREE=75GB, ramp=600s, timeout=5h
-[2026-08-01T04:04:27] LAUNCH mf_marketfix_village (136GB free)
-[2026-08-01T04:23:30] END mf_marketfix_village ok after 19m

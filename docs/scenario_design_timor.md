@@ -142,7 +142,7 @@ Two coherent readings, and they are not equivalent:
 charge a transfer on top of a resource cost it already counts. That removes the
 one-sided charge from the default runs. The model's own default is unchanged at
 59.0, so nothing outside this case moves, and
-[`run_plan_timor.md` A5](run_plan_timor.md) sweeps the axis so the choice is
+an `import_price` sweep (`tools/sensitivity.py`) measures the axis so the choice is
 measured rather than assumed.
 
 What remains open is the symmetric question: if the grid is a physical bus, should

@@ -1,6 +1,6 @@
 # scenario_timor_diverse.yml
 #
-# Group B1 — the load-shape diversity counterfactual (docs/run_plan_timor.md).
+# The load-shape diversity counterfactual (see docs/scenario_design_timor.md).
 #
 # Tests whether "coordination is worth ~0" follows from the villages being
 # load-shape clones. `timor__diverse` moves half the villages to a midday peak,

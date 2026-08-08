@@ -88,6 +88,18 @@ connection costs, the synthetic demo case, and priced village battery power.
   Indonesian filenames (`Data potensi desa.xlsx`, `NTT_Data_Desa.xlsx`), so the
   documented command fails on a fresh clone until the files are renamed. The
   translated workbooks do load correctly once renamed.
+- **Grid candidate `Inv_Cost_per_MWyr` appears to hold OVERNIGHT capex, charged
+  annually** (evidenced 2026-08-01; affects all eight island datasets; upstream
+  numbers deliberately preserved). The magnitudes match published installed capex
+  (solar 560,000 ≈ $560/kW vs IRENA's $691/kW), not annual costs — read as
+  annual, grid solar implies an LCOE of ~$394/MWh against IRENA's $43, while the
+  same value annualised through `tools/ntt/costs.py` (CRF 10 %, 25 yr ≈ ÷9.1)
+  lands within ~1 % of the benchmark, and the observed grid/village cost ratio is
+  9.46× ≈ 1/CRF. Consequence: capacity-expansion runs on the shipped grid
+  datasets price new-build renewables ~9× too high and never build them. The
+  Timor market studies used cost-corrected dataset variants
+  (`timor__marketfix*`); results on uncorrected datasets should treat grid
+  new-build economics as unreliable.
 - **Fuel prices and technology costs** are the upstream study's assumptions
   (`fuels_data.csv`, generator cost columns) and have not been revalidated here.
   NTT-specific cost assumptions used for the Timor build are in

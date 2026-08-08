@@ -2,8 +2,7 @@
 //
 // One slide per partner-facing figure, in story order; the three methodology
 // figures (coordination_bounds, diversity_panels, load_timing) are deliberately
-// excluded — caveats travel in the slide deck's spoken track and live in
-// RUN_LOG.md / docs/figure_plan_timor.md.
+// excluded — caveats travel in the presenters' own notes.
 //
 //   node tools/make_partner_deck.js
 //   -> results/figures/timor_partner_deck.pptx
