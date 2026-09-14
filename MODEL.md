@@ -189,6 +189,15 @@ dispatch engine, **off** (exact MILP) for expansion. On `timor_demo` the relaxed
 expansion LP is ~0.8 % below the exact MILP cost (a measured lower bound;
 reproduce with `tools/uc_relaxation_gap.jl`).
 
+`connect_pattern` (config key) fixes every village grid-connection variable
+`vVIL_CONNECT` to a given 0/1 pattern (a CSV with `ID` and `Connected` columns)
+before the solve — the **fix-and-verify** step of the reduced-representative-
+weeks workflow: solve the reduced model for a connection pattern, then fix that
+pattern on the full dataset, where the remaining problem under `relax_uc` is a
+single LP whose objective is the exact full-resolution cost of that concrete
+plan. The fix runs after `_relax_binaries!` and overrides either bound state
+(`force = true`), so it composes with both `relax_uc` and `exact_connect`.
+
 An optional Benders decomposition (`functions/benders_decomposition.jl`, an
 inherited stub, not loaded) would split investment (master) from dispatch
 (subproblem) for very large instances.

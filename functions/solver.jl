@@ -70,3 +70,36 @@ end
 # the unit-commitment binaries shared by both engines (grid + village commitment,
 # plus the village grid-connection decision); fed to _relax_binaries!.
 const UC_BINARIES = (:vCOMMIT, :vSTART, :vSHUT, :vVIL_COMMIT, :vVIL_START, :vVIL_SHUT, :vVIL_CONNECT)
+
+"""
+    _fix_connect_pattern!(CE, path) -> Int
+
+Fix every `vVIL_CONNECT` variable to the 0/1 values in `path` — a CSV with `ID`
+and `Connected` columns, so a landed run's `site_connection_results.csv` works
+verbatim. This is the fix-and-verify step for reduced-time-resolution runs:
+solve the reduced model for a connection pattern, fix that pattern on the full
+dataset, and the remaining solve (an LP under `relax_uc`) prices the concrete
+plan at full resolution with no aggregation caveat. `force = true` overrides
+both bound states a connect variable can be in (binary under `exact_connect`,
+`[0, 1]`-bounded after `_relax_binaries!`). Returns the connected-village
+count. Errors on a model without `vVIL_CONNECT` (non-Grid scenarios), a row
+count that mismatches the village set, or a non-0/1 value — a silently ignored
+pattern would report a base-case answer as a verified one.
+"""
+function _fix_connect_pattern!(CE, path::AbstractString)
+    pat = CSV.read(path, DataFrame)
+    ("ID" in names(pat) && "Connected" in names(pat)) ||
+        error("connect_pattern file $(path) needs ID and Connected columns, has $(names(pat))")
+    od = object_dictionary(CE)
+    haskey(od, :vVIL_CONNECT) ||
+        error("connect_pattern given but the model has no vVIL_CONNECT — Grid + VillageBuild scenarios only")
+    vcon = CE[:vVIL_CONNECT]
+    length(vcon) == nrow(pat) ||
+        error("connect_pattern has $(nrow(pat)) rows for $(length(vcon)) villages")
+    for r in eachrow(pat)
+        r.Connected in (0, 1) ||
+            error("connect_pattern Connected must be 0/1, got $(r.Connected) at ID $(r.ID)")
+        JuMP.fix(vcon[r.ID], Float64(r.Connected); force = true)
+    end
+    return count(==(1), pat.Connected)
+end

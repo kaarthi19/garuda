@@ -250,3 +250,49 @@ def test_time_limit_is_threaded_from_config_to_make_solver():
     for rel in ("generate_jobs.py", "generate_jobs_local.py"):
         keys = re.search(r"PASSTHROUGH_KEYS\s*=\s*\((.*?)\)", src(rel), re.S).group(1)
         assert "'time_limit'" in keys, f"{rel} PASSTHROUGH_KEYS"
+
+
+def test_connect_pattern_is_threaded_and_fixes_the_wire_binaries():
+    """Guards the fix-and-verify chain: `connect_pattern` pins vVIL_CONNECT.
+
+    The reduced-weeks workflow (tools/make_reduced_weeks.py) is only honest if
+    its winning connection pattern can be priced on the FULL dataset — fix the
+    780 wire decisions, solve the remaining LP once. A break anywhere in the
+    chain would let `get(cfg, ...)` fall back to "" and the run would silently
+    re-solve the free-connection problem, reporting a base-case answer as a
+    verified one. Check every link. Solver-free; runs in CI.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def src(rel):
+        return open(os.path.join(root, rel)).read()
+
+    # read + validated (file must exist) in the entry point, and forwarded
+    rm = src("run_model.jl")
+    assert 'get(cfg, "connect_pattern"' in rm
+    assert "isfile(connect_pattern)" in rm, "must reject a missing pattern file"
+    assert "connect_pattern = connect_pattern" in rm
+
+    # accepted by function_compiler and forwarded to BOTH engines
+    fc = src("functions/function_compiler.jl")
+    assert "connect_pattern::AbstractString" in fc
+    assert fc.count("connect_pattern = connect_pattern") >= 2, "must forward to both engines"
+
+    # each engine accepts it and applies the fix AFTER the relaxation, whose
+    # [0,1] bounds the fix must override
+    for rel in ("functions/optimizer.jl", "functions/dispatch_engine.jl"):
+        eng = src(rel)
+        assert "connect_pattern::AbstractString" in eng, f"{rel} signature"
+        i_relax = eng.index("_relax_binaries!(CE,")
+        i_fix = eng.index("_fix_connect_pattern!(CE, connect_pattern)")
+        assert i_fix > i_relax, f"{rel} must fix after relaxing, not before"
+
+    # the fixer itself must force-fix (binary or relaxed-bounded, either state)
+    sv = src("functions/solver.jl")
+    assert "function _fix_connect_pattern!" in sv
+    assert "force = true" in sv.split("function _fix_connect_pattern!")[1]
+
+    # and survives both job generators, or it is silently dropped from config.json
+    for rel in ("generate_jobs.py", "generate_jobs_local.py"):
+        keys = re.search(r"PASSTHROUGH_KEYS\s*=\s*\((.*?)\)", src(rel), re.S).group(1)
+        assert "'connect_pattern'" in keys, f"{rel} PASSTHROUGH_KEYS"

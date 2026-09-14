@@ -27,6 +27,7 @@ function function_compiler(
         engine::AbstractString = "expansion",
         relax_uc::Bool = true,
         exact_connect::Bool = false,
+        connect_pattern::AbstractString = "",
         export_price::Float64 = 0.0,
         policy_scope::AbstractString = "grid",
         lp_method::Int = -1,
@@ -42,7 +43,7 @@ function function_compiler(
         solution = dispatch_only(
             inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
-            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc, exact_connect = exact_connect,
+            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc, exact_connect = exact_connect, connect_pattern = connect_pattern,
             export_price = export_price, policy_scope = policy_scope, lp_method = lp_method,
             time_limit = time_limit,
             battery_duration_h = battery_duration_h,
@@ -52,7 +53,7 @@ function function_compiler(
         solution = capacity_expansion(
             inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
             Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
-            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc, exact_connect = exact_connect,
+            village_storage_max_mwh = village_storage_max_mwh, solver = solver, relax_uc = relax_uc, exact_connect = exact_connect, connect_pattern = connect_pattern,
             export_price = export_price, policy_scope = policy_scope, lp_method = lp_method,
             time_limit = time_limit,
             battery_duration_h = battery_duration_h,

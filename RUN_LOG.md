@@ -39,6 +39,40 @@ MILP n=5000 binaries   -> OPTIMAL
 
 ## Sessions
 
+### 2026-09-14 — fix-and-verify mechanism built; both full-8-week LPs launched
+
+Resumed after six weeks (branch fast-forwarded over the four off-server figure/
+deck commits; machine idle, 139 GB free). The outstanding follow-up from the
+closing entry — price the 2-week winners at full 8-week resolution — was
+blocked on one missing mechanism: nothing on the CLI path could fix the 780
+`vVIL_CONNECT` decisions to a given pattern. Built it as the config key
+**`connect_pattern`** (path to a CSV with `ID`/`Connected` columns; a landed
+`site_connection_results.csv` works verbatim): `_fix_connect_pattern!` in
+`functions/solver.jl` force-fixes each wire variable AFTER `_relax_binaries!`
+(whose [0,1] bounds the fix must override), threaded through all eight edit
+sites, guarded by `test_connect_pattern_is_threaded_and_fixes_the_wire_binaries`
+(suite 119 → **120 passed**), documented in README's per-run table and MODEL.md.
+Smoke-tested end-to-end on `timor_demo` (pattern 1,0,1,0 → `Connected` exactly
+matches; fixed-off villages trade 0.0 MWh).
+
+Launched **both** fix-and-verify LPs concurrently (gurobi, `lp_method 2`,
+`relax_uc: true`, `exact_connect: false` — with every connect fixed the model
+is a pure LP; `time_limit` 28800 s as a safety net only):
+
+| Job | Pattern source | Connected | Results dir |
+|---|---|---|---|
+| `jobs/fv_marketfix_gridvillage` | 2w `reference` winner | 733/780 | `gridvillage_timor__marketfix_2030_reference__fixverify` |
+| `jobs/fv_clean_gridvillage` | 2w `clean` winner (CO2 ≤ 656,500 t, RE ≥ 0.48, `policy_scope: system`) | 450/780 | `gridvillage_timor__marketfix_2030_clean__fixverify` |
+
+What the numbers will mean when they land: each LP objective is the **exact
+full-resolution cost of a concrete plan** — an upper bound on the true optimum
+with no aggregation caveat (UC relaxation still applies, as in every leg of the
+study, and cancels in the coordination delta). The reference leg also
+cross-checks the standing $84.15 M incumbent: if the 2w pattern prices below
+it, the one-number headline tightens. The clean leg is the one that removes the
+"2-week model, fix-and-verify pending" caveat from the $1.58 M/yr carbon-neutral
+headline and the partner figures.
+
 ### 2026-08-02 (local) — figure suite rebuilt; netting artifact quantified; no new solves
 
 On the local machine, from the committed results (every headline number first

@@ -58,6 +58,16 @@ relax_uc = Bool(get(cfg, "relax_uc", engine == "dispatch"))
 # ~121k UC binaries relax — the tractability sweet spot for coordination runs.
 # Default false = existing behaviour, a strict no-op.
 exact_connect = Bool(get(cfg, "exact_connect", false))
+# Fix-and-verify: path to a CSV with ID and Connected columns — a landed run's
+# site_connection_results.csv works verbatim — whose 0/1 pattern is fixed onto
+# vVIL_CONNECT before the solve. Use it to price a connection plan found on a
+# reduced-time-resolution dataset (tools/make_reduced_weeks.py) at full
+# resolution: with relax_uc the remaining problem is an LP and one solve gives
+# the exact full-resolution cost of that concrete plan, with no aggregation
+# caveat. Default "" = off, a strict no-op.
+connect_pattern = String(get(cfg, "connect_pattern", ""))
+isempty(connect_pattern) || isfile(connect_pattern) ||
+    error("config key connect_pattern points to a missing file: $(connect_pattern)")
 # Gurobi LP algorithm (its "Method" attribute) for the root relaxation and node
 # LPs: -1 automatic (the default — a strict no-op), 0 primal simplex, 1 dual
 # simplex, 2 barrier, 3 concurrent, 4/5 deterministic concurrent. On the
@@ -140,6 +150,7 @@ function_compiler(
     engine = engine,
     relax_uc = relax_uc,
     exact_connect = exact_connect,
+    connect_pattern = connect_pattern,
     export_price = export_price,
     policy_scope = policy_scope,
     lp_method = lp_method,
