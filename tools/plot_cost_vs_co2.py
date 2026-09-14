@@ -6,7 +6,8 @@ per plan, with arrows from the islanded plan to the two coordinated ones. The
 figure exists to make a single sentence unmissable: the big saving is bought
 with coal, and the carbon-neutral saving is real but small.
 
-All numbers read from the committed CSVs of the consistent 2-week trio.
+All numbers read from the committed CSVs of the consistent full-8-week
+trio (coordinated legs: the 2026-09-14 fix-and-verify exact LPs).
 
     python3 tools/plot_cost_vs_co2.py              # -> results/figures/
 
@@ -57,9 +58,9 @@ def main(argv=None):
                                                   "cost_vs_co2.png"))
     args = ap.parse_args(argv)
 
-    isl = _leg("village_timor__marketfix2w_2030_reference")
-    unc = _leg("gridvillage_timor__marketfix2w_2030_reference")
-    cln = _leg("gridvillage_timor__marketfix2w_2030_clean")
+    isl = _leg("village_timor__marketfix_2030_reference__ucrelax")
+    unc = _leg("gridvillage_timor__marketfix_2030_reference__fixverify")
+    cln = _leg("gridvillage_timor__marketfix_2030_clean__fixverify")
 
     fig, ax = plt.subplots(figsize=(9.8, 6.2), dpi=200)
     fig.subplots_adjust(left=0.10, right=0.965, top=0.84, bottom=0.13)
@@ -74,9 +75,9 @@ def main(argv=None):
 
     pts = [(isl, BLUE, "islanded\n780 microgrids", (14, 10), "left"),
            (unc, ORANGE, "coordinated, unconstrained\nruns on existing coal",
-            (-14, 10), "right"),
+            (16, 10), "left"),
            (cln, BLUE, "coordinated, carbon-neutral\nsolar fleet intact,\n"
-            "save \\$1.6 M/yr at the same CO₂", (-16, 26), "right")]
+            f"save \\${isl[0]-cln[0]:.1f} M/yr at lower CO₂", (-16, 26), "right")]
     for (x, y), c, lab, (dx, dy), ha in pts:
         ax.plot([x], [y], "o", ms=12, color=c, zorder=4)
         ax.annotate(lab, xy=(x, y), xytext=(dx, dy),
@@ -92,7 +93,7 @@ def main(argv=None):
 
     ax.set_xlabel("system cost  ($M/yr)", fontsize=10.5, color=INK2)
     ax.set_ylabel("system CO₂  (kt/yr)", fontsize=10.5, color=INK2)
-    ax.set_xlim(78, 108)
+    ax.set_xlim(74, 108)
     ax.set_ylim(560, 1200)
     ax.grid(True, color=GRID_LN, lw=0.8, zorder=0)
     for s_ in ("top", "right"):

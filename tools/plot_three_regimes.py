@@ -4,13 +4,14 @@
 Four small-multiple panels (system cost, system CO2, village solar, villages
 connected), each with the same three bars: islanded, coordinated with no carbon
 constraint, coordinated under a carbon cap + RE floor. Every number is read from
-the committed result CSVs of the CONSISTENT 2-week trio (same model, same
-dataset, all three legs), so the panels are comparable within and across.
+the committed result CSVs of the CONSISTENT full-8-week trio (same model, same
+dataset, all three legs exact LPs — the coordinated legs are the 2026-09-14
+fix-and-verify runs), so the panels are comparable within and across.
 
-The story the four panels tell together: the wires alone save $18.7 M/yr by
-substituting existing coal for village solar (+447 kt CO2, solar 370 -> 40 MW);
+The story the four panels tell together: the wires alone save $24.0 M/yr by
+substituting existing coal for village solar (+455 kt CO2, solar 361 -> 21 MW);
 the same wires under a carbon cap keep the solar programme intact and still
-save $1.6 M/yr. The constraint, not the technology, decides the buildout.
+save $2.8 M/yr. The constraint, not the technology, decides the buildout.
 
     python3 tools/plot_three_regimes.py            # -> results/figures/
 
@@ -41,9 +42,9 @@ SURFACE = "#fcfcfb"
 
 RESULTS = os.path.join(REPO, "results")
 LEGS = [  # (results dir, x label)
-    ("village_timor__marketfix2w_2030_reference", "islanded"),
-    ("gridvillage_timor__marketfix2w_2030_reference", "wires,\nno carbon cap"),
-    ("gridvillage_timor__marketfix2w_2030_clean", "wires +\ncarbon cap"),
+    ("village_timor__marketfix_2030_reference__ucrelax", "islanded"),
+    ("gridvillage_timor__marketfix_2030_reference__fixverify", "wires,\nno carbon cap"),
+    ("gridvillage_timor__marketfix_2030_clean__fixverify", "wires +\ncarbon cap"),
 ]
 NA = dict(encoding="utf-8-sig", keep_default_na=False, na_values=[""])
 

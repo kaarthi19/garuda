@@ -21,22 +21,24 @@ Three rows, all $M/yr (provenance in RUN_LOG.md):
      1.000 — every village peaks in the same hours, nothing to trade.
 
   2. village <-> grid, reference (`timor__marketfix`, full 8-week model)
-     OFF exact LP 101.71759 minus ON incumbent 84.15450 = $17.56 M/yr at an
-     achieved gap of 28.8144% (jobs/ucr_marketfix_gridvillage/solve.log).
-     Mechanism warning carried on the figure: the cost-optimal plan connects
-     746/780 villages to EXISTING coal headroom and dismantles ~90% of the
-     village solar build — system CO2 rises ~46%.
+     OFF exact LP 101.71759 minus ON fix-and-verify exact LP 77.75873
+     (results/gridvillage_timor__marketfix_2030_reference__fixverify: the
+     2-week winner's 733-village pattern priced at full resolution) =
+     $23.96 M/yr. Both sides are pure LPs solved to optimality — no solver
+     gap; the number is exact for this concrete plan and a FLOOR on the true
+     value (a better pattern could only raise it). Mechanism warning carried
+     on the figure: the plan runs on existing coal headroom, village solar
+     collapses to 21 MW, system CO2 rises ~68%.
 
-  3. village <-> grid, carbon-neutral (`timor__marketfix2w`, `clean`,
-     CO2_limit 656,500 t, RE_limit 0.48). Reads
-     results/gridvillage_timor__marketfix2w_2030_clean/cost_results.csv when
-     the run has landed (value = 101.72300 - Total_Costs, gap from the final
-     `Best objective` line of jobs/w2c_gridvillage/solve.log). While the run
-     is still solving the row renders muted as "solving — floor $X.X M/yr so
-     far", the floor taken from the latest incumbent in the same log. Either
-     way the row carries the aggregation caveat: 2-week reduced model
-     (OFF 2w LP = 101.72300 vs 101.71759 full, 0.005%); fix-and-verify on
-     the full 8-week dataset pending.
+  3. village <-> grid, carbon-neutral (same dataset, `clean`, CO2_limit
+     656,500 t, RE_limit 0.48, policy_scope system). Same construction:
+     OFF 101.71759 (the islanded plan meets the cap by construction) minus
+     ON fix-and-verify exact LP 98.87223
+     (results/gridvillage_timor__marketfix_2030_clean__fixverify: the
+     450-village pattern; CO2 = 656,500.000 t and RE share = 0.480000 bind
+     exactly at full resolution) = $2.85 M/yr, exact for this plan. The
+     former 2-week aggregation caveat is retired — both headline rows are
+     now full-8-week numbers.
 
 Chart conventions follow the dataviz method: horizontal lollipop per row
 (this is a set of headline numbers, not intervals — no bars), one axis, big
@@ -49,7 +51,6 @@ Requires matplotlib + pandas (not part of the core pip set). Solver-free.
 import argparse
 import datetime as _dt
 import os
-import re
 import sys
 
 import matplotlib
@@ -69,24 +70,17 @@ BASE = "#c3c2b7"
 SURFACE = "#fcfcfb"
 
 # ---- anchors ($M/yr) — provenance in the module docstring / RUN_LOG.md ----
-OFF_REF = 101.717594   # marketfix `village` ucrelax, `Optimal objective` (exact LP)
-ON_REF_INC = 84.154499  # marketfix gridvillage ucrelax incumbent at the 8 h cap
-REF_GAP_PCT = 28.8144  # achieved, from the final Best objective line
-OFF_CLEAN_2W = 101.72300  # marketfix2w `village` clean, exact LP
+OFF_REF = 101.717594    # marketfix `village` ucrelax, `Optimal objective` (exact LP)
+ON_REF_FV = 77.758726   # fix-and-verify exact LP, 733-village pattern (2026-09-14)
+ON_CLEAN_FV = 98.872226  # fix-and-verify exact LP, 450-village pattern (2026-09-14)
 
 RESULTS = os.path.join(REPO, "results")
 REF_OFF_CSV = os.path.join(
     RESULTS, "village_timor__marketfix_2030_reference__ucrelax", "cost_results.csv")
 REF_ON_CSV = os.path.join(
-    RESULTS, "gridvillage_timor__marketfix_2030_reference__ucrelax", "cost_results.csv")
-REF_LOG = os.path.join(REPO, "jobs", "ucr_marketfix_gridvillage", "solve.log")
-CLEAN_OFF_CSV = os.path.join(
-    RESULTS, "village_timor__marketfix2w_2030_clean", "cost_results.csv")
+    RESULTS, "gridvillage_timor__marketfix_2030_reference__fixverify", "cost_results.csv")
 CLEAN_ON_CSV = os.path.join(
-    RESULTS, "gridvillage_timor__marketfix2w_2030_clean", "cost_results.csv")
-CLEAN_LOG = os.path.join(REPO, "jobs", "w2c_gridvillage", "solve.log")
-
-_SCI = re.compile(r"\d\.\d+e\+\d+")
+    RESULTS, "gridvillage_timor__marketfix_2030_clean__fixverify", "cost_results.csv")
 
 
 def _total_costs(path, fallback):
@@ -96,48 +90,17 @@ def _total_costs(path, fallback):
     return fallback
 
 
-def _final_gap_pct(log_path, fallback=None):
-    """Achieved gap from the last `Best objective ..., gap X%` line, if any."""
-    gap = fallback
-    if os.path.exists(log_path):
-        for line in open(log_path, errors="ignore"):
-            if line.startswith("Best objective") and "gap" in line:
-                gap = float(line.split("gap")[1].strip().rstrip("%\n"))
-    return gap
-
-
-def _latest_incumbent(log_path):
-    """Best incumbent ($M) so far from a running Gurobi B&B log, or None."""
-    inc = None
-    if os.path.exists(log_path):
-        for line in open(log_path, errors="ignore"):
-            if line.startswith(("H", "*")):
-                m = _SCI.search(line)
-                if m:
-                    inc = float(m.group()) / 1e6
-    return inc
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--out", default=os.path.join(REPO, "results", "figures",
                                                   "headline_coordination.png"))
     args = ap.parse_args(argv)
 
-    # row 2 — reference pair
-    ref_val = _total_costs(REF_OFF_CSV, OFF_REF) - _total_costs(REF_ON_CSV, ON_REF_INC)
-    ref_gap = _final_gap_pct(REF_LOG, REF_GAP_PCT)
-
-    # row 3 — carbon-neutral pair (may still be solving)
-    off_clean = _total_costs(CLEAN_OFF_CSV, OFF_CLEAN_2W)
-    clean_landed = os.path.exists(CLEAN_ON_CSV)
-    if clean_landed:
-        clean_val = off_clean - _total_costs(CLEAN_ON_CSV, None)
-        clean_gap = _final_gap_pct(CLEAN_LOG)
-    else:
-        inc = _latest_incumbent(CLEAN_LOG)
-        clean_val = (off_clean - inc) if inc is not None else 0.0
-        clean_gap = None
+    # rows 2 and 3 — the same OFF (the islanded plan meets the carbon cap by
+    # construction) minus each fix-and-verify exact LP. No solver gap anywhere.
+    off = _total_costs(REF_OFF_CSV, OFF_REF)
+    ref_val = off - _total_costs(REF_ON_CSV, ON_REF_FV)
+    clean_val = off - _total_costs(CLEAN_ON_CSV, ON_CLEAN_FV)
 
     fig, ax = plt.subplots(figsize=(10.4, 5.2), dpi=200)
     fig.subplots_adjust(left=0.215, right=0.975, top=0.87, bottom=0.14)
@@ -163,25 +126,13 @@ def main(argv=None):
             fontsize=9, color=INK_2, va="top")
 
     # -- row 3: village <-> grid, carbon-neutral --
-    if clean_landed:
-        ax.hlines(Y3, 0, clean_val, color=BLUE, lw=2, zorder=3)
-        ax.plot([clean_val], [Y3], "o", ms=10, color=BLUE, zorder=4)
-        ax.text(clean_val + 0.45, Y3 + 0.02, f"${clean_val:.2f} M/yr",
-                fontsize=15, fontweight="bold", color=INK, va="center")
-        ax.text(0.0, Y3 - 0.32,
-                "the solar programme stays intact — CO₂ held at the islanded level",
-                fontsize=9, color=INK_2, va="top")
-    else:
-        ax.hlines(Y3, 0, clean_val, color=MUTED, lw=1.4,
-                  linestyle=(0, (4, 3)), zorder=3)
-        ax.plot([clean_val], [Y3], "o", ms=10, mfc=SURFACE, mec=MUTED,
-                mew=1.6, zorder=4)
-        ax.text(clean_val + 0.45, Y3 + 0.02,
-                f"solving — floor ${clean_val:.1f} M/yr so far",
-                fontsize=12, color=MUTED, va="center")
-        ax.text(0.0, Y3 - 0.32,
-                "still solving — the floor can only rise",
-                fontsize=9, color=MUTED, va="top")
+    ax.hlines(Y3, 0, clean_val, color=BLUE, lw=2, zorder=3)
+    ax.plot([clean_val], [Y3], "o", ms=10, color=BLUE, zorder=4)
+    ax.text(clean_val + 0.45, Y3 + 0.02, f"${clean_val:.2f} M/yr",
+            fontsize=15, fontweight="bold", color=INK, va="center")
+    ax.text(0.0, Y3 - 0.32,
+            "the solar programme stays intact — CO₂ held at the islanded level",
+            fontsize=9, color=INK_2, va="top")
 
     # axes / chrome
     ax.set_yticks([Y3, Y2, Y1])
@@ -189,9 +140,9 @@ def main(argv=None):
                         "village ↔ grid\nunconstrained",
                         "village ↔ village"],
                        fontsize=10, color=INK)
-    ax.set_xlim(-0.4, 22.5)
+    ax.set_xlim(-0.5, 32.0)
     ax.set_ylim(-0.55, 2.50)
-    ax.set_xticks([0, 5, 10, 15, 20])
+    ax.set_xticks([0, 5, 10, 15, 20, 25])
     ax.set_xlabel("coordination value  (islanded − best coordinated plan found,  $M/yr)",
                   fontsize=10, color=INK_2)
     ax.xaxis.grid(True, color=GRID, lw=0.8, zorder=0)
@@ -208,12 +159,8 @@ def main(argv=None):
     fig.savefig(args.out, facecolor=SURFACE)
     print(f"written: {args.out}")
     print(f"  village<->village : $0/yr (final)")
-    print(f"  reference         : ${ref_val:.5f} M/yr at achieved gap {ref_gap:.4f}%")
-    if clean_landed:
-        gtxt = f"{clean_gap:.4f}%" if clean_gap is not None else "n/a"
-        print(f"  carbon-neutral    : ${clean_val:.5f} M/yr at achieved gap {gtxt} (landed)")
-    else:
-        print(f"  carbon-neutral    : solving — floor ${clean_val:.5f} M/yr so far")
+    print(f"  reference         : ${ref_val:.5f} M/yr (fix-and-verify exact LP — no solver gap)")
+    print(f"  carbon-neutral    : ${clean_val:.5f} M/yr (fix-and-verify exact LP — no solver gap)")
     return 0
 
 

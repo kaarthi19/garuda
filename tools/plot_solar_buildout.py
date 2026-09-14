@@ -5,10 +5,12 @@ One question, partner-first: how much solar does least-cost planning actually
 deploy on Timor, and what does the answer depend on? Three regimes:
 
   islanded        every village a solar+storage+diesel microgrid (exact LP)
-  coordinated     least-cost with the grid, no carbon constraint (incumbent)
+  coordinated     least-cost with the grid, no carbon constraint
+                  (fix-and-verify exact LP: the 2-week winner's 733-village
+                  pattern priced at full 8-week resolution)
   carbon-neutral  least-cost with the grid, CO2 capped at the islanded level
-                  and RE share floored at the islanded share (incumbent; 2-week
-                  model until fix-and-verify)
+                  and RE share floored at the islanded share (fix-and-verify
+                  exact LP, 450-village pattern — cap and floor bind exactly)
 
 Each bar splits village solar vs grid (utility) solar. The middle bar is the
 warning the study exists to deliver: with DMO coal available and no carbon
@@ -18,17 +20,14 @@ solar. The third bar shows what survives when coordination may not out-emit
 islanding.
 
 Context annotations: MW as a share of the 100 GW national ambition (pure
-arithmetic), and kW per household (436,995 households). Incumbent-based values
-carry their achieved solver gap per the study's one-number convention.
+arithmetic), and kW per household (436,995 households). All three bars are now
+exact LPs — no solver gap anywhere (2026-09-14 fix-and-verify).
 
-Reads landed results; the carbon-neutral bar renders as "solving" until
-results/gridvillage_timor__marketfix2w_2030_clean/ exists, then upgrades on
-re-run. Requires matplotlib; solver-free.
+Requires matplotlib; solver-free.
 """
 import argparse
 import datetime as _dt
 import os
-import re
 import sys
 
 import matplotlib
@@ -63,16 +62,6 @@ def solar_mw(run_dir):
     return village, grid
 
 
-def achieved_gap(log_path):
-    gap = None
-    if os.path.exists(log_path):
-        for line in open(log_path, errors="ignore"):
-            m = re.search(r"gap (\d+\.?\d*)%", line)
-            if m:
-                gap = float(m.group(1))
-    return gap
-
-
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--out", default=os.path.join(REPO, "results", "figures",
@@ -85,12 +74,11 @@ def main(argv=None):
              run=os.path.join(R, "village_timor_2030_reference"),
              note="exact LP — no solver gap", gap=None),
         dict(label="coordinated, unconstrained\n(DMO coal available)",
-             run=os.path.join(R, "gridvillage_timor__marketfix_2030_reference__ucrelax"),
-             note=None, gap=achieved_gap(os.path.join(REPO, "jobs", "ucr_marketfix_gridvillage", "solve.log"))),
+             run=os.path.join(R, "gridvillage_timor__marketfix_2030_reference__fixverify"),
+             note="fix-and-verify exact LP", gap=None),
         dict(label="coordinated, carbon-neutral\n(CO2 capped at islanded level)",
-             run=os.path.join(R, "gridvillage_timor__marketfix2w_2030_clean"),
-             note="2-week model; fix-and-verify pending",
-             gap=achieved_gap(os.path.join(REPO, "jobs", "w2c_gridvillage", "solve.log"))),
+             run=os.path.join(R, "gridvillage_timor__marketfix_2030_clean__fixverify"),
+             note="fix-and-verify exact LP", gap=None),
     ]
     for r in rows:
         r["mw"] = solar_mw(r["run"])
@@ -118,8 +106,8 @@ def main(argv=None):
         ax.text(i, total + 34, f"{total:,.0f} MW", ha="center", va="bottom",
                 fontsize=13, color=INK, fontweight="bold")
         ax.text(i, total + 28, sub, ha="center", va="top", fontsize=8, color=INK2)
-        # split labels only when both components are visible
-        if v > 1 and g > 1:
+        # split labels only when both components are big enough to label
+        if v > 10 and g > 10:
             ax.text(i + 0.31, v / 2, f"village {v:,.0f}", ha="left", fontsize=8.5, color=INK2)
             ax.text(i + 0.31, v + g / 2, f"grid {g:,.0f}", ha="left", fontsize=8.5, color=INK2)
 

@@ -64,14 +64,38 @@ is a pure LP; `time_limit` 28800 s as a safety net only):
 | `jobs/fv_marketfix_gridvillage` | 2w `reference` winner | 733/780 | `gridvillage_timor__marketfix_2030_reference__fixverify` |
 | `jobs/fv_clean_gridvillage` | 2w `clean` winner (CO2 ≤ 656,500 t, RE ≥ 0.48, `policy_scope: system`) | 450/780 | `gridvillage_timor__marketfix_2030_clean__fixverify` |
 
-What the numbers will mean when they land: each LP objective is the **exact
-full-resolution cost of a concrete plan** — an upper bound on the true optimum
-with no aggregation caveat (UC relaxation still applies, as in every leg of the
-study, and cancels in the coordination delta). The reference leg also
-cross-checks the standing $84.15 M incumbent: if the 2w pattern prices below
-it, the one-number headline tightens. The clean leg is the one that removes the
-"2-week model, fix-and-verify pending" caveat from the $1.58 M/yr carbon-neutral
-headline and the partner figures.
+**Both landed the same night, both `Optimal`, and both re-set the headlines.**
+Barrier times 1,268 s (clean) and 1,718 s (reference); every quoted cost below
+is an exact LP objective — the first coordination numbers of the study with
+**no solver gap at all**:
+
+| Leg | ON cost ($M/yr) | Coordination value vs OFF 101.717594 | Supersedes |
+|---|---|---|---|
+| reference, 733-village pattern | **77.758726** | **$23.96 M/yr** | $17.56 M @ achieved gap 28.81 % |
+| carbon-neutral, 450-village pattern | **98.872226** | **$2.85 M/yr** | $1.58 M @ achieved gap 13.99 % (2w) |
+
+The 2-week winner beat the full-model B&B incumbent by **$6.40 M/yr** — the
+84.154 M incumbent from 8 h of branch-and-bound is retired; the reduced-model
+detour found a better plan in 21 minutes of LP. Both values are exact for their
+concrete plan and therefore **floors** on the true coordination value (a better
+pattern could only raise them; the old B&B bound still caps the reference leg
+from above at ~$41.8 M).
+
+Full-resolution mechanism numbers: reference — village solar **21.47 MW**
+(down from 39.3 in the retired incumbent), net grid supply 510 GWh/yr, system
+CO₂ **1,122,539 t** (+68 % over islanded); carbon-neutral — village solar
+**356.18 MW**, net grid supply 19.2 GWh/yr, CO₂ **656,500.000 t** and system
+RE share **0.480000**, both binding to the printed digit. One nuance worth a
+sentence: the full-model islanded plan emits 667.1 kt, so the 656.5 kt cap
+(measured on the 2-week islanded model) is slightly *tighter* than true
+islanded emissions — the carbon-neutral coordinated plan out-cleans islanding,
+and the "no more CO₂ than islanding" claim holds a fortiori.
+
+The figure suite (headline_coordination, solar_buildout, village_supply,
+three_regimes, cost_vs_co2) now reads the two `__fixverify` result dirs; the
+2-week aggregation caveat and every achieved-gap annotation are retired from
+the exhibits. The three-regime trio is now internally consistent at full
+8-week resolution: **$0 / $23.96 M / $2.85 M per year**.
 
 ### 2026-08-02 (local) — figure suite rebuilt; netting artifact quantified; no new solves
 

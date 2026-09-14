@@ -44,8 +44,8 @@ def main(argv=None):
     args = ap.parse_args(argv)
     R = os.path.join(REPO, "results")
     rows = [("islanded", os.path.join(R, "village_timor_2030_reference")),
-            ("coordinated,\nunconstrained", os.path.join(R, "gridvillage_timor__marketfix_2030_reference__ucrelax")),
-            ("coordinated,\ncarbon-neutral", os.path.join(R, "gridvillage_timor__marketfix2w_2030_clean"))]
+            ("coordinated,\nunconstrained", os.path.join(R, "gridvillage_timor__marketfix_2030_reference__fixverify")),
+            ("coordinated,\ncarbon-neutral", os.path.join(R, "gridvillage_timor__marketfix_2030_clean__fixverify"))]
 
     fig, ax = plt.subplots(figsize=(9.2, 5.4), dpi=200)
     fig.subplots_adjust(left=0.09, right=0.86, top=0.80, bottom=0.24)
