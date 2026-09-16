@@ -69,8 +69,8 @@ function figSlide(title, png) {
   });
   const stats = [
     ["780", "villages · 437,000 households"],
-    ["366 MW", "village solar under a carbon cap"],
-    ["$1.6 M/yr", "saved by wires, carbon-neutral"],
+    ["356 MW", "village solar under a carbon cap"],
+    ["$2.8 M/yr", "saved by wires, carbon-neutral"],
   ];
   stats.forEach(([big, small], i) => {
     const x = 0.9 + i * 4.0;
