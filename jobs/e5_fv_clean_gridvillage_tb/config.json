@@ -1,0 +1,21 @@
+{
+  "island": "timor__marketfix_era5",
+  "scenario": "gridvillage",
+  "year": "2030",
+  "CO235reduction": false,
+  "BAUCO2emissions": 0.0,
+  "import_price": 0.01,
+  "export_price": 0.0,
+  "relax_uc": true,
+  "solver": "gurobi",
+  "lp_method": 2,
+  "mipgap": 0.01,
+  "time_limit": 28800.0,
+  "clean": "clean",
+  "CO2_limit": 656500.0,
+  "RE_limit": 0.48,
+  "policy_scope": "system",
+  "exact_connect": false,
+  "run_tag": "fixverify_tb",
+  "connect_pattern": "jobs/e5_fv_clean_gridvillage/connect_pattern.csv"
+}
