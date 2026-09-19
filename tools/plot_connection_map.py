@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """Map: who connects and who stays islanded — the distance-decay exhibit.
 
-Scatter of villages on lat/lon from the coordinated (ON) plan's exact
-connection binaries: connected in blue, islanded in orange, dot area by
-households. The spatial story is distance decay: islanded villages sit twice
-as far from a substation (median 37.3 km) as connected ones (19.6 km).
+Scatter of villages on lat/lon from the coordinated (ON) plan's fixed
+connection pattern: connected in blue, islanded in orange, dot area by
+households. The spatial story is distance decay: the medians printed on the
+figure are recomputed from the run it is given.
 
-Sources: results/gridvillage_timor__marketfix_2030_reference__ucrelax/
-site_connection_results.csv (Connected is exact — the wire binaries were not
-relaxed) joined to data_indonesia/2030/timor/village_solar_potential.csv on
-Village. 153 of 780 villages lack coordinates and are counted in the caption,
-not drawn. The pattern comes from a feasible incumbent at achieved gap 28.8%;
-the exact membership of the connected set may shift in a tighter solve, the
-distance gradient is robust. Requires matplotlib; solver-free.
+Sources: results/gridvillage_timor__marketfix_2030_reference__fixverify/
+site_connection_results.csv (the 733-village pattern found on the 2-week model
+and priced exactly on the full 8-week model — see RUN_LOG 2026-09-14) joined to
+data_indonesia/2030/timor/village_solar_potential.csv on Village. 153 of 780
+villages lack coordinates and are counted in the caption, not drawn. Pass
+--run .../gridvillage_timor__marketfix_2030_clean__fixverify --out ... for the
+carbon-neutral pattern (450 connected). Requires matplotlib; solver-free.
 """
 import argparse, datetime as _dt, os, sys
 import numpy as np
@@ -29,9 +29,13 @@ def _read(p): return pd.read_csv(p, encoding="utf-8-sig", keep_default_na=False,
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--run", default=os.path.join(REPO, "results",
-                    "gridvillage_timor__marketfix_2030_reference__ucrelax"))
+                    "gridvillage_timor__marketfix_2030_reference__fixverify"))
     ap.add_argument("--out", default=os.path.join(REPO, "results", "figures", "connection_map.png"))
+    ap.add_argument("--regime", default=None,
+                    help="label for the title; inferred from the run folder name if omitted")
     args = ap.parse_args(argv)
+    regime = args.regime or ("carbon-neutral plan" if "_clean" in os.path.basename(args.run.rstrip("/"))
+                             else "unconstrained plan")
 
     cn = _read(os.path.join(args.run, "site_connection_results.csv"))
     sp = _read(os.path.join(REPO, "data_indonesia/2030/timor/village_solar_potential.csv"))
@@ -59,7 +63,7 @@ def main(argv=None):
     ax.tick_params(colors=MUTED, labelsize=8)
     ax.set_xlabel("longitude", fontsize=9, color=INK2); ax.set_ylabel("latitude", fontsize=9, color=INK2)
     ax.legend(loc="upper left", frameon=False, fontsize=9.5)
-    ax.set_title("Who connects: distance decides", fontsize=13, color=INK, loc="left", pad=12)
+    ax.set_title(f"Who connects: distance decides — {regime}", fontsize=13, color=INK, loc="left", pad=12)
     ax.text(0.98, 0.98, f"median substation distance\nconnected {med_c:.1f} km  ·  "
             f"islanded {med_i:.1f} km", transform=ax.transAxes, fontsize=9.5,
             color=INK, ha="right", va="top")
