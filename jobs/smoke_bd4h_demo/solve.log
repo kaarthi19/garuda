@@ -1,0 +1,37 @@
+Running HiGHS 1.14.0 (git hash: 7df0786de3): Copyright (c) 2026 under Apache 2.0 license terms
+Using BLAS: blastrampoline 
+LP has 288995 rows; 174803 cols; 859001 nonzeros
+Coefficient ranges:
+  Matrix  [3e-02, 5e+01]
+  Cost    [7e+00, 2e+05]
+  Bound   [1e+00, 2e+02]
+  RHS     [3e-05, 6e+01]
+WARNING: Problem has some excessively small row bounds
+Presolving model
+207817 rows, 126645 cols, 674917 nonzeros 0s
+Dependent equations search running on 27928 equations with time limit of 1000.00s
+Dependent equations search removed 0 rows and 0 nonzeros in 0.00s (limit = 1000.00s)
+199445 rows, 120972 cols, 690363 nonzeros 0s
+Presolve reductions: rows 199445(-89550); columns 120972(-53831); nonzeros 690363(-168638) 
+Solving the presolved LP
+Using dual simplex solver
+  Iteration        Objective     Infeasibilities num(sum)
+          0     3.6000699995e+05 Pr: 8065(48364.4) 0.6s
+      22886     2.3131851812e+07 Pr: 18431(398290); Du: 0(5.35808e-08) 5.8s
+      54632     2.3734970164e+07 Pr: 1206(13.4478); Du: 0(1.23423e-07) 10.9s
+      56422     2.3734715537e+07 Pr: 0(0); Du: 0(1.15885e-10) 11.0s
+
+Performed postsolve
+Solving the original LP from the solution after postsolve
+
+Model status        : Optimal
+Simplex   iterations: 56422
+Objective value     :  2.3734715537e+07
+P-D objective error :  2.5191331212e-14
+HiGHS run time      :         11.09
+  Activating project at `~/Documents/GitHub/garuda/.claude/worktrees/orientation`
+┌ Warning: schema validation skipped (validator exit 3):
+│ schema validation unavailable: pandas not installed
+└ @ Main ~/Documents/GitHub/garuda/.claude/worktrees/orientation/functions/preflight.jl:172
+Connection pattern fixed from jobs/smoke_bd4h_demo/connect_pattern.csv: 2/4 villages connected.
+Capacity expansion solved successfully (LP, UC relaxed).
