@@ -1,0 +1,121 @@
+[2026-09-19T23:09:49] BUILD timor__marketfix_era5
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+== wiring ERA5 solar into data_indonesia/2030/timor__marketfix ==
+  weeks [2, 9, 16, 24, 32, 40, 46, 52] -> 1344 hours
+  wired 780 solar unit(s); mean sliced CF 0.1822 (1,596 full-load hours if the weeks are representative)
+  30 distinct profile(s) across 780 units
+  1560 non-solar unit column(s) verified flat at 1.0
+
+== writing timor__marketfix_era5 ==
+  NOTE 'timor__marketfix_era5' contains a double underscore, which .gitignore treats as a derived sweep variant (data_indonesia/*/*__*/). Use a single underscore if you mean to commit it.
+  wrote data_indonesia/2030/timor__marketfix_era5/village_generators_variability.csv
+  schema OK (0 warning(s)) — timor__marketfix_era5
+
+Done. Run with island 'timor__marketfix_era5'.
+[2026-09-19T23:09:53] BUILD timor__marketfix_era5_2w
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+stress criterion: min weekly solar CF
+source weeks:
+ week  mean_power  solar_cf
+    0    138.7344    0.1911
+    1    144.9038    0.1553
+    2    142.8990    0.1626
+    3    124.4634    0.1629
+    4    138.6736    0.1737
+    5    141.0401    0.2090
+    6    143.7738    0.2039
+    7    145.3315    0.1987
+selected: [(1, 1833), (4, 6927)]  (week, Sub_Weight)
+annual electric energy: source 1,226.20 GWh -> reduced 1,226.20 GWh  (residual -0.0002%)
+OK: schema valid (0 warning(s)) — data_indonesia/2030/timor__marketfix_era5_2w
+[2026-09-19T23:09:56] STAGE 1 — islanded full-model LPs
+[2026-09-19T23:09:56] LAUNCH e5_village (179GB free)
+[2026-09-19T23:12:56] LAUNCH e5_village_4h (173GB free)
+[2026-09-19T23:32:17] END e5_village rc=0
+[2026-09-19T23:32:56] LAUNCH e5_village_2h (149GB free)
+[2026-09-19T23:34:37] END e5_village_4h rc=0
+[2026-09-19T23:55:55] END e5_village_2h rc=0
+[2026-09-19T23:55:55] caps for the full-model clean legs:
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+  measured on results/village_timor__marketfix_era5_2030_reference: CO2 677,207.9 t, RE share 0.4568  ->  CO2_limit 680,593.9, RE_limit 0.451
+  wrote jobs/e5_fv_clean_gridvillage/config.json
+  wrote jobs/e5_fv_clean_gridvillage_4h/config.json
+  wrote jobs/e5_fv_clean_gridvillage_tb/config.json
+[2026-09-19T23:55:55] STAGE 2 — 2-week islanded LP, then the two pattern-search MILPs
+[2026-09-19T23:55:55] LAUNCH e5_w2_village (179GB free)
+[2026-09-20T00:01:29] END e5_w2_village rc=0
+[2026-09-20T00:01:29] caps for the 2-week clean search:
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+  measured on results/village_timor__marketfix_era5_2w_2030_reference: CO2 660,021.9 t, RE share 0.4739  ->  CO2_limit 663,322.0, RE_limit 0.468
+  wrote jobs/e5_w2c_gridvillage/config.json
+[2026-09-20T00:01:29] LAUNCH e5_w2_gridvillage (179GB free)
+[2026-09-20T00:04:29] LAUNCH e5_w2c_gridvillage (168GB free)
+[2026-09-20T04:04:35] END e5_w2_gridvillage rc=0
+[2026-09-20T04:07:31] END e5_w2c_gridvillage rc=0
+  e5_w2_gridvillage: Capacity expansion reached the time limit (LP, UC relaxed).
+  e5_w2c_gridvillage: Capacity expansion reached the time limit (LP, UC relaxed).
+[2026-09-20T04:07:31] STAGE 3 — fix-and-verify on the full model
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+[2026-09-20T04:07:31] pattern e5_fv_gridvillage: 750/780 connected
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+[2026-09-20T04:07:31] pattern e5_fv_clean_gridvillage: 0/780 connected
+[2026-09-20T04:07:31] LAUNCH e5_fv_gridvillage (179GB free)
+[2026-09-20T04:10:31] LAUNCH e5_fv_clean_gridvillage (173GB free)
+[2026-09-20T04:38:11] END e5_fv_clean_gridvillage rc=0
+[2026-09-20T05:14:32] END e5_fv_gridvillage rc=0
+[2026-09-20T05:14:32] STAGE 4 — 4 h battery and trade tie-breaker on the fixed patterns
+[2026-09-20T05:14:32] LAUNCH e5_fv_gridvillage_4h (179GB free)
+[2026-09-20T05:17:32] LAUNCH e5_fv_clean_gridvillage_4h (173GB free)
+[2026-09-20T05:45:58] END e5_fv_clean_gridvillage_4h rc=0
+[2026-09-20T05:46:32] LAUNCH e5_fv_gridvillage_tb (136GB free)
+[2026-09-20T06:21:14] END e5_fv_gridvillage_4h rc=0
+[2026-09-20T06:21:32] LAUNCH e5_fv_clean_gridvillage_tb (135GB free)
+[2026-09-20T06:50:13] END e5_fv_clean_gridvillage_tb rc=0
+[2026-09-20T07:09:49] END e5_fv_gridvillage_tb rc=0
+[2026-09-20T07:09:49] all solves complete
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+
+== Regime trio, full 8-week model, ERA5 weather ==
+regime                           cost $M  coord $M   CO2 kt     RE  solar MW  batt MWh  conn  net grid GWh  diesel %
+islanded                         104.575       nan    677.2  0.457     391.3       790     0           0.0       5.1
+coordinated, unconstrained        78.911    25.664   1124.4  0.027      20.7        16   750         512.0       1.1
+coordinated, carbon-neutral      104.575     0.000    677.2  0.457     391.3       790     0           0.0       5.1
+
+== The kit (islanded, per MW of village peak) and its duration sensitivity ==
+run                              cost $M   d cost  solar/pk  MWh/pk  dur h  solar MW  batt MW  batt MWh  diesel MW  diesel %
+islanded, free duration          104.575   +0.000      3.17    6.45   5.89     391.3    133.5       790       14.3       5.1
+islanded, 4 h                    106.138   +1.563      2.68    4.81   4.00     333.3    149.2       597       24.7      16.9
+islanded, 2 h                    108.668   +4.092      1.79    1.44   2.00     222.2     96.1       192       67.2      44.0
+
+== Fix-and-verify variants (delta against the free-duration, untied leg of the same regime) ==
+  unconstrained   4 h battery                      cost    79.048 (+0.137); connected 750 vs 750; solar 19.0 vs 20.7 MW; batt 19 vs 16 MWh; net grid 514.0 vs 512.0 GWh; gross import 1047.6 vs 1048.7 GWh
+  unconstrained   tie-breaker (charge netted out)  cost    78.911 (+0.000); connected 750 vs 750; solar 20.7 vs 20.7 MW; batt 16 vs 16 MWh; net grid 512.0 vs 512.0 GWh; gross import 521.9 vs 1048.7 GWh
+  carbon-neutral  4 h battery                      cost   106.270 (+1.695); connected 0 vs 0; solar 384.6 vs 391.3 MW; batt 775 vs 790 MWh; net grid 0.0 vs 0.0 GWh; gross import 0.0 vs 0.0 GWh
+  carbon-neutral  tie-breaker (charge netted out)  cost   104.575 (+0.000); connected 0 vs 0; solar 391.3 vs 391.3 MW; batt 790 vs 790 MWh; net grid 0.0 vs 0.0 GWh; gross import 0.0 vs 0.0 GWh
+
+== 2-week search: achieved gaps (quote these, never the permitted mipgap) ==
+  e5_w2_gridvillage: Capacity expansion reached the time limit (LP, UC relaxed).
+  e5_w2c_gridvillage: Capacity expansion reached the time limit (LP, UC relaxed).
+
+Coordination values are OFF minus ON on the same dataset and duration; the fix-and-verify legs are exact LPs for their pattern, so each value is a floor on the true coordination value.

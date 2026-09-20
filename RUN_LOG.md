@@ -39,6 +39,48 @@ MILP n=5000 binaries   -> OPTIMAL
 
 ## Sessions
 
+### 2026-09-20 — the ERA5 chain: 12/12 solves clean; unconstrained value RISES on real weather; the clean search seed survived — probes launched
+
+`jobs/sched_era5.sh` (authored off-server, launched 2026-09-19 23:09) ran end to
+end in 8 h 0 m, all 12 solves `rc=0`. Datasets built and validated: ERA5 solar
+wired into all 780 villages (30 distinct cells, mean CF 0.182), 2-week
+reduction now stress-selected by *minimum weekly solar CF* — the criterion's
+first real use, since synthetic weather was weekly-degenerate.
+
+**Islanded on real weather** (all exact LPs): $104.575 M/yr, 391.3 MW solar,
+790 MWh storage, diesel 5.1 % of generation — costlier and dirtier than the
+synthetic world ($101.718, 360.7 MW), with the free-duration optimum choosing
+**5.9 h median battery duration**. Forcing 4 h costs +$1.563 M and triples
+diesel to 16.9 %; forcing 2 h costs +$4.092 M and pushes diesel to **44 %**.
+Measured caps written into the clean configs by the script: CO2 680,593.9 t,
+RE 0.451 (full model); 663,322.0 t / 0.468 (2-week).
+
+**Unconstrained coordination value rises to $25.664 M/yr** (from $23.959 on
+synthetic — worse sun makes the wires worth more). Chain: 2-week MILP incumbent
+84.094 (gap 26.59 % at the 4 h cap, pattern 750/780) → fix-and-verify exact LP
+**$78.911 M/yr** on the full model. Village solar collapses to 20.7 MW, CO2
+1,124.4 kt, net grid supply 512 GWh/yr — the coal-substitution mechanism,
+unchanged. Variants: 4 h battery +$0.137 M (storage barely matters once
+connected); the $0.01/MWh import tie-breaker leaves cost and net flow identical
+while collapsing gross import 1,048.7 → 521.9 GWh — **half the "trade" in the
+untied runs was degenerate wash volume; per-village trade is quotable only from
+the _tb legs.**
+
+**The carbon-neutral search FAILED to move off its seed — its result is a
+bracket, not a zero.** `e5_w2c_gridvillage` explored 1 node in 4 h with **no
+heuristic incumbent**: best objective 108.6738 is byte-for-byte the 2-week
+islanded LP cost, i.e. the all-islanded warm start. The chain then dutifully
+fix-and-verified that empty pattern (0/780 → $104.575, identical to islanded).
+The summary table's "carbon-neutral, coord $0.000" row is therefore VACUOUS:
+what is actually proven is coordination value ∈ **[0, ~$20.6 M]** (2-week bound
+88.102 vs 108.674). Do not quote $0 as a finding.
+
+**Probes launched** to put a real floor under the clean leg, using the
+`connect_pattern` mechanism on the full clean model (exact LPs, ~30 min each):
+`e5_fv_clean_gridvillage_p750` (the ERA5 unconstrained winner's 750-village
+pattern under the caps) and `e5_fv_clean_gridvillage_p450` (the synthetic-era
+clean winner's 450-village pattern). Any result below $104.575 is a genuine
+floor; results in the next entry.
 ### 2026-09-14 — fix-and-verify mechanism built; both full-8-week LPs launched
 
 Resumed after six weeks (branch fast-forwarded over the four off-server figure/
