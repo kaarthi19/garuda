@@ -79,8 +79,29 @@ what is actually proven is coordination value ∈ **[0, ~$20.6 M]** (2-week boun
 `connect_pattern` mechanism on the full clean model (exact LPs, ~30 min each):
 `e5_fv_clean_gridvillage_p750` (the ERA5 unconstrained winner's 750-village
 pattern under the caps) and `e5_fv_clean_gridvillage_p450` (the synthetic-era
-clean winner's 450-village pattern). Any result below $104.575 is a genuine
-floor; results in the next entry.
+clean winner's 450-village pattern).
+
+**Probe results (both exact LPs, both caps binding to the digit):**
+
+| pattern | cost ($M/yr) | vs islanded 104.575 | verdict |
+|---|---|---|---|
+| p450 — synthetic clean winner | **97.418108** | **coordination $7.157 M/yr** | genuine floor |
+| p750 — ERA5 unconstrained winner | 117.662866 | −$13.088 M (worse) | wrong plan under a cap |
+
+The ERA5 carbon-neutral coordination value is now bracketed **[$7.16 M,
+~$20.6 M]**, quotable as "$7.16 M/yr with the best plan found (exact LP), true
+optimum at most ~$20.6 M". The p450 plan: 450/780 connected, village solar
+350.6 MW, net grid supply 52.5 GWh/yr, CO2 = 680,593.9 t and RE = 0.4510
+binding exactly. Two morals for the record: (1) the 2-week clean MILP's
+"nobody connects" was pure search failure — a pattern found on *synthetic*
+weather beats it by $7.16 M/yr under ERA5 constraints; (2) the p750 result is
+the cross-regime warning in one number — the coal-substitution wiring plan is
+$13.1 M/yr WORSE than no wires at all once the carbon cap is real. Wiring for
+the wrong objective is worse than not wiring.
+
+Open option (not launched): a `start_pattern` warm-start key (seed the clean
+MILP search from p450 instead of all-islanded) could close the bracket from
+below; the upper bound would need a longer clean MILP run.
 ### 2026-09-14 — fix-and-verify mechanism built; both full-8-week LPs launched
 
 Resumed after six weeks (branch fast-forwarded over the four off-server figure/
