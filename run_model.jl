@@ -68,6 +68,15 @@ exact_connect = Bool(get(cfg, "exact_connect", false))
 connect_pattern = String(get(cfg, "connect_pattern", ""))
 isempty(connect_pattern) || isfile(connect_pattern) ||
     error("config key connect_pattern points to a missing file: $(connect_pattern)")
+# Seeded warm start: same file format as connect_pattern, but the 0/1 values
+# are MIP start values on vVIL_CONNECT rather than fixes — the search may move
+# off them. Use it to seed a pattern search from a known-good plan so the
+# reported incumbent can never be worse than that plan. Ignored when
+# connect_pattern is also given (nothing is free to start). Default "" = the
+# all-islanded start, a strict no-op.
+start_pattern = String(get(cfg, "start_pattern", ""))
+isempty(start_pattern) || isfile(start_pattern) ||
+    error("config key start_pattern points to a missing file: $(start_pattern)")
 # Gurobi LP algorithm (its "Method" attribute) for the root relaxation and node
 # LPs: -1 automatic (the default — a strict no-op), 0 primal simplex, 1 dual
 # simplex, 2 barrier, 3 concurrent, 4/5 deterministic concurrent. On the
@@ -151,6 +160,7 @@ function_compiler(
     relax_uc = relax_uc,
     exact_connect = exact_connect,
     connect_pattern = connect_pattern,
+    start_pattern = start_pattern,
     export_price = export_price,
     policy_scope = policy_scope,
     lp_method = lp_method,

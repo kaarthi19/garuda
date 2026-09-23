@@ -903,7 +903,7 @@ end
 # (fractional commitment and grid-connection), under-counting start-up / minimum
 # up-down effects. Use it for fast license-free expansion where the empirically
 # measured UC integrality gap is acceptable; keep `false` for decision-grade runs.
-function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, exact_connect::Bool = false, connect_pattern::AbstractString = "", export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, time_limit::Float64 = 3*24*60*60.0, battery_duration_h::Float64 = 0.0, export_backed_by_generation::Bool = false)
+function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constraint, RE_limit, Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions; village_storage_max_mwh = 208.0, solver = "highs", relax_uc = false, exact_connect::Bool = false, connect_pattern::AbstractString = "", start_pattern::AbstractString = "", export_price = 0.0, policy_scope = "grid", lp_method::Int = -1, time_limit::Float64 = 3*24*60*60.0, battery_duration_h::Float64 = 0.0, export_backed_by_generation::Bool = false)
     CE = make_solver(solver; mipgap = mipgap, lp_method = lp_method, time_limit = time_limit)
     refs = build_model!(CE, inputs, CO2_constraint, CO2_limit, RE_constraint, RE_limit,
                         Grid, VillageBuild, ImportPrice, NoCoal, CO235reduction, BAUCO2emissions;
@@ -922,6 +922,14 @@ function capacity_expansion(inputs, mipgap, CO2_constraint, CO2_limit, RE_constr
     if !isempty(connect_pattern)
         nconn = _fix_connect_pattern!(CE, connect_pattern)
         println("Connection pattern fixed from $(connect_pattern): $(nconn)/$(length(CE[:vVIL_CONNECT])) villages connected.")
+    elseif !isempty(start_pattern)
+        # Seeded warm start: begin the search from a known-good connection plan
+        # (e.g. a fix-and-verify winner) instead of all-islanded, so the reported
+        # incumbent can never be worse than that plan. Measured need: the 2-week
+        # clean MILP on ERA5 sat at its all-islanded seed for 4 h with no
+        # heuristic incumbent, reporting "nobody connects" as its answer.
+        nstart = _start_connect_pattern!(CE, start_pattern)
+        println("Connection pattern warm-started from $(start_pattern): $(nstart)/$(length(CE[:vVIL_CONNECT])) villages connected in the start.")
     else
         # Warm-start the interconnection decision at all-islanded. vVIL_CONNECT = 0 is
         # always feasible (connection cost is only incurred when connected), so the

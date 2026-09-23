@@ -87,19 +87,50 @@ count that mismatches the village set, or a non-0/1 value — a silently ignored
 pattern would report a base-case answer as a verified one.
 """
 function _fix_connect_pattern!(CE, path::AbstractString)
-    pat = CSV.read(path, DataFrame)
-    ("ID" in names(pat) && "Connected" in names(pat)) ||
-        error("connect_pattern file $(path) needs ID and Connected columns, has $(names(pat))")
-    od = object_dictionary(CE)
-    haskey(od, :vVIL_CONNECT) ||
-        error("connect_pattern given but the model has no vVIL_CONNECT — Grid + VillageBuild scenarios only")
-    vcon = CE[:vVIL_CONNECT]
-    length(vcon) == nrow(pat) ||
-        error("connect_pattern has $(nrow(pat)) rows for $(length(vcon)) villages")
+    pat, vcon = _read_connect_pattern(CE, path, "connect_pattern")
     for r in eachrow(pat)
-        r.Connected in (0, 1) ||
-            error("connect_pattern Connected must be 0/1, got $(r.Connected) at ID $(r.ID)")
         JuMP.fix(vcon[r.ID], Float64(r.Connected); force = true)
     end
     return count(==(1), pat.Connected)
+end
+
+"""
+    _start_connect_pattern!(CE, path) -> Int
+
+Warm-start (MIP start) every `vVIL_CONNECT` variable at the 0/1 values in
+`path` — same file format and validation as `_fix_connect_pattern!`, but the
+values are `set_start_value`s, not fixes: the solver is free to move off them.
+Use it to seed a connection-pattern search from a plan that is already known
+to be good (e.g. a fix-and-verify winner from another dataset) instead of the
+default all-islanded start, so the reported incumbent can never be worse than
+that plan. A start only helps or is discarded; it never binds. Returns the
+connected-village count in the start.
+"""
+function _start_connect_pattern!(CE, path::AbstractString)
+    pat, vcon = _read_connect_pattern(CE, path, "start_pattern")
+    for r in eachrow(pat)
+        set_start_value(vcon[r.ID], Float64(r.Connected))
+    end
+    return count(==(1), pat.Connected)
+end
+
+# Shared validation for connect_pattern / start_pattern: a CSV with ID and
+# Connected columns, one row per village, 0/1 values, on a model that has the
+# wire variables at all. Errors rather than ignoring, because a silently
+# skipped pattern would report a base-case answer as a verified (or seeded) one.
+function _read_connect_pattern(CE, path::AbstractString, key::AbstractString)
+    pat = CSV.read(path, DataFrame)
+    ("ID" in names(pat) && "Connected" in names(pat)) ||
+        error("$(key) file $(path) needs ID and Connected columns, has $(names(pat))")
+    od = object_dictionary(CE)
+    haskey(od, :vVIL_CONNECT) ||
+        error("$(key) given but the model has no vVIL_CONNECT — Grid + VillageBuild scenarios only")
+    vcon = CE[:vVIL_CONNECT]
+    length(vcon) == nrow(pat) ||
+        error("$(key) has $(nrow(pat)) rows for $(length(vcon)) villages")
+    for r in eachrow(pat)
+        r.Connected in (0, 1) ||
+            error("$(key) Connected must be 0/1, got $(r.Connected) at ID $(r.ID)")
+    end
+    return pat, vcon
 end

@@ -296,3 +296,47 @@ def test_connect_pattern_is_threaded_and_fixes_the_wire_binaries():
     for rel in ("generate_jobs.py", "generate_jobs_local.py"):
         keys = re.search(r"PASSTHROUGH_KEYS\s*=\s*\((.*?)\)", src(rel), re.S).group(1)
         assert "'connect_pattern'" in keys, f"{rel} PASSTHROUGH_KEYS"
+
+
+def test_start_pattern_is_threaded_and_warm_starts_the_wire_binaries():
+    """Guards the seeded-warm-start chain: `start_pattern` seeds vVIL_CONNECT.
+
+    A pattern search that starts from all-islanded can sit on that seed for
+    its whole time limit and report "nobody connects" as its answer (the ERA5
+    2-week clean MILP did exactly that). `start_pattern` lets the search begin
+    from a known-good plan instead. Unlike `connect_pattern` it must NOT fix
+    the variables — a start the solver cannot leave is a fix in disguise.
+    Solver-free; runs in CI.
+    """
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+    def src(rel):
+        return open(os.path.join(root, rel)).read()
+
+    rm = src("run_model.jl")
+    assert 'get(cfg, "start_pattern"' in rm
+    assert "isfile(start_pattern)" in rm, "must reject a missing pattern file"
+    assert "start_pattern = start_pattern" in rm
+
+    fc = src("functions/function_compiler.jl")
+    assert "start_pattern::AbstractString" in fc
+    assert fc.count("start_pattern = start_pattern") >= 2, "must forward to both engines"
+
+    for rel in ("functions/optimizer.jl", "functions/dispatch_engine.jl"):
+        eng = src(rel)
+        assert "start_pattern::AbstractString" in eng, f"{rel} signature"
+        i_relax = eng.index("_relax_binaries!(CE,")
+        i_start = eng.index("_start_connect_pattern!(CE, start_pattern)")
+        assert i_start > i_relax, f"{rel} must seed after relaxing"
+        # a fixed pattern takes precedence: nothing is free to start
+        assert eng.index("_fix_connect_pattern!(CE, connect_pattern)") < i_start, f"{rel} fix before start"
+
+    sv = src("functions/solver.jl")
+    assert "function _start_connect_pattern!" in sv
+    body = sv.split("function _start_connect_pattern!")[1].split("\nend")[0]
+    assert "set_start_value" in body
+    assert "JuMP.fix" not in body and "force = true" not in body, "a start must not fix"
+
+    for rel in ("generate_jobs.py", "generate_jobs_local.py"):
+        keys = re.search(r"PASSTHROUGH_KEYS\s*=\s*\((.*?)\)", src(rel), re.S).group(1)
+        assert "'start_pattern'" in keys, f"{rel} PASSTHROUGH_KEYS"

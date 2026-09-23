@@ -189,6 +189,11 @@ dispatch engine, **off** (exact MILP) for expansion. On `timor_demo` the relaxed
 expansion LP is ~0.8 % below the exact MILP cost (a measured lower bound;
 reproduce with `tools/uc_relaxation_gap.jl`).
 
+`start_pattern` (config key) warm-starts the same variables at a given 0/1
+pattern instead of the default all-islanded start, without fixing them — a
+MIP start the search may leave, used to seed a pattern search from a plan
+already known to be good so the reported incumbent cannot be worse than it.
+
 `connect_pattern` (config key) fixes every village grid-connection variable
 `vVIL_CONNECT` to a given 0/1 pattern (a CSV with `ID` and `Connected` columns)
 before the solve — the **fix-and-verify** step of the reduced-representative-
