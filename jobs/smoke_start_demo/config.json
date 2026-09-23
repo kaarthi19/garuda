@@ -1,0 +1,18 @@
+{
+  "island": "timor_demo",
+  "year": "2030",
+  "clean": "reference",
+  "scenario": "gridvillage",
+  "CO235reduction": false,
+  "BAUCO2emissions": 0.0,
+  "CO2_limit": 3000000,
+  "mipgap": 0.01,
+  "import_price": 0.0,
+  "export_price": 0.0,
+  "policy_scope": "grid",
+  "relax_uc": true,
+  "exact_connect": true,
+  "start_pattern": "jobs/smoke_start_demo/start_pattern.csv",
+  "solver": "highs",
+  "run_tag": "smoke_start"
+}

@@ -1,0 +1,81 @@
+Running HiGHS 1.14.0 (git hash: 7df0786de3): Copyright (c) 2026 under Apache 2.0 license terms
+Using BLAS: blastrampoline 
+MIP has 288991 rows; 174803 cols; 858993 nonzeros; 4 integer variables (4 binary)
+Coefficient ranges:
+  Matrix  [3e-02, 5e+01]
+  Cost    [7e+00, 2e+05]
+  Bound   [1e+00, 2e+02]
+  RHS     [3e-05, 6e+01]
+WARNING: Problem has some excessively small row bounds
+Attempting to find feasible solution by solving LP for user-supplied values of discrete variables
+Presolving model
+207817 rows, 126649 cols, 674917 nonzeros 0s
+Dependent equations search running on 27926 equations with time limit of 1000.00s
+Dependent equations search removed 0 rows and 0 nonzeros in 0.00s (limit = 1000.00s)
+199443 rows, 120974 cols, 690365 nonzeros 0s
+Presolve reductions: rows 199443(-89548); columns 120974(-53829); nonzeros 690365(-168628) 
+Solving the presolved LP
+Using dual simplex solver
+  Iteration        Objective     Infeasibilities num(sum)
+          0     3.6000699995e+05 Pr: 8065(48364.4) 0.6s
+      23570     2.3183797787e+07 Pr: 13806(75182.3); Du: 0(5.68567e-15) 5.7s
+      47981     2.3727871499e+07 Pr: 8783(323.929); Du: 0(5.68567e-15) 10.9s
+      50590     2.3730604387e+07 Pr: 0(0); Du: 0(8.65855e-11) 11.6s
+
+Performed postsolve
+Solving the original LP from the solution after postsolve
+
+Model status        : Optimal
+Simplex   iterations: 50590
+Objective value     :  2.3730604387e+07
+P-D objective error :  5.7298621988e-15
+HiGHS run time      :         11.69
+Presolving model
+213193 rows, 132029 cols, 701797 nonzeros 0s
+210195 rows, 129042 cols, 715942 nonzeros 0s
+Presolve reductions: rows 210195(-78796); columns 129042(-45761); nonzeros 715942(-143051) 
+
+MIP start solution is feasible, objective value is 23730604.3867
+
+Solving MIP model with:
+   210195 rows
+   129042 cols (4 binary, 0 integer, 0 implied int., 129038 continuous, 0 domain fixed)
+   715942 nonzeros
+
+Src: B => Branching; C => Central rounding; F => Feasibility pump; H => Heuristic;
+     I => Shifting; J => Feasibility jump; L => Sub-MIP; P => Empty MIP; R => Randomized rounding;
+     S => Solve LP; T => Evaluate node; U => Unbounded; X => User solution; Y => HiGHS solution;
+     Z => ZI Round; l => Trivial lower; p => Trivial point; u => Trivial upper; z => Trivial zero
+
+        Nodes      |    B&B Tree     |            Objective Bounds              |  Dynamic Constraints |       Work      
+Src  Proc. InQueue |  Leaves   Expl. | BestBound       BestSol              Gap |   Cuts   InLp Confl. | LpIters     Time
+
+         0       0         0   0.00%   0               23730604.38669   100.00%        0      0      0         0     2.8s
+ S       0       0         0   0.00%   0               23582613.2817    100.00%        0      0      0         0    29.0s
+         1       0         1 100.00%   23377726.36014  23582613.2817      0.87%        0      0      0     65866    29.0s
+
+Solving report
+  Status            Optimal
+  Primal bound      23582613.2817
+  Dual bound        23377726.3601
+  Gap               0.869% (tolerance: 1%)
+  P-D integral      26.1770076538
+  Solution status   feasible
+                    23582613.2817 (objective)
+                    0 (bound viol.)
+                    0 (int. viol.)
+                    0 (row viol.)
+  Timing            28.97
+  Max sub-MIP depth 0
+  Nodes             1
+  Repair LPs        0
+  LP iterations     65866
+                    0 (strong br.)
+                    0 (separation)
+                    0 (heuristics)
+  Activating project at `~/Documents/GitHub/garuda/.claude/worktrees/orientation`
+┌ Warning: schema validation skipped (validator exit 3):
+│ schema validation unavailable: pandas not installed
+└ @ Main ~/Documents/GitHub/garuda/.claude/worktrees/orientation/functions/preflight.jl:172
+Connection pattern warm-started from jobs/smoke_start_demo/start_pattern.csv: 2/4 villages connected in the start.
+Capacity expansion solved successfully (LP, UC relaxed).

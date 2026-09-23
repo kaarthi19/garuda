@@ -1,0 +1,22 @@
+{
+  "island": "timor__marketfix_era5",
+  "scenario": "gridvillage",
+  "year": "2030",
+  "CO235reduction": false,
+  "BAUCO2emissions": 0.0,
+  "import_price": 0.0,
+  "export_price": 0.0,
+  "relax_uc": true,
+  "solver": "gurobi",
+  "lp_method": 2,
+  "mipgap": 0.01,
+  "time_limit": 28800.0,
+  "clean": "clean",
+  "CO2_limit": 680593.9,
+  "RE_limit": 0.451,
+  "policy_scope": "system",
+  "exact_connect": false,
+  "run_tag": "fixverify_p450_bd4h",
+  "connect_pattern": "jobs/e5_fv_clean_gridvillage_p450/connect_pattern.csv",
+  "battery_duration_h": 4.0
+}
