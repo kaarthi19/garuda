@@ -10,17 +10,16 @@ one font size ladder, white background, 200 dpi.
     python tools/plot_brief_figures.py --only kit cost_stack
 
 Result folders (ERA5 weather, full 8-week model; see RUN_LOG 2026-09-20):
-  islanded          results/village_timor__marketfix_era5_2030_reference   (+ __bd4h, __bd2h)
-  unconstrained     results/gridvillage_timor__marketfix_era5_2030_reference__fixverify (+ __fixverify_tb)
-  carbon-neutral    results/gridvillage_timor__marketfix_era5_2030_clean__fixverify_p450
+  islanded          results/village_timor__marketfix_era5_2030_reference__bd4h
+  unconstrained     results/gridvillage_timor__marketfix_era5_2030_reference__fixverify_bd4h
+  carbon-neutral    results/gridvillage_timor__marketfix_era5_2030_clean__fixverify_p450_bd4h
 The carbon-neutral ceiling is parsed from jobs/e5_w2c_gridvillage/solve.log
 (the 2-week clean root bound) against the 2-week islanded LP. Override any
 folder with --root / the RUNS table below when the seeded search lands.
 
 Figures:
   village_map        Fig 1  where the villages are, by kabupaten, on the basemap
-  kit                Fig 2  solar and battery sizing per MW of peak; diesel before/after
-  duration           Fig 2b the kit at 5.9 / 4 / 2 h battery
+  kit                Fig 2  solar and battery per household; diesel before/after
   cost_stack         Fig 3  islanded annual cost by component
   three_regimes      Fig 4  cost, CO2, village solar, villages connected
   village_supply     Fig 5  energy serving village load, by source, per regime
@@ -51,15 +50,14 @@ DATA = os.path.join(REPO, "data_indonesia", "2030", "timor")
 OUT = os.path.join(RESULTS, "figures", "brief")
 
 DS = "timor__marketfix_era5"
+# Numbers of record (decision 2026-09-24): the 4 h-battery legs of every regime.
 RUNS = {
-    "islanded":      f"village_{DS}_2030_reference",
-    "islanded_4h":   f"village_{DS}_2030_reference__bd4h",
-    "islanded_2h":   f"village_{DS}_2030_reference__bd2h",
-    "unconstrained": f"gridvillage_{DS}_2030_reference__fixverify",
-    "unconstrained_tb": f"gridvillage_{DS}_2030_reference__fixverify_tb",
-    "carbon_neutral": f"gridvillage_{DS}_2030_clean__fixverify_p450",
+    "islanded":      f"village_{DS}_2030_reference__bd4h",
+    "unconstrained": f"gridvillage_{DS}_2030_reference__fixverify_bd4h",
+    "carbon_neutral": f"gridvillage_{DS}_2030_clean__fixverify_p450_bd4h",
     "islanded_2w":   f"village_{DS}_2w_2030_reference",
 }
+SHOW_CEILING = False   # the 2-week search bound was measured without the duration constraint
 CLEAN_SEARCH_LOG = os.path.join(REPO, "jobs", "e5_w2c_gridvillage", "solve.log")
 DIESEL_FUEL = 18.0     # $/MMBtu, fuels_data.csv
 VILLAGE_DEMAND_GWH = 544.075
@@ -220,12 +218,12 @@ def fig_kit():
     kwh = (1e3 * o["be"] / hh).dropna()
     fig, axes = plt.subplots(1, 3, figsize=(13, 4.2), gridspec_kw=dict(width_ratios=[1.2, 1.2, 0.8]))
     ax = axes[0]
-    ax.hist(kwp, bins=np.arange(0.6, 1.41, 0.02), color=BLUE, edgecolor="white", lw=0.4, zorder=3)
+    ax.hist(kwp, bins=np.arange(0.5, 1.11, 0.02), color=BLUE, edgecolor="white", lw=0.4, zorder=3)
     ax.axvline(kwp.median(), color=INK, lw=1, ls="--", zorder=4)
     ax.text(kwp.median() + 0.02, ax.get_ylim()[1] * 0.93, f"median {kwp.median():.2f}", fontsize=9.5, color=INK)
     ax.set_xlabel("Solar kWp per household"); ax.set_ylabel("Villages"); style(ax)
     ax = axes[1]
-    ax.hist(kwh, bins=np.arange(1.0, 3.01, 0.05), color=BLUE, edgecolor="white", lw=0.4, zorder=3)
+    ax.hist(kwh, bins=np.arange(0.8, 2.21, 0.04), color=BLUE, edgecolor="white", lw=0.4, zorder=3)
     ax.axvline(kwh.median(), color=INK, lw=1, ls="--", zorder=4)
     ax.text(kwh.median() + 0.05, ax.get_ylim()[1] * 0.93, f"median {kwh.median():.2f}", fontsize=9.5, color=INK)
     ax.set_xlabel("Battery kWh per household"); style(ax)
@@ -307,7 +305,7 @@ def fig_three_regimes():
 
 # ---- Fig 5: who powers the villages ------------------------------------------
 def fig_village_supply():
-    os_ = [load("islanded"), load("unconstrained_tb", tiebreak=0.01), load("carbon_neutral")]
+    os_ = [load("islanded"), load("unconstrained"), load("carbon_neutral")]
     sol = [o["solar_gwh"] for o in os_]; dsl = [o["diesel_gwh"] for o in os_]; grid = [max(o["net_grid_gwh"], 0) for o in os_]
     fig, ax = plt.subplots(figsize=(8, 4.6))
     x = np.arange(3)
@@ -396,7 +394,7 @@ def fig_kit_split():
 def fig_coordination():
     isl, unc, cn = load("islanded"), load("unconstrained"), load("carbon_neutral")
     v_unc, v_cn = isl["cost"] - unc["cost"], isl["cost"] - cn["cost"]
-    ceil = clean_ceiling()
+    ceil = clean_ceiling() if SHOW_CEILING else None
     rows = [("Village to village", 0.0, None), ("Village to grid,\nunconstrained", v_unc, None),
             ("Village to grid,\ncarbon-neutral", v_cn, ceil)]
     fig, ax = plt.subplots(figsize=(9, 3.8))
@@ -412,15 +410,16 @@ def fig_coordination():
     ax.set_yticks(range(3)); ax.set_yticklabels([r[0] for r in reversed(rows)], fontsize=10)
     ax.set_xlabel("Coordination value: islanded cost minus coordinated cost, \\$M per year")
     ax.set_xlim(-0.5, max(v_unc, ceil or 0) * 1.15); ax.set_ylim(-0.6, 2.6)
-    ax.legend(handles=[Line2D([], [], color=BLUE, lw=3, marker="o", ms=9, label="Best plan found (exact)"),
-                       Patch(color=LIGHTBLUE, label="Range to the search bound")],
-              loc="lower right", fontsize=9)
+    if ceil:
+        ax.legend(handles=[Line2D([], [], color=BLUE, lw=3, marker="o", ms=9, label="Best plan found (exact)"),
+                           Patch(color=LIGHTBLUE, label="Range to the search bound")],
+                  loc="lower right", fontsize=9)
     style(ax, ygrid=False)
     fig.tight_layout()
     save(fig, "fig9_coordination")
 
 
-FIGS = {"village_map": fig_village_map, "kit": fig_kit, "duration": fig_duration, "cost_stack": fig_cost_stack,
+FIGS = {"village_map": fig_village_map, "kit": fig_kit, "cost_stack": fig_cost_stack,
         "three_regimes": fig_three_regimes, "village_supply": fig_village_supply, "cost_vs_co2": fig_cost_vs_co2,
         "connection_basemap": fig_connection_basemap, "kit_split": fig_kit_split, "coordination": fig_coordination}
 
