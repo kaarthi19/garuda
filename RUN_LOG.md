@@ -39,6 +39,36 @@ MILP n=5000 binaries   -> OPTIMAL
 
 ## Sessions
 
+### 2026-09-24 — ERA5 follow-up chain: the clean variants re-based on p450; the seeded 8 h search cannot beat the floor
+
+`jobs/sched_era5b.sh` (authored off-server with the new `start_pattern` key,
+launched 2026-09-23 22:58) completed in 9 h 21 m, all solves `rc=0`.
+
+**Stage A — the carbon-neutral variants, now on the real floor plan** (both
+exact LPs; the first chain's versions priced an empty pattern and are
+superseded):
+
+| run | cost ($M/yr) | vs p450 97.418108 | note |
+|---|---|---|---|
+| p450 + 4 h battery | 98.051312 | +$0.633 M | duration penalty: $1.70 M islanded → $0.63 M clean-connected → $0.14 M unconstrained — the wires buy back the duration constraint |
+| p450 + $0.01/MWh tie-breaker | 97.418111 (charge netted) | +$3/yr (noise) | net flow 52.1 GWh unchanged; gross import collapses 649.3 → 229.5 GWh — the unique per-village clean trade split |
+
+**Stage B — the seeded search validates the floor by failing to beat it.**
+`start_pattern` worked as designed: Gurobi accepted the p450 seed as a genuine
+incumbent at 576 s ($100.324 M on the 2-week model, vs the unseeded run's
+$108.674 islanded seed). It then ran its full 8 h cap — root-node cuts and
+heuristics throughout, never branching — and finished with the incumbent
+UNCHANGED: best objective 100.324, bound 88.102, gap 12.18 %. Stage C was
+skipped by the script's own diff check (winner ≡ seed, 0/780 villages differ).
+
+**The ERA5 carbon-neutral number of record:** coordination value
+**$7.157 M/yr floor** (p450, exact full-model LP) with **ceiling ~$20.6 M/yr**
+(2-week root bound 108.674 − 88.102). The floor now carries 12 h of combined
+MILP evidence (4 h unseeded + 8 h seeded) that no better 2-week pattern was
+findable — quote it as "$7.16 M/yr with the best plan found; a further
+~$13 M/yr is unproven headroom, not expected value". The clean-regime kit at
+p450: 350.6 MW village solar, 567 MWh storage, diesel 0.7 % of generation,
+450/780 connected, net grid supply 52.5 GWh/yr, caps binding to the digit.
 ### 2026-09-20 — the ERA5 chain: 12/12 solves clean; unconstrained value RISES on real weather; the clean search seed survived — probes launched
 
 `jobs/sched_era5.sh` (authored off-server, launched 2026-09-19 23:09) ran end to

@@ -1,0 +1,35 @@
+  seeded search caps: CO2 663,322.0 t, RE 0.468; start_pattern jobs/e5_fv_clean_gridvillage_p450/connect_pattern.csv
+[2026-09-23T22:58:21] STAGE A — carbon-neutral 4 h and tie-breaker legs on the p450 pattern
+[2026-09-23T22:58:21] LAUNCH e5_fv_clean_gridvillage_p450_4h (179GB free)
+[2026-09-23T23:01:21] LAUNCH e5_fv_clean_gridvillage_p450_tb (173GB free)
+[2026-09-23T23:59:16] END e5_fv_clean_gridvillage_p450_4h rc=0
+[2026-09-24T00:16:03] END e5_fv_clean_gridvillage_p450_tb rc=0
+[2026-09-24T00:16:03] STAGE B — 2-week clean MILP seeded from p450 (8 h cap)
+[2026-09-24T00:16:03] LAUNCH e5_w2c_gridvillage_seeded (179GB free)
+[2026-09-24T08:19:14] END e5_w2c_gridvillage_seeded rc=0
+  seeded: User MIP start produced solution with objective 1.00324e+08 (576.19s)
+  seeded: User MIP start produced solution with objective 1.00324e+08 (582.02s)
+  seeded: Best objective 1.003241568594e+08, best bound 8.810244548283e+07, gap 12.1822%
+  seeded: Connection pattern warm-started from jobs/e5_fv_clean_gridvillage_p450/connect_pattern.csv: 450/780 villages connected in the start.
+  seeded: Capacity expansion reached the time limit (LP, UC relaxed).
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+  seeded winner: 450/780 connected; differs from p450 in 0 villages
+[2026-09-24T08:19:14] STAGE C skipped — the seeded search returned its own seed; the full-model price is p450's
+[2026-09-24T08:19:14] all solves complete
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/computation/expressions.py:23: UserWarning: Pandas requires version '2.10.2' or newer of 'numexpr' (version '2.9.0' currently installed).
+  from pandas.core.computation.check import NUMEXPR_INSTALLED
+/home/pwrlabadmin/.local/lib/python3.12/site-packages/pandas/core/arrays/masked.py:56: UserWarning: Pandas requires version '1.4.2' or newer of 'bottleneck' (version '1.3.5' currently installed).
+  from pandas.core import (
+
+run                               cost $M   coord  CO2 kt     RE  solar MW  batt MWh  diesel MW  diesel %  conn  gross imp  net GWh
+islanded (anchor)                 104.575     nan   677.2  0.457     391.3       790       14.3       5.1     0        0.0      0.0
+carbon-neutral, p450               97.418   7.157   680.6  0.451     350.6       567        2.6       0.7   450      649.3     52.5
+carbon-neutral, p450, 4 h          98.051   6.524   680.6  0.451     340.7       556        2.9       0.9   450      653.8     59.5
+carbon-neutral, p450, tie-br       97.418   7.157   680.6  0.451     350.6       567        2.6       0.7   450      229.5     52.1
+carbon-neutral, seeded winner    (missing)
+
+Carbon-neutral coordination value on ERA5: floor $7.157 M/yr from 'carbon-neutral, p450' (exact LP); ceiling ~$20.6 M/yr from the seeded 2-week root bound (108.674 - 88.102)
+The tie-breaker row has the $0.01/MWh import charge netted out; its cost, net flow and builds should match p450 and only gross import should fall.
